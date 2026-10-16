@@ -1,19 +1,5 @@
 import type { Transacao } from '@/types'
-
-/**
- * Cores padrão para categorias
- */
-export const CORES_CATEGORIAS: Record<string, string> = {
-  'Salário': '#10b981',
-  'Alimentação': '#f59e0b',
-  'Moradia': '#3b82f6',
-  'Transporte': '#8b5cf6',
-  'Lazer': '#ec4899',
-  'Saúde': '#f43f5e',
-  'Educação': '#0ea5e9',
-  'Investimentos': '#14b8a6',
-  'Outros': '#64748b',
-}
+import type { CategoriaPersonalizada } from '@/services/categorias'
 
 /**
  * Agrupa transações por categoria e soma valores
@@ -30,11 +16,29 @@ export function agruparPorCategoria(transacoes: Transacao[]): Record<string, num
  */
 export function gerarConfigGrafico(
   grupos: Record<string, number>,
-  isDark: boolean
+  isDark: boolean,
+  categorias: CategoriaPersonalizada[] = []
 ): object {
   const labels = Object.keys(grupos)
   const data = Object.values(grupos)
-  const colors = labels.map(l => CORES_CATEGORIAS[l] || '#64748b')
+
+  // Cria mapa de cores personalizadas
+  const mapaCores = new Map<string, string>()
+  categorias.forEach(c => {
+    if (c.cor) {
+      mapaCores.set(c.nome, c.cor)
+    }
+  })
+
+  // Usa cores personalizadas ou gera cores automáticas
+  const colors = labels.map((label, index) => {
+    if (mapaCores.has(label)) {
+      return mapaCores.get(label)!
+    }
+    // Gera cor baseada no índice se não tiver cor personalizada
+    const hue = (index * 137.508) % 360 // ângulo dourado para boa distribuição
+    return `hsl(${hue}, 70%, 60%)`
+  })
 
   return {
     type: 'pie',

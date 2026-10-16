@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Transacao, TipoTransacao, Categoria } from '@/types'
+import type { Transacao, TipoTransacao } from '@/types'
 import { getCicloInicioParaData, formatCicloISO } from '@/utils/ciclo'
 
 /**
@@ -27,7 +27,7 @@ export async function criarTransacao(params: {
   valor: number
   data: string
   tipo: TipoTransacao
-  categoria: Categoria
+  categoria: string
   fixo: boolean
   descricao: string | null
 }): Promise<Transacao> {

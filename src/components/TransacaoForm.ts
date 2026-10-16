@@ -1,22 +1,11 @@
-import type { Categoria, TipoTransacao, Transacao } from '@/types'
-
-const CATEGORIAS: { value: Categoria; label: string }[] = [
-  { value: 'Salário', label: '💰 Salário' },
-  { value: 'Alimentação', label: '🍕 Alimentação' },
-  { value: 'Moradia', label: '🏠 Moradia' },
-  { value: 'Transporte', label: '🚗 Transporte' },
-  { value: 'Lazer', label: '🎮 Lazer' },
-  { value: 'Saúde', label: '🏥 Saúde' },
-  { value: 'Educação', label: '📚 Educação' },
-  { value: 'Investimentos', label: '📈 Investimentos' },
-  { value: 'Outros', label: '✨ Outros' },
-]
+import type { TipoTransacao, Transacao } from '@/types'
+import { appStore } from '@/stores/AppState'
 
 type SaveCallback = (data: {
   valor: number
   data: string
   tipo: TipoTransacao
-  categoria: Categoria
+  categoria: string
   fixo: boolean
   descricao: string
 }) => Promise<void>
@@ -26,29 +15,33 @@ type CancelCallback = () => void
 export function criarTransacaoForm(
   container: HTMLElement,
   onSave: SaveCallback,
-  onCancel: CancelCallback
+  onCancel: CancelCallback,
+  onGerenciarCategorias: () => void
 ): void {
   container.innerHTML = `
-    <div class="rounded-3xl p-6 border shadow-sm mb-8 bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
-      <h3 id="form-title" class="font-bold text-lg mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
-      <form id="transaction-form" class="space-y-4">
+    <div class="rounded-2xl sm:rounded-3xl p-4 sm:p-6 border shadow-sm mb-4 sm:mb-8 bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+      <h3 id="form-title" class="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
+      <form id="transaction-form" class="space-y-3 sm:space-y-4">
         <input type="hidden" id="input-id">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-3 sm:gap-4">
           <input type="number" id="input-value" step="0.01" min="0.01" required
-            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
-            placeholder="Valor">
+            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base"
+            placeholder="Valor" inputmode="decimal">
           <input type="date" id="input-date" required
-            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base">
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <select id="input-type" class="w-full p-3 rounded-xl border bg-white font-bold dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+        <div class="grid grid-cols-2 gap-2 sm:gap-4">
+          <select id="input-type" class="w-full p-2 sm:p-3 rounded-xl border bg-white font-bold text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
             <option value="saida">Saída (-)</option>
             <option value="entrada">Entrada (+)</option>
           </select>
-          <select id="input-category" class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white">
-            ${CATEGORIAS.map(c => `<option value="${c.value}">${c.label}</option>`).join('')}
+          <select id="input-category" class="w-full p-2 sm:p-3 rounded-xl border bg-white text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+            <!-- Populado dinamicamente -->
           </select>
         </div>
+        <button type="button" id="btn-gerenciar-categorias" class="text-xs text-blue-500 hover:underline font-bold">
+          ⚙️ Gerenciar categorias
+        </button>
         <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
           <input type="checkbox" id="input-fixed" class="w-4 h-4"> É transação fixa?
         </label>
@@ -70,6 +63,14 @@ export function criarTransacaoForm(
   const cancelBtn = container.querySelector('#cancel-btn')!
   const formTitle = container.querySelector('#form-title')!
   const inputId = container.querySelector('#input-id') as HTMLInputElement
+  const btnGerenciar = container.querySelector('#btn-gerenciar-categorias')!
+
+  // Popula categorias do store
+  atualizarSelectCategorias()
+
+  btnGerenciar.addEventListener('click', () => {
+    onGerenciarCategorias()
+  })
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -89,7 +90,7 @@ export function criarTransacaoForm(
         valor,
         data: (container.querySelector('#input-date') as HTMLInputElement).value,
         tipo: (container.querySelector('#input-type') as HTMLSelectElement).value as TipoTransacao,
-        categoria: (container.querySelector('#input-category') as HTMLSelectElement).value as Categoria,
+        categoria: (container.querySelector('#input-category') as HTMLSelectElement).value,
         fixo: (container.querySelector('#input-fixed') as HTMLInputElement).checked,
         descricao: (container.querySelector('#input-description') as HTMLInputElement).value.trim(),
       })
@@ -119,6 +120,20 @@ export function criarTransacaoForm(
 }
 
 /**
+ * Atualiza o select de categorias baseado no store
+ */
+function atualizarSelectCategorias(): void {
+  const select = document.getElementById('input-category') as HTMLSelectElement
+  if (!select) return
+  const categorias = appStore.getCategorias()
+  select.innerHTML = categorias.map(c =>
+    `<option value="${c.nome}">${c.icone ? c.icone + ' ' : ''}${c.nome}</option>`
+  ).join('')
+}
+
+export { atualizarSelectCategorias }
+
+/**
  * Preenche o formulário para edição
  */
 export function preencherFormEdicao(container: HTMLElement, t: Transacao): void {
@@ -126,6 +141,7 @@ export function preencherFormEdicao(container: HTMLElement, t: Transacao): void 
   ;(container.querySelector('#input-value') as HTMLInputElement).value = String(t.valor)
   ;(container.querySelector('#input-date') as HTMLInputElement).value = t.data
   ;(container.querySelector('#input-type') as HTMLSelectElement).value = t.tipo
+  atualizarSelectCategorias()
   ;(container.querySelector('#input-category') as HTMLSelectElement).value = t.categoria
   ;(container.querySelector('#input-fixed') as HTMLInputElement).checked = t.fixo
   ;(container.querySelector('#input-description') as HTMLInputElement).value = t.descricao || ''

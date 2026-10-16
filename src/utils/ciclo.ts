@@ -50,10 +50,10 @@ export function getCicloInicioParaData(data: Date): string {
 
 /**
  * Retorna offset inicial baseado na data atual.
- * Se dia atual < 9, offset = 0; senão, offset = 1.
+ * O getCicloAtual já faz o ajuste internamente, então offset é sempre 0.
  */
 export function getOffsetInicial(): number {
-  return new Date().getDate() < 9 ? 0 : 1
+  return 0
 }
 
 /**

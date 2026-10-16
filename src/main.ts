@@ -1,11 +1,13 @@
 import { initAuth, onAuthChange, getAuthState } from '@/hooks/useAuth'
 import { useTransacoes } from '@/hooks/useTransacoes'
+import { useCategorias } from '@/hooks/useCategorias'
 import { appStore } from '@/stores/AppState'
 import { criarAuthForm } from '@/components/AuthForm'
 import { criarHeader, atualizarHeader } from '@/components/Header'
-import { criarTransacaoForm, preencherFormEdicao } from '@/components/TransacaoForm'
+import { criarTransacaoForm, preencherFormEdicao, atualizarSelectCategorias } from '@/components/TransacaoForm'
 import { criarGrafico, atualizarGrafico } from '@/components/GraficoPizza'
 import { criarTransacaoList, renderLista } from '@/components/TransacaoList'
+import { criarModalCategorias } from '@/components/ModalCategorias'
 import { formatarIntervaloCiclo, getOffsetInicial } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
@@ -18,6 +20,7 @@ let mainContainer: HTMLElement
 
 // Hook de transações
 const transacoesHook = useTransacoes()
+const categoriasHook = useCategorias()
 
 // Debounce para navegação de ciclos
 const debouncedUpdateDashboard = debounce(() => updateDashboard(), 250)
@@ -63,12 +66,15 @@ function init(): void {
   window.addEventListener('beforeunload', unsubAuth)
 }
 
-function setupApp(_userEmail: string): void {
+async function setupApp(_userEmail: string): Promise<void> {
   logger.debug('Configurando aplicação')
 
   // Inicializa offset do ciclo
   const offsetInicial = getOffsetInicial()
   appStore.setCycleOffset(offsetInicial)
+
+  // Carrega categorias do usuário (aguarda para popular o select antes do form)
+  await categoriasHook.carregarCategorias()
 
   // Cria estrutura DOM
   const headerContainer = document.createElement('div')
@@ -86,7 +92,7 @@ function setupApp(_userEmail: string): void {
 
   // Inicializa componentes
   criarHeader(headerContainer)
-  criarTransacaoForm(formContainer, handleSalvar, handleCancelarEdicao)
+  criarTransacaoForm(formContainer, handleSalvar, handleCancelarEdicao, handleGerenciarCategorias)
   criarGrafico(chartContainer)
   criarTransacaoList(listContainer)
 
@@ -142,6 +148,14 @@ function updateLista(): void {
     (id) => handleExcluir(id)
   )
 
+  updateGrafico(filtradas)
+}
+
+function updateGrafico(transacoes?: Transacao[]): void {
+  const txs = transacoes ?? appStore.getTransacoes()
+  const filterEl = document.getElementById('filter-fixed') as HTMLInputElement | null
+  const showOnlyFixed = filterEl?.checked || false
+  const filtradas = showOnlyFixed ? txs.filter(t => t.fixo) : txs
   const saidas = filtradas.filter(t => t.tipo === 'saida')
   atualizarGrafico(saidas)
 }
@@ -195,7 +209,7 @@ async function handleSalvar(data: Parameters<typeof transacoesHook.salvarTransac
   const success = await transacoesHook.salvarTransacao(data)
 
   if (success) {
-    // Atualiza header após salvar
+    updateLista()
     updateHeader()
   }
 }
@@ -222,6 +236,7 @@ async function handleExcluir(id: string): Promise<void> {
   const success = await transacoesHook.excluir(id)
 
   if (success) {
+    updateLista()
     updateHeader()
   }
 }
@@ -231,8 +246,39 @@ async function handleAplicarFixos(): Promise<void> {
   const success = await transacoesHook.aplicarFixos()
 
   if (success) {
+    updateLista()
     updateHeader()
   }
+}
+
+function handleGerenciarCategorias(): void {
+  logger.debug('Abrindo modal de categorias')
+  criarModalCategorias(
+    async (nome, icone, cor) => {
+      const success = await categoriasHook.criarCategoria(nome, icone, cor)
+      if (success) {
+        atualizarSelectCategorias()
+        updateGrafico()
+      }
+      return success
+    },
+    async (id, nome, icone, cor) => {
+      const success = await categoriasHook.atualizarCategoria(id, nome, icone, cor)
+      if (success) {
+        atualizarSelectCategorias()
+        updateGrafico()
+      }
+      return success
+    },
+    async (id) => {
+      const success = await categoriasHook.excluirCategoria(id)
+      if (success) {
+        atualizarSelectCategorias()
+        updateGrafico()
+      }
+      return success
+    }
+  )
 }
 
 init()

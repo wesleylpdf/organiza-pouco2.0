@@ -17,7 +17,7 @@ export interface Transacao {
   valor: number
   data: string // ISO date YYYY-MM-DD
   tipo: TipoTransacao
-  categoria: Categoria
+  categoria: string
   fixo: boolean
   descricao: string | null
   ciclo_inicio: string // ISO date do início do ciclo (dia 9)

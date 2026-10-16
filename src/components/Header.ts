@@ -12,41 +12,41 @@ export interface HeaderProps {
 
 export function criarHeader(container: HTMLElement): void {
   container.innerHTML = `
-    <header class="max-w-4xl mx-auto mb-4">
-      <div class="flex justify-between items-center">
-        <h1 class="font-black text-lg text-slate-800 dark:text-white">Organiza Pouco</h1>
-        <div class="flex items-center gap-2">
-          <span id="header-user" class="text-xs text-slate-500 dark:text-slate-400"></span>
+    <header class="max-w-4xl mx-auto mb-3 sm:mb-4">
+      <div class="flex justify-between items-center gap-2">
+        <h1 class="font-black text-base sm:text-lg text-slate-800 dark:text-white">Organiza Pouco</h1>
+        <div class="flex items-center gap-1 sm:gap-2">
+          <span id="header-user" class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline"></span>
           <button id="theme-toggle" class="bg-white p-2 rounded-full shadow border dark:bg-slate-800 dark:border-slate-700">
             <span id="theme-icon">☀️</span>
           </button>
-          <button id="logout-btn" class="bg-rose-500 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-600 transition">Sair</button>
+          <button id="logout-btn" class="bg-rose-500 text-white px-2 sm:px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-600 transition">Sair</button>
         </div>
       </div>
     </header>
 
-    <div id="resumo-ciclo" class="max-w-4xl mx-auto bg-white border border-slate-200 p-6 rounded-3xl shadow-sm mb-8 dark:bg-slate-800 dark:border-slate-700">
-      <div class="flex justify-between items-center mb-4">
-        <button id="ciclo-anterior" class="bg-slate-100 px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">← Anterior</button>
-        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest" id="cycle-dates">Resumo do Ciclo</span>
-        <button id="ciclo-proximo" class="bg-slate-100 px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">Próximo →</button>
+    <div id="resumo-ciclo" class="max-w-4xl mx-auto bg-white border border-slate-200 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm mb-4 sm:mb-8 dark:bg-slate-800 dark:border-slate-700">
+      <div class="flex justify-between items-center mb-3 sm:mb-4 gap-2">
+        <button id="ciclo-anterior" class="bg-slate-100 px-2 sm:px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs sm:text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">←</button>
+        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center flex-1" id="cycle-dates">Resumo do Ciclo</span>
+        <button id="ciclo-proximo" class="bg-slate-100 px-2 sm:px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs sm:text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">→</button>
       </div>
-      <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
         <div>
           <span class="text-[10px] text-emerald-600 uppercase font-bold">Entradas</span>
-          <h2 id="total-entradas" class="text-xl font-bold text-emerald-600">R$ 0,00</h2>
+          <h2 id="total-entradas" class="text-base sm:text-xl font-bold text-emerald-600 truncate">R$ 0,00</h2>
         </div>
         <div>
           <span class="text-[10px] text-rose-600 uppercase font-bold">Saídas</span>
-          <h2 id="total-saidas" class="text-xl font-bold text-rose-600">R$ 0,00</h2>
+          <h2 id="total-saidas" class="text-base sm:text-xl font-bold text-rose-600 truncate">R$ 0,00</h2>
         </div>
       </div>
-      <div class="border-t border-slate-200 pt-3 flex justify-between items-end dark:border-slate-700">
+      <div class="border-t border-slate-200 pt-2 sm:pt-3 flex justify-between items-end dark:border-slate-700">
         <div>
           <span class="text-[10px] text-slate-400 uppercase font-bold">Saldo Final</span>
-          <h2 id="cycle-total" class="text-3xl font-black text-slate-900 dark:text-white">R$ 0,00</h2>
+          <h2 id="cycle-total" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">R$ 0,00</h2>
         </div>
-        <div class="text-[9px] text-slate-500 font-bold uppercase">Versão: 2.0.0</div>
+        <div class="text-[9px] text-slate-500 font-bold uppercase hidden sm:block">Versão: 2.0.0</div>
       </div>
     </div>
   `
@@ -73,6 +73,4 @@ export function atualizarHeader(props: HeaderProps): void {
   root.querySelector('#cycle-total')!.textContent = formatarMoeda(props.totais.saldo)
 
   document.querySelector('#header-user')!.textContent = props.user
-  document.querySelector('#ciclo-anterior')!.addEventListener('click', props.onCicloAnterior)
-  document.querySelector('#ciclo-proximo')!.addEventListener('click', props.onCicloProximo)
 }

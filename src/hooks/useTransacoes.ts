@@ -14,13 +14,13 @@ import {
 import { validarTransacao, extrairMensagemErro } from '@/utils/validation'
 import { toast } from '@/utils/toast'
 import { logger } from '@/utils/logger'
-import type { Transacao, TipoTransacao, Categoria } from '@/types'
+import type { Transacao, TipoTransacao } from '@/types'
 
 export interface CriarTransacaoParams {
   valor: number
   data: string
   tipo: TipoTransacao
-  categoria: Categoria
+  categoria: string
   fixo: boolean
   descricao: string
 }

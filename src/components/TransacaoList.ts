@@ -4,19 +4,34 @@ import { formatarMoeda, formatarData, sanitizarHTML } from '@/utils/format'
 type EditCallback = (id: string) => void
 type DeleteCallback = (id: string) => void
 
+let editCallback: EditCallback
+let deleteCallback: DeleteCallback
+
 export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="mb-6 flex items-center gap-4 flex-wrap">
-      <button id="btn-aplicar-fixos" class="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-full font-bold text-sm hover:bg-emerald-700 transition shadow-lg">
-        <span>📋</span> Aplicar fixos do ciclo anterior
+    <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+      <button id="btn-aplicar-fixos" class="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-bold text-xs sm:text-sm hover:bg-emerald-700 transition shadow-lg">
+        <span>📋</span> <span class="hidden sm:inline">Aplicar fixos</span><span class="sm:hidden">Fixos</span>
       </button>
-      <label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-600 bg-slate-50 px-4 py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
-        <input type="checkbox" id="filter-fixed" class="w-4 h-4"> Mostrar apenas Fixas
+      <label class="flex items-center justify-center gap-2 cursor-pointer text-xs sm:text-sm font-bold text-slate-600 bg-slate-50 px-3 sm:px-4 py-2 sm:py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+        <input type="checkbox" id="filter-fixed" class="w-4 h-4"> <span class="hidden sm:inline">Mostrar apenas Fixas</span><span class="sm:hidden">Fixas</span>
       </label>
     </div>
-    <div id="transaction-list" class="space-y-3 pb-10"></div>
+    <div id="transaction-list" class="space-y-2 sm:space-y-3 pb-10"></div>
     <p id="list-empty" class="text-center text-slate-400 py-8 hidden">Nenhuma transação neste ciclo</p>
   `
+
+  // Delegação de eventos registrada UMA VEZ
+  const listContainer = document.getElementById('transaction-list')!
+  listContainer.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement
+    const action = target.dataset.action
+    const id = target.dataset.id
+    if (!action || !id) return
+
+    if (action === 'edit' && editCallback) editCallback(id)
+    else if (action === 'delete' && deleteCallback) deleteCallback(id)
+  })
 }
 
 export function renderLista(
@@ -24,6 +39,10 @@ export function renderLista(
   onEdit: EditCallback,
   onDelete: DeleteCallback
 ): void {
+  // Atualiza callbacks
+  editCallback = onEdit
+  deleteCallback = onDelete
+
   const listContainer = document.getElementById('transaction-list')!
   const emptyMsg = document.getElementById('list-empty')!
 
@@ -46,28 +65,19 @@ export function renderLista(
     const fixoIcon = t.fixo ? ' 📌' : ''
 
     return `
-      <div class="p-4 bg-white border rounded-xl flex justify-between items-center shadow-sm dark:bg-slate-800 dark:border-slate-700">
+      <div class="p-3 sm:p-4 bg-white border rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 shadow-sm dark:bg-slate-800 dark:border-slate-700">
         <div class="min-w-0 flex-1">
           <span class="block font-bold text-sm dark:text-white truncate">${descSanitizada}${fixoIcon}</span>
-          <span class="text-[10px] text-slate-500">${catSanitizada} | ${formatarData(t.data)}</span>
+          <span class="text-[10px] sm:text-xs text-slate-500">${catSanitizada} | ${formatarData(t.data)}</span>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 shrink-0">
           <span class="font-bold ${corClasse} text-sm">${sinal} ${formatarMoeda(t.valor)}</span>
-          <button data-action="edit" data-id="${t.id}" class="text-blue-500 text-xs font-bold hover:underline">Editar</button>
-          <button data-action="delete" data-id="${t.id}" class="text-rose-500 text-xs font-bold hover:underline">Excluir</button>
+          <div class="flex gap-2">
+            <button data-action="edit" data-id="${t.id}" class="text-blue-500 text-xs font-bold hover:underline px-2 py-1">Editar</button>
+            <button data-action="delete" data-id="${t.id}" class="text-rose-500 text-xs font-bold hover:underline px-2 py-1">Excluir</button>
+          </div>
         </div>
       </div>
     `
   }).join('')
-
-  // Delegação de eventos
-  listContainer.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement
-    const action = target.dataset.action
-    const id = target.dataset.id
-    if (!action || !id) return
-
-    if (action === 'edit') onEdit(id)
-    else if (action === 'delete') onDelete(id)
-  }, { once: false })
 }

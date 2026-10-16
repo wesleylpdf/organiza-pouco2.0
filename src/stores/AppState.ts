@@ -4,16 +4,19 @@
  */
 
 import type { Transacao } from '@/types'
+import type { CategoriaPersonalizada } from '@/services/categorias'
 import { getCicloAtual, formatCicloISO } from '@/utils/ciclo'
 
 interface AppState {
   transacoes: Transacao[]
+  categorias: CategoriaPersonalizada[]
   cycleOffset: number
   editandoId: string | null
   loading: {
     transacoes: boolean
     salvando: boolean
     aplicandoFixos: boolean
+    categorias: boolean
   }
   error: string | null
 }
@@ -23,12 +26,14 @@ type Listener = () => void
 class AppStateStore {
   private state: AppState = {
     transacoes: [],
+    categorias: [],
     cycleOffset: 0,
     editandoId: null,
     loading: {
       transacoes: false,
       salvando: false,
       aplicandoFixos: false,
+      categorias: false,
     },
     error: null,
   }
@@ -56,6 +61,16 @@ class AppStateStore {
 
   getTransacoes(): Transacao[] {
     return this.state.transacoes
+  }
+
+  // Categorias
+  setCategorias(categorias: CategoriaPersonalizada[]): void {
+    this.state = { ...this.state, categorias }
+    this.notify()
+  }
+
+  getCategorias(): CategoriaPersonalizada[] {
+    return this.state.categorias
   }
 
   // Ciclo
@@ -114,9 +129,10 @@ class AppStateStore {
   reset(): void {
     this.state = {
       transacoes: [],
+      categorias: [],
       cycleOffset: 0,
       editandoId: null,
-      loading: { transacoes: false, salvando: false, aplicandoFixos: false },
+      loading: { transacoes: false, salvando: false, aplicandoFixos: false, categorias: false },
       error: null,
     }
     this.notify()

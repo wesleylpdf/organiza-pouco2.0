@@ -110,3 +110,82 @@ select:focus-visible {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+/* Melhorias mobile */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  /* Aumenta áreas de toque para botões */
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Melhor espaçamento em formulários mobile */
+  input, select, textarea {
+    font-size: 16px; /* Evita zoom no iOS */
+  }
+
+  /* Modal em mobile ocupa quase toda a tela */
+  .modal-content {
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 64px);
+    margin: 16px;
+  }
+
+  /* Toast notifications */
+  #toast-container {
+    left: 16px;
+    right: 16px;
+  }
+
+  .toast {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Tabela responsiva */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Cards com padding menor */
+  .card {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* Espaçamento vertical em listas */
+  .list-container {
+    gap: 8px;
+  }
+}
+
+/* Melhorias para tablets */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding: 16px;
+  }
+}
+
+/* Prevenir scroll horizontal */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Safe area para dispositivos com notch */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}

@@ -111,3 +111,74 @@ COMMENT ON COLUMN public.transacoes.fixo IS 'Indica se é transação fixa recor
 COMMENT ON COLUMN public.transacoes.descricao IS 'Descrição opcional da transação';
 COMMENT ON COLUMN public.transacoes.ciclo_inicio IS 'Data de início do ciclo financeiro (dia 9)';
 COMMENT ON COLUMN public.transacoes.created_at IS 'Timestamp de criação';
+
+-- ============================================
+-- TABELA: categorias
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.categorias (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  icone TEXT,
+  cor TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, nome)
+);
+
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_categorias_user ON public.categorias(user_id);
+
+-- RLS
+ALTER TABLE public.categorias ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users see own categorias" ON public.categorias;
+CREATE POLICY "Users see own categorias"
+  ON public.categorias
+  FOR ALL
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users insert own categorias" ON public.categorias;
+CREATE POLICY "Users insert own categorias"
+  ON public.categorias
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+COMMENT ON TABLE public.categorias IS 'Categorias personalizadas dos usuários';
+COMMENT ON COLUMN public.categorias.id IS 'UUID único da categoria';
+COMMENT ON COLUMN public.categorias.user_id IS 'ID do usuário (auth.users)';
+COMMENT ON COLUMN public.categorias.nome IS 'Nome da categoria';
+COMMENT ON COLUMN public.categorias.icone IS 'Emoji opcional da categoria';
+COMMENT ON COLUMN public.categorias.created_at IS 'Timestamp de criação';
+
+-- ============================================
+-- DADOS INICIAIS: Categorias padrão
+-- ============================================
+
+-- Função para inserir categorias padrão para novos usuários
+CREATE OR REPLACE FUNCTION public.inserir_categorias_padrao()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+SECURITY DEFINER
+AS $$
+BEGIN
+  INSERT INTO public.categorias (user_id, nome, icone) VALUES
+    (NEW.id, 'Salário', '💰'),
+    (NEW.id, 'Alimentação', '🍕'),
+    (NEW.id, 'Moradia', '🏠'),
+    (NEW.id, 'Transporte', '🚗'),
+    (NEW.id, 'Lazer', '🎮'),
+    (NEW.id, 'Saúde', '🏥'),
+    (NEW.id, 'Educação', '📚'),
+    (NEW.id, 'Investimentos', '📈'),
+    (NEW.id, 'Outros', '✨');
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger para criar categorias padrão quando novo usuário se registra
+DROP TRIGGER IF EXISTS trg_novo_usuario_categorias ON auth.users;
+CREATE TRIGGER trg_novo_usuario_categorias
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.inserir_categorias_padrao();

@@ -2,7 +2,7 @@
  * Validações e utilitários de erro
  */
 
-import type { TipoTransacao, Categoria } from '@/types'
+import type { TipoTransacao } from '@/types'
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -10,18 +10,6 @@ export class ValidationError extends Error {
     this.name = 'ValidationError'
   }
 }
-
-export const CATEGORIAS_VALIDAS: Categoria[] = [
-  'Salário',
-  'Alimentação',
-  'Moradia',
-  'Transporte',
-  'Lazer',
-  'Saúde',
-  'Educação',
-  'Investimentos',
-  'Outros',
-]
 
 export const TIPOS_VALIDOS: TipoTransacao[] = ['entrada', 'saida']
 
@@ -65,8 +53,11 @@ export function validarTransacao(data: {
   }
 
   // Categoria
-  if (!CATEGORIAS_VALIDAS.includes(data.categoria as Categoria)) {
-    throw new ValidationError('Categoria inválida')
+  if (!data.categoria || typeof data.categoria !== 'string') {
+    throw new ValidationError('Categoria é obrigatória')
+  }
+  if (data.categoria.length > 50) {
+    throw new ValidationError('Categoria deve ter no máximo 50 caracteres')
   }
 
   // Descrição
