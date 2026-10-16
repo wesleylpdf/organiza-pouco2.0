@@ -1,0 +1,47 @@
+[
+  {
+    "id": "1710000000000.123",
+    "Valor": "150.50",
+    "Data": "2026-02-15",
+    "Tipo": "saida",
+    "Categoria": "Alimentação",
+    "Fixo": "false",
+    "Descrição": "Supermercado"
+  },
+  {
+    "id": "1710000001000.456",
+    "Valor": "3500.00",
+    "Data": "2026-02-10",
+    "Tipo": "entrada",
+    "Categoria": "Salário",
+    "Fixo": "true",
+    "Descrição": "Salário mensal"
+  },
+  {
+    "id": "1710000002000.789",
+    "Valor": "800.00",
+    "Data": "2026-02-09",
+    "Tipo": "saida",
+    "Categoria": "Moradia",
+    "Fixo": "true",
+    "Descrição": "Aluguel"
+  },
+  {
+    "id": "1710000003000.321",
+    "Valor": "120.00",
+    "Data": "2026-02-20",
+    "Tipo": "saida",
+    "Categoria": "Transporte",
+    "Fixo": "false",
+    "Descrição": "Combustível"
+  },
+  {
+    "id": "1710000004000.654",
+    "Valor": "50.00",
+    "Data": "2026-02-25",
+    "Tipo": "saida",
+    "Categoria": "Lazer",
+    "Fixo": "false",
+    "Descrição": "Cinema"
+  }
+]

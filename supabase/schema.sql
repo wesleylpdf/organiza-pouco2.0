@@ -1,0 +1,113 @@
+-- Organiza Pouco - Schema do Banco de Dados Supabase
+-- Versão: 2.0.0
+-- Data: 2026-03-16
+
+-- ============================================
+-- TABELA: transacoes
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.transacoes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  valor NUMERIC(12, 2) NOT NULL CHECK (valor > 0),
+  data DATE NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'saida')),
+  categoria TEXT NOT NULL,
+  fixo BOOLEAN NOT NULL DEFAULT FALSE,
+  descricao TEXT,
+  ciclo_inicio DATE NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_transacoes_user_ciclo ON public.transacoes(user_id, ciclo_inicio DESC);
+CREATE INDEX IF NOT EXISTS idx_transacoes_user_data ON public.transacoes(user_id, data DESC);
+CREATE INDEX IF NOT EXISTS idx_transacoes_user_tipo ON public.transacoes(user_id, tipo);
+CREATE INDEX IF NOT EXISTS idx_transacoes_user_fixo ON public.transacoes(user_id, fixo) WHERE fixo = TRUE;
+
+-- ============================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================
+
+ALTER TABLE public.transacoes ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Usuários só veem suas próprias transações
+DROP POLICY IF EXISTS "Users see own transactions" ON public.transacoes;
+CREATE POLICY "Users see own transactions"
+  ON public.transacoes
+  FOR ALL
+  USING (auth.uid() = user_id);
+
+-- Policy: Usuários podem inserir apenas suas próprias transações
+DROP POLICY IF EXISTS "Users insert own transactions" ON public.transacoes;
+CREATE POLICY "Users insert own transactions"
+  ON public.transacoes
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- ============================================
+-- FUNÇÕES HELPER
+-- ============================================
+
+-- Função: Calcula próximo ciclo (dia 9 do mês seguinte)
+CREATE OR REPLACE FUNCTION public.proximo_ciclo(inicio DATE)
+RETURNS DATE
+LANGUAGE SQL
+IMMUTABLE
+AS $$
+  SELECT (date_trunc('month', inicio) + INTERVAL '1 month - 8 days')::DATE;
+$$;
+
+-- Função: Calcula ciclo anterior (dia 9 do mês anterior)
+CREATE OR REPLACE FUNCTION public.ciclo_anterior(inicio DATE)
+RETURNS DATE
+LANGUAGE SQL
+IMMUTABLE
+AS $$
+  SELECT (date_trunc('month', inicio) - INTERVAL '1 month - 8 days')::DATE;
+$$;
+
+-- ============================================
+-- TRIGGERS
+-- ============================================
+
+-- Trigger: Atualiza ciclo_inicio automaticamente se data mudar
+CREATE OR REPLACE FUNCTION public.update_ciclo_inicio()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+  -- Calcula ciclo_inicio baseado na data
+  -- Se dia < 9, ciclo começou dia 9 do mês anterior
+  -- Se dia >= 9, ciclo começou dia 9 do próprio mês
+  NEW.ciclo_inicio := CASE
+    WHEN EXTRACT(DAY FROM NEW.data) < 9
+    THEN date_trunc('month', NEW.data)::DATE - INTERVAL '1 month' + INTERVAL '8 days'
+    ELSE date_trunc('month', NEW.data)::DATE + INTERVAL '8 days'
+  END;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_update_ciclo_inicio ON public.transacoes;
+CREATE TRIGGER trg_update_ciclo_inicio
+  BEFORE INSERT OR UPDATE OF data ON public.transacoes
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_ciclo_inicio();
+
+-- ============================================
+-- COMENTÁRIOS
+-- ============================================
+
+COMMENT ON TABLE public.transacoes IS 'Transações financeiras dos usuários';
+COMMENT ON COLUMN public.transacoes.id IS 'UUID único da transação';
+COMMENT ON COLUMN public.transacoes.user_id IS 'ID do usuário (auth.users)';
+COMMENT ON COLUMN public.transacoes.valor IS 'Valor da transação (sempre positivo)';
+COMMENT ON COLUMN public.transacoes.data IS 'Data da transação';
+COMMENT ON COLUMN public.transacoes.tipo IS 'Tipo: entrada ou saída';
+COMMENT ON COLUMN public.transacoes.categoria IS 'Categoria da transação';
+COMMENT ON COLUMN public.transacoes.fixo IS 'Indica se é transação fixa recorrente';
+COMMENT ON COLUMN public.transacoes.descricao IS 'Descrição opcional da transação';
+COMMENT ON COLUMN public.transacoes.ciclo_inicio IS 'Data de início do ciclo financeiro (dia 9)';
+COMMENT ON COLUMN public.transacoes.created_at IS 'Timestamp de criação';
