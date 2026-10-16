@@ -20,7 +20,7 @@ Aplicação web de controle financeiro pessoal migrada do Google Sheets/Apps Scr
 ### 1. Clone o repositório
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/wesleylpdf/organiza-pouco2.0.git
 cd organiza-pouco
 ```
 
@@ -171,19 +171,27 @@ organiza-pouco/
 │   │   ├── TransacaoForm.ts
 │   │   ├── TransacaoList.ts
 │   │   └── GraficoPizza.ts
-│   ├── hooks/            # Hooks e lógica de estado
-│   │   └── useAuth.ts
-│   ├── lib/              # Configurações externas
-│   │   └── supabaseClient.ts
+│   ├── hooks/            # Hooks de lógica de negócios
+│   │   ├── useAuth.ts
+│   │   └── useTransacoes.ts
+│   ├── stores/           # Estado global da aplicação
+│   │   └── AppState.ts
 │   ├── services/         # Serviços de API
 │   │   └── transacoes.ts
+│   ├── lib/              # Configurações externas
+│   │   └── supabaseClient.ts
 │   ├── types/            # Definições de tipos
 │   │   └── index.ts
 │   ├── utils/            # Funções utilitárias
 │   │   ├── ciclo.ts
 │   │   ├── format.ts
-│   │   └── chart.ts
-│   └── main.ts           # Ponto de entrada
+│   │   ├── chart.ts
+│   │   ├── validation.ts
+│   │   ├── debounce.ts
+│   │   ├── logger.ts
+│   │   └── toast.ts
+│   ├── main.ts           # Ponto de entrada
+│   └── styles.css        # Estilos customizados
 ├── supabase/
 │   └── schema.sql        # Schema do banco de dados
 ├── scripts/
@@ -194,6 +202,8 @@ organiza-pouco/
 ├── vite.config.ts
 ├── vitest.config.ts
 ├── playwright.config.ts
+├── GUIA_RAPIDO.md        # Guia rápido em português
+├── QUICK_GUIDE.md        # Quick guide em inglês
 └── package.json
 ```
 
