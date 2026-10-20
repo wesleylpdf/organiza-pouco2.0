@@ -71,29 +71,40 @@ export function validarTransacao(data: {
 
 /**
  * Extrai mensagem de erro amigável
+ * Suporta instâncias de Error e objetos plain (ex.: erros do Supabase)
  */
 export function extrairMensagemErro(error: unknown): string {
   if (error instanceof ValidationError) {
     return error.message
   }
-  if (error instanceof Error) {
+
+  // Obtém a mensagem de instâncias de Error ou objetos plain
+  const mensagem =
+    error instanceof Error
+      ? error.message
+      : error && typeof error === 'object' && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : null
+
+  if (mensagem) {
     // Mapeia erros comuns do Supabase
-    if (error.message.includes('Invalid login credentials')) {
+    if (mensagem.includes('Invalid login credentials')) {
       return 'Email ou senha incorretos'
     }
-    if (error.message.includes('Email not confirmed')) {
+    if (mensagem.includes('Email not confirmed')) {
       return 'Email não confirmado. Verifique sua caixa de entrada'
     }
-    if (error.message.includes('User already registered')) {
+    if (mensagem.includes('User already registered')) {
       return 'Este email já está cadastrado'
     }
-    if (error.message.includes('Password should be at least')) {
+    if (mensagem.includes('Password should be at least')) {
       return 'Senha deve ter pelo menos 6 caracteres'
     }
-    if (error.message.includes('rate limit')) {
+    if (mensagem.includes('rate limit')) {
       return 'Muitas tentativas. Aguarde alguns minutos'
     }
-    return error.message
+    return mensagem
   }
+
   return 'Erro desconhecido'
 }
