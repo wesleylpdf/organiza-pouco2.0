@@ -1,0 +1,3 @@
+-keep class io.supabase.** { *; }
+-keep class io.ktor.** { *; }
+-keepattributes *Annotation*

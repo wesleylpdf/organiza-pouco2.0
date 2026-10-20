@@ -1,0 +1,3 @@
+com.organizapouco.app.test
+style WhiteBackgroundDialogTheme
+style WhiteBackgroundTheme
