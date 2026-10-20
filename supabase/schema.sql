@@ -148,8 +148,8 @@ COMMENT ON COLUMN public.transacoes.created_at IS 'Timestamp de criação';
 
 CREATE TABLE IF NOT EXISTS public.configuracoes_usuario (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  dia_inicio_ciclo INTEGER NOT NULL DEFAULT 9 CHECK (dia_inicio_ciclo BETWEEN 1 AND 28),
-  dia_fim_ciclo INTEGER NOT NULL DEFAULT 8 CHECK (dia_fim_ciclo BETWEEN 1 AND 28),
+  dia_inicio_ciclo INTEGER NOT NULL DEFAULT 9 CHECK (dia_inicio_ciclo BETWEEN 1 AND 31),
+  dia_fim_ciclo INTEGER NOT NULL DEFAULT 8 CHECK (dia_fim_ciclo BETWEEN 1 AND 31),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

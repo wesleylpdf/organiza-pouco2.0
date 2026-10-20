@@ -3,6 +3,19 @@ import type { Ciclo } from '@/types'
 export const DIA_INICIO_PADRAO = 9
 export const DIA_FIM_PADRAO = 8
 
+/** Último dia do mês (1-12). */
+function ultimoDiaDoMes(ano: number, mes: number): number {
+  return new Date(ano, mes + 1, 0).getDate()
+}
+
+/**
+ * Cria uma data no mês/ano indicados limitando o dia ao último dia do mês.
+ * Sem o limite, `new Date(2024, 1, 31)` viraria 2 de março.
+ */
+function criarDataNoMes(ano: number, mes: number, dia: number, horas = 0, minutos = 0): Date {
+  return new Date(ano, mes, Math.min(dia, ultimoDiaDoMes(ano, mes)), horas, minutos)
+}
+
 /**
  * Calcula o ciclo financeiro baseado em um offset.
  * O ciclo começa no dia `diaInicio` e termina no dia `diaFim`.
@@ -21,7 +34,11 @@ export function getCicloAtual(
   let cicloMes = mes
   let cicloAno = ano
 
-  if (dia >= diaInicio) {
+  // Em meses mais curtos que diaInicio (ex.: 31 em fevereiro), o ciclo
+  // começa no último dia do mês.
+  const diaInicioEfetivo = Math.min(diaInicio, ultimoDiaDoMes(ano, mes))
+
+  if (dia >= diaInicioEfetivo) {
     cicloMes = mes
     cicloAno = ano
   } else {
@@ -35,12 +52,18 @@ export function getCicloAtual(
   const anoCiclo = cicloAno + Math.floor(totalMeses / 12)
   const mesCiclo = ((totalMeses % 12) + 12) % 12
 
-  const inicio = new Date(anoCiclo, mesCiclo, diaInicio)
+  const inicio = criarDataNoMes(anoCiclo, mesCiclo, diaInicio)
 
-  // Fim: se fim < inicio, cruza para o mês seguinte
-  const anoFim = diaFim < diaInicio ? anoCiclo : anoCiclo
-  const mesFim = diaFim < diaInicio ? mesCiclo + 1 : mesCiclo
-  const fim = new Date(anoFim, mesFim, diaFim, 23, 59, 59)
+  // Fim: se fim < inicio, cruza para o mês seguinte.
+  // Normaliza mês negativo/overflow via Date (ex.: mesCiclo = -1 → dezembro anterior).
+  const mesFimRef = new Date(anoCiclo, diaFim < diaInicio ? mesCiclo + 1 : mesCiclo, 1)
+  const fim = criarDataNoMes(
+    mesFimRef.getFullYear(),
+    mesFimRef.getMonth(),
+    diaFim,
+    23,
+    59
+  )
 
   return { inicio, fim, offset }
 }
@@ -78,7 +101,9 @@ export function getCicloInicioParaData(
   let cicloMes = mes
   let cicloAno = ano
 
-  if (dia >= diaInicio) {
+  const diaInicioEfetivo = Math.min(diaInicio, ultimoDiaDoMes(ano, mes))
+
+  if (dia >= diaInicioEfetivo) {
     cicloMes = mes
     cicloAno = ano
   } else if (mes === 0) {
@@ -90,10 +115,10 @@ export function getCicloInicioParaData(
     cicloAno = ano
   }
 
-  const inicio = new Date(cicloAno, cicloMes, diaInicio)
-  inicio.setHours(0, 0, 0, 0)
+  const mesRef = new Date(cicloAno, cicloMes, 1)
+  const inicio = criarDataNoMes(mesRef.getFullYear(), mesRef.getMonth(), diaInicio)
 
-  return formatCicloISO(inicio)
+  return formatDateLocalISO(inicio)
 }
 
 /**
