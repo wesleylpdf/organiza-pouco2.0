@@ -74,7 +74,7 @@ async function setupApp(_userEmail: string): Promise<void> {
   appStore.setCycleOffset(offsetInicial)
 
   // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
-  await carregarConfiguracaoCiclo()
+  await carregarConfiguracaoCiclo(_userEmail)
 
   // Carrega categorias do usuário (aguarda para popular o select antes do form)
   await categoriasHook.carregarCategorias()
@@ -116,7 +116,7 @@ async function setupApp(_userEmail: string): Promise<void> {
   window.addEventListener('cicloConfigChange', (e: Event) => {
     const { diaInicio, diaFim } = (e as CustomEvent).detail
     appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-    salvarConfiguracaoCiclo(diaInicio, diaFim)
+    salvarConfiguracaoCiclo(diaInicio, diaFim, _userEmail)
     debouncedUpdateDashboard()
   })
 
@@ -135,8 +135,8 @@ async function setupApp(_userEmail: string): Promise<void> {
 }
 
 // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
-async function carregarConfiguracaoCiclo(): Promise<void> {
-  const salva = localStorage.getItem('configuracao_ciclo')
+async function carregarConfiguracaoCiclo(userEmail: string): Promise<void> {
+  const salva = localStorage.getItem(`configuracao_ciclo_${userEmail}`)
   if (salva) {
     try {
       const { diaInicio, diaFim } = JSON.parse(salva)
@@ -147,9 +147,9 @@ async function carregarConfiguracaoCiclo(): Promise<void> {
   }
 }
 
-// Salva configuração de ciclo
-function salvarConfiguracaoCiclo(diaInicio: number, diaFim: number): void {
-  localStorage.setItem('configuracao_ciclo', JSON.stringify({ diaInicio, diaFim }))
+// Salva configuração de ciclo (por usuário)
+function salvarConfiguracaoCiclo(diaInicio: number, diaFim: number, userEmail: string): void {
+  localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))
 }
 
 async function updateDashboard(): Promise<void> {
@@ -207,8 +207,9 @@ function updateHeader(): void {
       debouncedUpdateDashboard()
     },
     onAlterarDiaCiclo: (diaInicio, diaFim) => {
+      const state = getAuthState()
       appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-      salvarConfiguracaoCiclo(diaInicio, diaFim)
+      salvarConfiguracaoCiclo(diaInicio, diaFim, state.user?.email || 'Usuario')
       debouncedUpdateDashboard()
     },
     user: state.user?.email || 'Usuario',
