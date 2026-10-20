@@ -16,10 +16,12 @@ export interface HeaderProps {
 export function criarHeader(container: HTMLElement): void {
   container.innerHTML = `
     <header class="max-w-4xl mx-auto mb-3 sm:mb-4">
-      <div class="flex flex-col items-center gap-1 sm:gap-2 text-center">
-        <h1 class="font-black text-base sm:text-lg text-slate-800 dark:text-white">Organiza Pouco</h1>
-        <span id="header-user" class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline"></span>
-        <div class="flex items-center gap-1 sm:gap-2 mt-2 sm:mt-3">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <h1 class="font-black text-base sm:text-lg text-slate-800 dark:text-white">Organiza Pouco</h1>
+          <span id="header-user" class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline"></span>
+        </div>
+        <div class="flex items-center gap-1 sm:gap-2">
           <button id="theme-toggle" class="bg-white p-2 rounded-full shadow border dark:bg-slate-800 dark:border-slate-700">
             <span id="theme-icon">☀️</span>
           </button>
@@ -47,6 +49,7 @@ export function criarHeader(container: HTMLElement): void {
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
         </select>
+        <button id="salvar-config-ciclo" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-emerald-700 transition dark:bg-emerald-700">Salvar</button>
       </div>
       <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
         <div>
@@ -63,7 +66,7 @@ export function criarHeader(container: HTMLElement): void {
           <span class="text-[10px] text-slate-400 uppercase font-bold">Saldo Final</span>
           <h2 id="cycle-total" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">R$ 0,00</h2>
         </div>
-        <div class="text-[9px] text-slate-500 font-bold uppercase hidden sm:block">Versão: 2.0.0</div>
+        <div class="text-[9px] text-slate-500 font-bold uppercase hidden sm:block">Versão: 2.2.0</div>
       </div>
     </div>
   `
@@ -90,6 +93,14 @@ export function criarHeader(container: HTMLElement): void {
   })
 
   fimSelect.addEventListener('change', () => {
+    const diaInicio = parseInt(inicioSelect.value, 10)
+    const diaFim = parseInt(fimSelect.value, 10)
+    window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
+  })
+
+  // Botão salvar configuração de ciclo
+  const btnSalvarConfig = container.querySelector('#salvar-config-ciclo') as HTMLButtonElement
+  btnSalvarConfig.addEventListener('click', () => {
     const diaInicio = parseInt(inicioSelect.value, 10)
     const diaFim = parseInt(fimSelect.value, 10)
     window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
