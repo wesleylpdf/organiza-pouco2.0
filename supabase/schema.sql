@@ -77,12 +77,28 @@ RETURNS TRIGGER
 LANGUAGE PLPGSQL
 AS $$
 DECLARE
-  dia_inicio_ciclo INTEGER;
+  v_dia_inicio_ciclo INTEGER;
 BEGIN
   -- Busca o dia de início do ciclo configurado pelo usuário
-  SELECT dia_inicio_ciclo INTO dia_inicio_ciclo
+  SELECT dia_inicio_ciclo INTO v_dia_inicio_ciclo
   FROM configuracoes_usuario
   WHERE user_id = NEW.user_id;
+
+  IF v_dia_inicio_ciclo IS NULL THEN
+    v_dia_inicio_ciclo := 9; -- padrão
+  END IF;
+
+  -- Calcula ciclo_inicio baseado na data e configuração do usuário
+  -- Se dia < dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do mês anterior
+  -- Se dia >= dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do próprio mês
+  NEW.ciclo_inicio := CASE
+    WHEN EXTRACT(DAY FROM NEW.data) < v_dia_inicio_ciclo
+    THEN (date_trunc('month', NEW.data) - INTERVAL '1 month')::DATE + (v_dia_inicio_ciclo - 1) * INTERVAL '1 day'
+    ELSE date_trunc('month', NEW.data)::DATE + (v_dia_inicio_ciclo - 1) * INTERVAL '1 day'
+  END;
+
+  RETURN NEW;
+END;
 
   IF dia_inicio_ciclo IS NULL THEN
     dia_inicio_ciclo := 9; -- padrão

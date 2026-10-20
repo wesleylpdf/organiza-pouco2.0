@@ -106,5 +106,16 @@ export function extrairMensagemErro(error: unknown): string {
     return mensagem
   }
 
+  // Tenta extrair de outros campos comuns do Supabase (details, hint, error)
+  if (error && typeof error === 'object') {
+    const obj = error as Record<string, unknown>
+    for (const campo of ['details', 'hint', 'error', 'message']) {
+      const valor = obj[campo]
+      if (typeof valor === 'string' && valor.trim()) {
+        return valor
+      }
+    }
+  }
+
   return 'Erro desconhecido'
 }
