@@ -8,10 +8,13 @@ export interface ConfiguracaoCiclo {
 /**
  * Busca configuração de ciclo do usuário no Supabase
  */
-export async function buscarConfiguracaoCiclo(): Promise<ConfiguracaoCiclo | null> {
+export async function buscarConfiguracaoCiclo(
+  userId: string
+): Promise<ConfiguracaoCiclo | null> {
   const { data, error } = await supabase
     .from('configuracoes_usuario')
     .select('dia_inicio_ciclo, dia_fim_ciclo')
+    .eq('user_id', userId)
     .maybeSingle()
 
   if (error) throw error

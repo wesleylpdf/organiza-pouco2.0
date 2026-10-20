@@ -131,7 +131,10 @@ async function setupApp(_userEmail: string): Promise<void> {
   window.addEventListener('cicloConfigChange', async (e: Event) => {
     const { diaInicio, diaFim } = (e as CustomEvent).detail
     appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-    await salvarConfiguracaoCiclo(diaInicio, diaFim, _userEmail)
+    const userId = getAuthState().user?.id
+    if (userId) {
+      await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
+    }
     debouncedUpdateDashboard()
   })
 
@@ -154,14 +157,17 @@ async function setupApp(_userEmail: string): Promise<void> {
 
 // Carrega configuração de ciclo do usuário (Supabase com fallback localStorage)
 async function carregarConfiguracaoCiclo(userEmail: string): Promise<void> {
-  try {
-    const salva = await buscarConfiguracaoCiclo()
-    if (salva) {
-      appStore.setConfiguracaoCiclo(salva.dia_inicio_ciclo, salva.dia_fim_ciclo)
-      return
+  const userId = getAuthState().user?.id
+  if (userId) {
+    try {
+      const salva = await buscarConfiguracaoCiclo(userId)
+      if (salva) {
+        appStore.setConfiguracaoCiclo(salva.dia_inicio_ciclo, salva.dia_fim_ciclo)
+        return
+      }
+    } catch (err) {
+      logger.error('Erro ao buscar configuração de ciclo no Supabase', err as any)
     }
-  } catch {
-    // Ignora erro do Supabase, tenta localStorage
   }
 
   const salvoLocal = localStorage.getItem(`configuracao_ciclo_${userEmail}`)
@@ -182,10 +188,14 @@ async function salvarConfiguracaoCiclo(
   userEmail: string
 ): Promise<void> {
   const userId = getAuthState().user?.id
+  if (!userId) {
+    localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))
+    return
+  }
   try {
-    await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId!)
-  } catch {
-    // Se falhar no Supabase, salva no localStorage como fallback
+    await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId)
+  } catch (err) {
+    logger.error('Erro ao salvar configuração de ciclo no Supabase', err as any)
     localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))
   }
 }
