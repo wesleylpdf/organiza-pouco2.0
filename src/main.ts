@@ -305,8 +305,14 @@ async function handleSalvar(data: Parameters<typeof transacoesHook.salvarTransac
   const success = await transacoesHook.salvarTransacao(data)
 
   if (success) {
+    toast.success('Transação salva com sucesso!')
     updateLista()
     updateHeader()
+  } else {
+    const error = appStore.getError()
+    if (error) {
+      toast.error(error)
+    }
   }
 }
 
@@ -332,6 +338,7 @@ async function handleExcluir(id: string): Promise<void> {
   const success = await transacoesHook.excluir(id)
 
   if (success) {
+    toast.success('Transação excluída!')
     updateLista()
     updateHeader()
   }
@@ -342,6 +349,7 @@ async function handleAplicarFixos(): Promise<void> {
   const success = await transacoesHook.aplicarFixos()
 
   if (success) {
+    toast.success('Fixos aplicados com sucesso!')
     updateLista()
     updateHeader()
   }

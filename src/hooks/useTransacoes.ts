@@ -12,7 +12,6 @@ import {
   duplicarFixosCicloAnterior,
 } from '@/services/transacoes'
 import { validarTransacao, extrairMensagemErro } from '@/utils/validation'
-import { toast } from '@/utils/toast'
 import { logger } from '@/utils/logger'
 import { formatDateLocalISO } from '@/utils/ciclo'
 import type { Transacao, TipoTransacao } from '@/types'
@@ -59,7 +58,6 @@ export function useTransacoes() {
       const message = extrairMensagemErro(error)
       logger.error('Erro ao carregar transações', { error })
       appStore.setError(message)
-      toast.error(message)
     } finally {
       appStore.setLoading('transacoes', false)
     }
@@ -79,11 +77,9 @@ export function useTransacoes() {
         logger.debug('Atualizando transação', { id: editandoId, params })
         await atualizarTransacao(editandoId, params)
         appStore.setEditandoId(null)
-        toast.success('Transação atualizada!')
       } else {
         logger.debug('Criando transação', { params })
         await criarTransacao(params)
-        toast.success('Transação criada!')
       }
 
       logger.info('Transação salva com sucesso')
@@ -94,7 +90,6 @@ export function useTransacoes() {
       const message = extrairMensagemErro(error)
       logger.error('Erro ao salvar transação', { error, params })
       appStore.setError(message)
-      toast.error(message)
       return false
     } finally {
       appStore.setLoading('salvando', false)
@@ -112,7 +107,6 @@ export function useTransacoes() {
       logger.debug('Excluindo transação', { id })
       await excluirTransacao(id)
 
-      toast.success('Transação excluída!')
       logger.info('Transação excluída', { id })
       appStore.limparCacheCiclo()
       await carregarTransacoes()
@@ -121,7 +115,6 @@ export function useTransacoes() {
       const message = extrairMensagemErro(error)
       logger.error('Erro ao excluir transação', { error, id })
       appStore.setError(message)
-      toast.error(message)
       return false
     }
   }
@@ -140,13 +133,7 @@ export function useTransacoes() {
 
       const quantidade = await duplicarFixosCicloAnterior(cicloInicio)
 
-      if (quantidade === 0) {
-        toast.info('Nenhuma transação fixa encontrada no ciclo anterior')
-        logger.info('Nenhum fixo encontrado')
-      } else {
-        toast.success(`${quantidade} transação(ões) fixa(s) aplicada(s)!`)
-        logger.info('Fixos aplicados', { quantidade })
-      }
+      logger.info('Fixos aplicados', { quantidade })
 
       appStore.limparCacheCiclo()
       await carregarTransacoes()
@@ -155,7 +142,6 @@ export function useTransacoes() {
       const message = extrairMensagemErro(error)
       logger.error('Erro ao aplicar fixos', { error })
       appStore.setError(message)
-      toast.error(message)
       return false
     } finally {
       appStore.setLoading('aplicandoFixos', false)
