@@ -130,7 +130,7 @@ async function setupApp(_userEmail: string): Promise<void> {
     updateLoadingStates()
   })
 
-  // Primeira carga
+  // Primeira carga (depois dos componentes existirem no DOM)
   updateDashboard()
 }
 
