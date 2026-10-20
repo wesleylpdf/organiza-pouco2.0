@@ -181,8 +181,9 @@ async function salvarConfiguracaoCiclo(
   diaFim: number,
   userEmail: string
 ): Promise<void> {
+  const userId = getAuthState().user?.id
   try {
-    await salvarConfiguracaoCicloSupabase(diaInicio, diaFim)
+    await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId!)
   } catch {
     // Se falhar no Supabase, salva no localStorage como fallback
     localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))

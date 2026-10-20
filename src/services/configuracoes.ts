@@ -23,9 +23,11 @@ export async function buscarConfiguracaoCiclo(): Promise<ConfiguracaoCiclo | nul
  */
 export async function salvarConfiguracaoCiclo(
   diaInicio: number,
-  diaFim: number
+  diaFim: number,
+  userId: string
 ): Promise<void> {
   const { error } = await supabase.from('configuracoes_usuario').upsert({
+    user_id: userId,
     dia_inicio_ciclo: diaInicio,
     dia_fim_ciclo: diaFim,
   })
