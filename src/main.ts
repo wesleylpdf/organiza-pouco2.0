@@ -11,6 +11,7 @@ import { criarModalCategorias } from '@/components/ModalCategorias'
 import { formatarIntervaloCiclo, getOffsetInicial } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
+import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase } from '@/services/configuracoes'
 import type { Transacao, TotaisCiclo } from '@/types'
 
 // Elementos DOM
@@ -113,10 +114,10 @@ async function setupApp(_userEmail: string): Promise<void> {
   })
 
   // Evento de alteração de configuração do ciclo (início/fim)
-  window.addEventListener('cicloConfigChange', (e: Event) => {
+  window.addEventListener('cicloConfigChange', async (e: Event) => {
     const { diaInicio, diaFim } = (e as CustomEvent).detail
     appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-    salvarConfiguracaoCiclo(diaInicio, diaFim, _userEmail)
+    await salvarConfiguracaoCiclo(diaInicio, diaFim, _userEmail)
     debouncedUpdateDashboard()
   })
 
@@ -134,12 +135,22 @@ async function setupApp(_userEmail: string): Promise<void> {
   updateDashboard()
 }
 
-// Carrega configuração de ciclo do usuário (localStorage ou Supabase)
+// Carrega configuração de ciclo do usuário (Supabase com fallback localStorage)
 async function carregarConfiguracaoCiclo(userEmail: string): Promise<void> {
-  const salva = localStorage.getItem(`configuracao_ciclo_${userEmail}`)
-  if (salva) {
+  try {
+    const salva = await buscarConfiguracaoCiclo()
+    if (salva) {
+      appStore.setConfiguracaoCiclo(salva.dia_inicio_ciclo, salva.dia_fim_ciclo)
+      return
+    }
+  } catch {
+    // Ignora erro do Supabase, tenta localStorage
+  }
+
+  const salvoLocal = localStorage.getItem(`configuracao_ciclo_${userEmail}`)
+  if (salvoLocal) {
     try {
-      const { diaInicio, diaFim } = JSON.parse(salva)
+      const { diaInicio, diaFim } = JSON.parse(salvoLocal)
       appStore.setConfiguracaoCiclo(diaInicio, diaFim)
     } catch {
       // Ignora erro de parse, usa padrão
@@ -147,9 +158,18 @@ async function carregarConfiguracaoCiclo(userEmail: string): Promise<void> {
   }
 }
 
-// Salva configuração de ciclo (por usuário)
-function salvarConfiguracaoCiclo(diaInicio: number, diaFim: number, userEmail: string): void {
-  localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))
+// Salva configuração de ciclo (Supabase + localStorage como fallback)
+async function salvarConfiguracaoCiclo(
+  diaInicio: number,
+  diaFim: number,
+  userEmail: string
+): Promise<void> {
+  try {
+    await salvarConfiguracaoCicloSupabase(diaInicio, diaFim)
+  } catch {
+    // Se falhar no Supabase, salva no localStorage como fallback
+    localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))
+  }
 }
 
 async function updateDashboard(): Promise<void> {
@@ -206,10 +226,10 @@ function updateHeader(): void {
       appStore.setCycleOffset(appStore.getState().cycleOffset + 1)
       debouncedUpdateDashboard()
     },
-    onAlterarDiaCiclo: (diaInicio, diaFim) => {
+    onAlterarDiaCiclo: async (diaInicio, diaFim) => {
       const state = getAuthState()
       appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-      salvarConfiguracaoCiclo(diaInicio, diaFim, state.user?.email || 'Usuario')
+      await salvarConfiguracaoCiclo(diaInicio, diaFim, state.user?.email || 'Usuario')
       debouncedUpdateDashboard()
     },
     user: state.user?.email || 'Usuario',
