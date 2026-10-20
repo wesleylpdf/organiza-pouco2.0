@@ -78,7 +78,8 @@ async function setupApp(_userEmail: string): Promise<void> {
   appStore.setCycleOffset(offsetInicial)
 
   // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
-  await carregarConfiguracaoCiclo(_userEmail)
+  const userId = getAuthState().user?.id ?? null
+  await carregarConfiguracaoCiclo(userId)
 
   // Carrega categorias do usuário (aguarda para popular o select antes do form)
   await categoriasHook.carregarCategorias()
@@ -158,8 +159,7 @@ async function setupApp(_userEmail: string): Promise<void> {
 }
 
 // Carrega configuração de ciclo do usuário (Supabase com fallback localStorage)
-async function carregarConfiguracaoCiclo(userEmail: string): Promise<void> {
-  const userId = getAuthState().user?.id
+async function carregarConfiguracaoCiclo(userId: string | null): Promise<void> {
   if (userId) {
     try {
       const salva = await buscarConfiguracaoCiclo(userId)
@@ -172,7 +172,7 @@ async function carregarConfiguracaoCiclo(userEmail: string): Promise<void> {
     }
   }
 
-  const salvoLocal = localStorage.getItem(`configuracao_ciclo_${userEmail}`)
+  const salvoLocal = localStorage.getItem(`configuracao_ciclo_${userId ?? 'anonimo'}`)
   if (salvoLocal) {
     try {
       const { diaInicio, diaFim } = JSON.parse(salvoLocal)
@@ -187,32 +187,39 @@ async function carregarConfiguracaoCiclo(userEmail: string): Promise<void> {
 async function salvarConfiguracaoCiclo(
   diaInicio: number,
   diaFim: number,
-  userEmail: string
+  userId: string | null
 ): Promise<void> {
-  const userId = getAuthState().user?.id
   if (!userId) {
-    localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))
+    localStorage.setItem(`configuracao_ciclo_anonimo`, JSON.stringify({ diaInicio, diaFim }))
     return
   }
   try {
     await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId)
+    toast.success('Configuração de ciclo salva!')
   } catch (err) {
     logger.error('Erro ao salvar configuração de ciclo no Supabase', err as any)
-    localStorage.setItem(`configuracao_ciclo_${userEmail}`, JSON.stringify({ diaInicio, diaFim }))
+    localStorage.setItem(`configuracao_ciclo_${userId}`, JSON.stringify({ diaInicio, diaFim }))
+    toast.success('Configuração de ciclo salva!')
   }
 }
 
 async function updateDashboard(): Promise<void> {
-  logger.debug('Atualizando dashboard')
+  try {
+    logger.debug('Atualizando dashboard')
 
-  // Mostra loading
-  updateLoadingStates()
+    // Mostra loading
+    updateLoadingStates()
 
-  // Carrega transações via hook
-  await transacoesHook.carregarTransacoes()
+    // Carrega transações via hook
+    await transacoesHook.carregarTransacoes()
 
-  updateLista()
-  updateHeader()
+    updateLista()
+    updateHeader()
+  } catch (err) {
+    logger.error('Erro ao atualizar dashboard', err as any)
+    appStore.setError('Erro ao atualizar o dashboard')
+    toast.error('Erro ao atualizar o dashboard')
+  }
 }
 
 function updateLista(): void {
@@ -258,8 +265,9 @@ function updateHeader(): void {
     },
     onAlterarDiaCiclo: async (diaInicio, diaFim) => {
       const state = getAuthState()
+      const userId = state.user?.id ?? null
       appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-      await salvarConfiguracaoCiclo(diaInicio, diaFim, state.user?.email || 'Usuario')
+      await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
       debouncedUpdateDashboard()
     },
     user: state.user?.email || 'Usuario',

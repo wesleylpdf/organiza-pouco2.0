@@ -35,13 +35,24 @@ export function useTransacoes() {
       const ciclo = appStore.getCicloAtual()
       const cicloInicio = appStore.getCicloInicioISO()
       const dataFim = formatDateLocalISO(ciclo.fim)
+      const cicloKey = `${ciclo.inicio.toISOString()}-${ciclo.fim.toISOString()}`
+
       logger.debug('Carregando transações', { cicloInicio, dataFim })
+
+      // Verifica cache antes de consultar a API
+      const cache = appStore.getTransacoesPorCiclo(cicloKey)
+      if (cache) {
+        appStore.setTransacoes(cache)
+        logger.info('Transações carregadas do cache', { count: cache.length })
+        return
+      }
 
       const transacoes = await listarTransacoes({
         dataInicio: cicloInicio,
         dataFim,
       })
       appStore.setTransacoes(transacoes)
+      appStore.setTransacoesPorCiclo(cicloKey, transacoes)
 
       logger.info('Transações carregadas', { count: transacoes.length })
     } catch (error) {
@@ -76,6 +87,7 @@ export function useTransacoes() {
       }
 
       logger.info('Transação salva com sucesso')
+      appStore.limparCacheCiclo()
       await carregarTransacoes()
       return true
     } catch (error) {
@@ -102,6 +114,7 @@ export function useTransacoes() {
 
       toast.success('Transação excluída!')
       logger.info('Transação excluída', { id })
+      appStore.limparCacheCiclo()
       await carregarTransacoes()
       return true
     } catch (error) {
@@ -135,6 +148,7 @@ export function useTransacoes() {
         logger.info('Fixos aplicados', { quantidade })
       }
 
+      appStore.limparCacheCiclo()
       await carregarTransacoes()
       return true
     } catch (error) {

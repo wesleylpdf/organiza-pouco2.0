@@ -21,6 +21,8 @@ interface AppState {
     categorias: boolean
   }
   error: string | null
+  transacoesPorCiclo: Record<string, Transacao[]>
+  cicloAtualCache: string | null
 }
 
 type Listener = () => void
@@ -40,6 +42,8 @@ class AppStateStore {
       categorias: false,
     },
     error: null,
+    transacoesPorCiclo: {},
+    cicloAtualCache: null,
   }
 
   private listeners: Set<Listener> = new Set()
@@ -65,6 +69,29 @@ class AppStateStore {
 
   getTransacoes(): Transacao[] {
     return this.state.transacoes
+  }
+
+  // Cache de transações por ciclo
+  getTransacoesPorCiclo(chave: string): Transacao[] | null {
+    return this.state.transacoesPorCiclo[chave] ?? null
+  }
+
+  setTransacoesPorCiclo(chave: string, transacoes: Transacao[]): void {
+    this.state = {
+      ...this.state,
+      transacoesPorCiclo: {
+        ...this.state.transacoesPorCiclo,
+        [chave]: transacoes,
+      },
+    }
+  }
+
+  limparCacheCiclo(): void {
+    this.state = {
+      ...this.state,
+      transacoesPorCiclo: {},
+      cicloAtualCache: null,
+    }
   }
 
   // Categorias
@@ -154,6 +181,8 @@ class AppStateStore {
       editandoId: null,
       loading: { transacoes: false, salvando: false, aplicandoFixos: false, categorias: false },
       error: null,
+      transacoesPorCiclo: {},
+      cicloAtualCache: null,
     }
     this.notify()
   }
