@@ -195,11 +195,9 @@ async function salvarConfiguracaoCiclo(
   }
   try {
     await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId)
-    toast.success('Configuração de ciclo salva!')
   } catch (err) {
     logger.error('Erro ao salvar configuração de ciclo no Supabase', err as any)
     localStorage.setItem(`configuracao_ciclo_${userId}`, JSON.stringify({ diaInicio, diaFim }))
-    toast.success('Configuração de ciclo salva!')
   }
 }
 
