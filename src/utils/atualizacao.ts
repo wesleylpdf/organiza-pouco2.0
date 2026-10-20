@@ -1,5 +1,5 @@
 /**
- * Detecção de novas versões do app.
+ * Detecção de novas versões do app (GitHub Pages).
  *
  * Cada build gera um identificador único, que é:
  *  - embutido no bundle em execução (`__BUILD_VERSION__`);
@@ -7,13 +7,18 @@
  *
  * O app consulta `version.json` periodicamente e, quando o valor diverge do
  * bundle atual, recarrega a página com cache contornado.
+ *
+ * No GitHub Pages o deploy substitui os arquivos antigos, então cada build
+ * também mantém uma cópia de `index.html` como `index-<versao>.html`: assim um
+ * app aberto consegue recarregar sem risco de pedir assets já removidos.
  */
 
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
 
 const INTERVALO_VERIFICACAO_MS = 5 * 60 * 1000
-const URL_VERSAO = `${import.meta.env.BASE_URL}version.json`
+const BASE_URL = import.meta.env.BASE_URL
+const URL_VERSAO = `${BASE_URL}version.json`
 
 interface VersionInfo {
   version: string
@@ -35,17 +40,16 @@ async function buscarVersaoPublicada(): Promise<string | null> {
 }
 
 /**
- * Recarrega a página buscando o index.html do servidor.
- * `location.reload(true)` é ignorado pelos navegadores modernos, então usamos
- * uma URL com parâmetro extra — os assets têm nomes com hash a cada build.
+ * Recarrega usando o snapshot `index-<versao>.html` da build publicada.
+ *
+ * Necessário no GitHub Pages: cada deploy apaga os assets da build anterior,
+ * então recarregar o index.html em cache pode pedir arquivos inexistentes.
  */
-function recarregarIgnorandoCache(): void {
+function recarregarIgnorandoCache(versao: string): void {
   if (recarregando) return
   recarregando = true
 
-  const url = new URL(window.location.href)
-  url.searchParams.set('v', String(Date.now()))
-  window.location.replace(url.toString())
+  window.location.replace(`${BASE_URL}index-${versao}.html?v=${versao}`)
 }
 
 async function verificarAtualizacao(): Promise<void> {
@@ -59,7 +63,7 @@ async function verificarAtualizacao(): Promise<void> {
     publicada: versaoPublicada,
   })
   toast.info('Nova versão disponível. Atualizando...')
-  window.setTimeout(recarregarIgnorandoCache, 800)
+  window.setTimeout(() => recarregarIgnorandoCache(versaoPublicada), 800)
 }
 
 /**

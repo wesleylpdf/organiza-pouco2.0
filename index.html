@@ -9,6 +9,28 @@
         tailwind.config = { darkMode: 'class' }
     </script>
     <link rel="stylesheet" href="/src/styles.css">
+    <script>
+      // Guarda de versão: se este index.html veio do cache e já existe build
+      // mais nova, carrega o snapshot index-<versao>.html (GitHub Pages).
+      (function () {
+        var versaoAtual = '__BUILD_VERSION__'
+        var base = '__BUILD_BASE__'
+        if (versaoAtual.indexOf('__') === 0) return // modo dev
+
+        var url = new URL(window.location.href)
+        // Já estamos na build publicada: nada a fazer. Não reescrevemos a URL,
+        // pois voltar para o index.html em cache reiniciaria o redirecionamento.
+        if (url.searchParams.get('v') === versaoAtual) return
+
+        fetch(base + 'version.json?_=' + Date.now(), { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.json() : null })
+          .then(function (dados) {
+            if (!dados || !dados.version || dados.version === versaoAtual) return
+            window.location.replace(base + 'index-' + dados.version + '.html?v=' + dados.version)
+          })
+          .catch(function () {})
+      })()
+    </script>
 </head>
 <body class="bg-slate-50 p-3 sm:p-4 transition-colors duration-300 dark:bg-slate-900">
     <div id="app"></div>
