@@ -86,11 +86,20 @@ class AppStateStore {
     }
   }
 
-  limparCacheCiclo(): void {
-    this.state = {
-      ...this.state,
-      transacoesPorCiclo: {},
-      cicloAtualCache: null,
+  limparCacheCiclo(chave?: string): void {
+    if (chave && this.state.transacoesPorCiclo[chave]) {
+      const { [chave]: _, ...rest } = this.state.transacoesPorCiclo
+      this.state = {
+        ...this.state,
+        transacoesPorCiclo: rest,
+      }
+    } else {
+      // Limpa tudo se nenhuma chave for especificada ou chave inválida
+      this.state = {
+        ...this.state,
+        transacoesPorCiclo: {},
+        cicloAtualCache: null,
+      }
     }
   }
 

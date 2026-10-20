@@ -11,6 +11,7 @@ import {
   atualizarTransacao,
   excluirTransacao,
   listarParcelasRelacionadas,
+  atualizarParcelasRelacionadas,
   excluirParcelasRelacionadas,
   duplicarFixosCicloAnterior,
 } from '@/services/transacoes'
@@ -100,10 +101,10 @@ export function useTransacoes() {
           const qtdeNova = params.totalParcelas || 1
           const qtdeManter = Math.min(qtdeAtual, qtdeNova)
 
-          // Atualiza as parcelas que serão mantidas (sem alterar data, pois estão em meses diferentes)
-          for (let i = 0; i < qtdeManter; i++) {
-            const tx = relacionadas[i]
-            await atualizarTransacao(tx.id, {
+          // Atualiza as parcelas que serão mantidas em lote (sem alterar data, pois estão em meses diferentes)
+          const paraManter = relacionadas.slice(0, qtdeManter)
+          if (paraManter.length > 0) {
+            await atualizarParcelasRelacionadas(paraManter.map(tx => tx.id), {
               valor: params.valor,
               tipo: params.tipo,
               categoria: params.categoria,
@@ -125,17 +126,19 @@ export function useTransacoes() {
             const dataBase = ultimaParcela
               ? new Date(ultimaParcela.data + 'T00:00:00')
               : new Date(params.data + 'T00:00:00')
-            for (let i = qtdeAtual; i < qtdeNova; i++) {
-              const dataNova = new Date(dataBase)
-              dataNova.setMonth(dataNova.getMonth() + (i - qtdeAtual + 1))
-              await criarTransacao({
-                ...params,
-                data: dataNova.toISOString().slice(0, 10),
-                parcelaAtual: i + 1,
-                descricao: params.descricao,
-                totalParcelas: qtdeNova,
-              } as CriarTransacaoParams)
-            }
+            await Promise.all(
+              Array.from({ length: qtdeNova - qtdeAtual }, (_, i) => {
+                const dataNova = new Date(dataBase)
+                dataNova.setMonth(dataNova.getMonth() + (i + 1))
+                return criarTransacao({
+                  ...params,
+                  data: dataNova.toISOString().slice(0, 10),
+                  parcelaAtual: qtdeAtual + i + 1,
+                  descricao: params.descricao,
+                  totalParcelas: qtdeNova,
+                } as CriarTransacaoParams)
+              })
+            )
           }
         } else {
           logger.debug('Atualizando transação', { id: editandoId, params })
@@ -162,7 +165,7 @@ export function useTransacoes() {
       }
 
       logger.info('Transação salva com sucesso')
-      appStore.limparCacheCiclo()
+      appStore.limparCacheCiclo(appStore.getCicloInicioISO())
       await carregarTransacoes()
       return true
     } catch (error) {
@@ -205,7 +208,7 @@ export function useTransacoes() {
       }
 
       logger.info('Transação excluída', { id })
-      appStore.limparCacheCiclo()
+      appStore.limparCacheCiclo(appStore.getCicloInicioISO())
       await carregarTransacoes()
       return true
     } catch (error) {
@@ -232,7 +235,7 @@ export function useTransacoes() {
 
       logger.info('Fixos aplicados', { quantidade })
 
-      appStore.limparCacheCiclo()
+      appStore.limparCacheCiclo(appStore.getCicloInicioISO())
       await carregarTransacoes()
       return true
     } catch (error) {
