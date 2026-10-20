@@ -36,13 +36,13 @@ export function criarTransacaoForm(
             <option value="saida">Saída (-)</option>
             <option value="entrada">Entrada (+)</option>
           </select>
-          <button type="button" id="btn-gerenciar-categorias" class="text-xs text-blue-500 hover:underline font-bold">
-          ⚙️ Gerenciar categorias
-        </button>
-        <select id="input-category" class="w-full p-2 sm:p-3 rounded-xl border bg-white text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+          <select id="input-category" class="w-full p-2 sm:p-3 rounded-xl border bg-white text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
             <!-- Populado dinamicamente -->
           </select>
         </div>
+        <button type="button" id="btn-gerenciar-categorias" class="w-full text-xs text-blue-500 hover:underline font-bold">
+          ⚙️ Gerenciar categorias
+        </button>
         <input type="text" id="input-description" required maxlength="100"
           class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
           placeholder="Descrição">

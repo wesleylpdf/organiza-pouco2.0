@@ -145,8 +145,7 @@ async function setupApp(_userEmail: string): Promise<void> {
   document.getElementById('export-btn')!.addEventListener('click', handleExportar)
 
   // Outros eventos
-  document.getElementById('btn-aplicar-fixos')!.addEventListener('click', handleAplicarFixos)
-  document.getElementById('filter-fixed')!.addEventListener('change', () => updateLista())
+  document.getElementById('filter-dividido')!.addEventListener('change', () => updateLista())
   window.addEventListener('themechange', () => updateDashboard())
 
   // Subscribe to store changes
@@ -223,10 +222,10 @@ async function updateDashboard(): Promise<void> {
 }
 
 function updateLista(): void {
-  const filterEl = document.getElementById('filter-fixed') as HTMLInputElement | null
-  const showOnlyFixed = filterEl?.checked || false
+  const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
+  const showOnlyDividido = filterEl?.checked || false
   const transacoes = appStore.getTransacoes()
-  const filtradas = showOnlyFixed ? transacoes.filter(t => t.fixo) : transacoes
+  const filtradas = showOnlyDividido ? transacoes.filter(t => t.dividido) : transacoes
 
   renderLista(
     filtradas,
@@ -239,9 +238,9 @@ function updateLista(): void {
 
 function updateGrafico(transacoes?: Transacao[]): void {
   const txs = transacoes ?? appStore.getTransacoes()
-  const filterEl = document.getElementById('filter-fixed') as HTMLInputElement | null
-  const showOnlyFixed = filterEl?.checked || false
-  const filtradas = showOnlyFixed ? txs.filter(t => t.fixo) : txs
+  const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
+  const showOnlyDividido = filterEl?.checked || false
+  const filtradas = showOnlyDividido ? txs.filter(t => t.dividido) : txs
   const saidas = filtradas.filter(t => t.tipo === 'saida')
   atualizarGrafico(saidas)
 }
@@ -339,17 +338,6 @@ async function handleExcluir(id: string): Promise<void> {
 
   if (success) {
     toast.success('Transação excluída!')
-    updateLista()
-    updateHeader()
-  }
-}
-
-async function handleAplicarFixos(): Promise<void> {
-  logger.debug('Aplicando transações fixas')
-  const success = await transacoesHook.aplicarFixos()
-
-  if (success) {
-    toast.success('Fixos aplicados com sucesso!')
     updateLista()
     updateHeader()
   }
