@@ -21,7 +21,6 @@ export interface CriarTransacaoParams {
   data: string
   tipo: TipoTransacao
   categoria: string
-  fixo: boolean
   descricao: string
   dividido: boolean
   totalParcelas: number

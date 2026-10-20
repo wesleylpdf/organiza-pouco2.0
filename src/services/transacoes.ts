@@ -42,7 +42,6 @@ export async function criarTransacao(params: {
   data: string
   tipo: TipoTransacao
   categoria: string
-  fixo: boolean
   descricao: string | null
   dividido?: boolean
   totalParcelas?: number
@@ -64,7 +63,6 @@ export async function criarTransacao(params: {
       data: params.data,
       tipo: params.tipo,
       categoria: params.categoria,
-      fixo: params.fixo,
       descricao: params.descricao,
       ciclo_inicio: cicloInicio,
       dividido: params.dividido ?? false,

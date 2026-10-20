@@ -6,7 +6,6 @@ type SaveCallback = (data: {
   data: string
   tipo: TipoTransacao
   categoria: string
-  fixo: boolean
   descricao: string
   dividido: boolean
   totalParcelas: number
@@ -37,16 +36,16 @@ export function criarTransacaoForm(
             <option value="saida">Saída (-)</option>
             <option value="entrada">Entrada (+)</option>
           </select>
-          <select id="input-category" class="w-full p-2 sm:p-3 rounded-xl border bg-white text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+          <button type="button" id="btn-gerenciar-categorias" class="text-xs text-blue-500 hover:underline font-bold">
+          ⚙️ Gerenciar categorias
+        </button>
+        <select id="input-category" class="w-full p-2 sm:p-3 rounded-xl border bg-white text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
             <!-- Populado dinamicamente -->
           </select>
         </div>
-        <button type="button" id="btn-gerenciar-categorias" class="text-xs text-blue-500 hover:underline font-bold">
-          ⚙️ Gerenciar categorias
-        </button>
-        <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
-          <input type="checkbox" id="input-fixed" class="w-4 h-4"> É transação fixa?
-        </label>
+        <input type="text" id="input-description" required maxlength="100"
+          class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+          placeholder="Descrição">
         <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
           <input type="checkbox" id="input-dividido" class="w-4 h-4">
           É transação dividida?
@@ -56,9 +55,6 @@ export function criarTransacaoForm(
             class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base"
             placeholder="Quantidade de parcelas">
         </div>
-        <input type="text" id="input-description" required maxlength="100"
-          class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
-          placeholder="Descrição">
         <button type="submit" id="save-btn"
           class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition dark:bg-slate-700">
           Guardar
@@ -89,6 +85,7 @@ export function criarTransacaoForm(
     parcelasContainer.classList.toggle('hidden', !inputDividido.checked)
   })
 
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
 
@@ -108,7 +105,6 @@ export function criarTransacaoForm(
         data: (container.querySelector('#input-date') as HTMLInputElement).value,
         tipo: (container.querySelector('#input-type') as HTMLSelectElement).value as TipoTransacao,
         categoria: (container.querySelector('#input-category') as HTMLSelectElement).value,
-        fixo: (container.querySelector('#input-fixed') as HTMLInputElement).checked,
         descricao: (container.querySelector('#input-description') as HTMLInputElement).value.trim(),
         dividido: (container.querySelector('#input-dividido') as HTMLInputElement).checked,
         totalParcelas: parseInt((container.querySelector('#input-total-parcelas') as HTMLInputElement).value) || 1,
@@ -164,7 +160,6 @@ export function preencherFormEdicao(container: HTMLElement, t: Transacao): void 
   ;(container.querySelector('#input-type') as HTMLSelectElement).value = t.tipo
   atualizarSelectCategorias()
   ;(container.querySelector('#input-category') as HTMLSelectElement).value = t.categoria
-  ;(container.querySelector('#input-fixed') as HTMLInputElement).checked = t.fixo
   ;(container.querySelector('#input-description') as HTMLInputElement).value = t.descricao || ''
   container.querySelector('#form-title')!.textContent = 'Editar Transação'
   container.querySelector('#cancel-btn')!.classList.remove('hidden')
