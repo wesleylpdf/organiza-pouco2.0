@@ -14,6 +14,7 @@ import {
 import { validarTransacao, extrairMensagemErro } from '@/utils/validation'
 import { toast } from '@/utils/toast'
 import { logger } from '@/utils/logger'
+import { formatCicloISO } from '@/utils/ciclo'
 import type { Transacao, TipoTransacao } from '@/types'
 
 export interface CriarTransacaoParams {
@@ -31,10 +32,15 @@ export function useTransacoes() {
       appStore.setLoading('transacoes', true)
       appStore.clearError()
 
+      const ciclo = appStore.getCicloAtual()
       const cicloInicio = appStore.getCicloInicioISO()
-      logger.debug('Carregando transações', { cicloInicio })
+      const dataFim = formatCicloISO(ciclo.fim)
+      logger.debug('Carregando transações', { cicloInicio, dataFim })
 
-      const transacoes = await listarTransacoes(cicloInicio)
+      const transacoes = await listarTransacoes({
+        dataInicio: cicloInicio,
+        dataFim,
+      })
       appStore.setTransacoes(transacoes)
 
       logger.info('Transações carregadas', { count: transacoes.length })

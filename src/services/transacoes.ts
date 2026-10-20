@@ -4,18 +4,31 @@ import type { Transacao, TipoTransacao } from '@/types'
 import { getCicloInicioParaData, formatCicloISO } from '@/utils/ciclo'
 
 /**
- * Lista transações de um ciclo específico
+ * Lista transações de um ciclo específico.
+ * Aceita cicloInicio (comportamento antigo, filtra por ciclo_inicio)
+ * ou dataInicio + dataFim (filtra por período de datas).
  */
-export async function listarTransacoes(cicloInicio: string): Promise<Transacao[]> {
+export async function listarTransacoes(params: {
+  cicloInicio?: string
+  dataInicio?: string
+  dataFim?: string
+}): Promise<Transacao[]> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('transacoes')
     .select('*')
     .eq('user_id', user.id)
-    .eq('ciclo_inicio', cicloInicio)
     .order('data', { ascending: false })
+
+  if (params.dataInicio && params.dataFim) {
+    query = query.gte('data', params.dataInicio).lte('data', params.dataFim)
+  } else if (params.cicloInicio) {
+    query = query.eq('ciclo_inicio', params.cicloInicio)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   return data || []
