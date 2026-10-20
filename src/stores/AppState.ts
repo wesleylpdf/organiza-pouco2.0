@@ -11,6 +11,8 @@ interface AppState {
   transacoes: Transacao[]
   categorias: CategoriaPersonalizada[]
   cycleOffset: number
+  diaInicioCiclo: number
+  diaFimCiclo: number
   editandoId: string | null
   loading: {
     transacoes: boolean
@@ -28,6 +30,8 @@ class AppStateStore {
     transacoes: [],
     categorias: [],
     cycleOffset: 0,
+    diaInicioCiclo: 9,
+    diaFimCiclo: 8,
     editandoId: null,
     loading: {
       transacoes: false,
@@ -79,8 +83,22 @@ class AppStateStore {
     this.notify()
   }
 
+  // Configuração do ciclo
+  setConfiguracaoCiclo(diaInicio: number, diaFim: number): void {
+    this.state = { ...this.state, diaInicioCiclo: diaInicio, diaFimCiclo: diaFim }
+    this.notify()
+  }
+
+  getDiaInicioCiclo(): number {
+    return this.state.diaInicioCiclo
+  }
+
+  getDiaFimCiclo(): number {
+    return this.state.diaFimCiclo
+  }
+
   getCicloAtual() {
-    return getCicloAtual(this.state.cycleOffset)
+    return getCicloAtual(this.state.cycleOffset, this.state.diaInicioCiclo, this.state.diaFimCiclo)
   }
 
   getCicloInicioISO(): string {
@@ -131,6 +149,8 @@ class AppStateStore {
       transacoes: [],
       categorias: [],
       cycleOffset: 0,
+      diaInicioCiclo: 9,
+      diaFimCiclo: 8,
       editandoId: null,
       loading: { transacoes: false, salvando: false, aplicandoFixos: false, categorias: false },
       error: null,

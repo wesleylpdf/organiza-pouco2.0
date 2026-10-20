@@ -113,6 +113,41 @@ COMMENT ON COLUMN public.transacoes.ciclo_inicio IS 'Data de início do ciclo fi
 COMMENT ON COLUMN public.transacoes.created_at IS 'Timestamp de criação';
 
 -- ============================================
+-- TABELA: configuracoes_usuario
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS public.configuracoes_usuario (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  dia_inicio_ciclo INTEGER NOT NULL DEFAULT 9 CHECK (dia_inicio_ciclo BETWEEN 1 AND 28),
+  dia_fim_ciclo INTEGER NOT NULL DEFAULT 8 CHECK (dia_fim_ciclo BETWEEN 1 AND 28),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.configuracoes_usuario ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users see own configuracoes" ON public.configuracoes_usuario;
+CREATE POLICY "Users see own configuracoes"
+  ON public.configuracoes_usuario
+  FOR ALL
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users insert own configuracoes" ON public.configuracoes_usuario;
+CREATE POLICY "Users insert own configuracoes"
+  ON public.configuracoes_usuario
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users update own configuracoes" ON public.configuracoes_usuario;
+CREATE POLICY "Users update own configuracoes"
+  ON public.configuracoes_usuario
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+COMMENT ON TABLE public.configuracoes_usuario IS 'Configurações de ciclo financeiro do usuário';
+COMMENT ON COLUMN public.configuracoes_usuario.dia_inicio_ciclo IS 'Dia de início do ciclo financeiro';
+COMMENT ON COLUMN public.configuracoes_usuario.dia_fim_ciclo IS 'Dia de fim do ciclo financeiro';
+
+-- ============================================
 -- TABELA: categorias
 -- ============================================
 

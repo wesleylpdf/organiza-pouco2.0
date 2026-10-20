@@ -1,24 +1,46 @@
 import type { Ciclo } from '@/types'
 
+export const DIA_INICIO_PADRAO = 9
+export const DIA_FIM_PADRAO = 8
+
 /**
  * Calcula o ciclo financeiro baseado em um offset.
- * Ciclo: dia 9 do mês atual até dia 8 do próximo.
- * Se o dia atual for < 9, considera o ciclo anterior.
+ * O ciclo começa no dia `diaInicio` e termina no dia `diaFim`.
+ * Se diaFim < diaInicio, o ciclo cruza para o mês seguinte.
  */
-export function getCicloAtual(offset = 0): Ciclo {
+export function getCicloAtual(
+  offset = 0,
+  diaInicio = DIA_INICIO_PADRAO,
+  diaFim = DIA_FIM_PADRAO
+): Ciclo {
   const agora = new Date()
   const dia = agora.getDate()
+  const mes = agora.getMonth()
+  const ano = agora.getFullYear()
 
-  // Se dia < 9, ciclo atual é o anterior; senão, é o corrente
-  const ajusteMes = dia >= 9 ? 0 : -1
-  const totalMeses = agora.getMonth() + ajusteMes + offset
+  let cicloMes = mes
+  let cicloAno = ano
 
-  // Normalizar mês/ano para casos de overflow/underflow
-  const ano = agora.getFullYear() + Math.floor(totalMeses / 12)
-  const mes = ((totalMeses % 12) + 12) % 12
+  if (dia >= diaInicio) {
+    cicloMes = mes
+    cicloAno = ano
+  } else {
+    // Ainda estamos dentro do ciclo do mês anterior (ou na lacuna)
+    cicloMes = mes - 1
+    cicloAno = mes === 0 ? ano - 1 : ano
+  }
 
-  const inicio = new Date(ano, mes, 9)
-  const fim = new Date(ano, mes + 1, 8, 23, 59, 59)
+  // Aplica offset
+  const totalMeses = cicloMes + offset
+  const anoCiclo = cicloAno + Math.floor(totalMeses / 12)
+  const mesCiclo = ((totalMeses % 12) + 12) % 12
+
+  const inicio = new Date(anoCiclo, mesCiclo, diaInicio)
+
+  // Fim: se fim < inicio, cruza para o mês seguinte
+  const anoFim = diaFim < diaInicio ? anoCiclo : anoCiclo
+  const mesFim = diaFim < diaInicio ? mesCiclo + 1 : mesCiclo
+  const fim = new Date(anoFim, mesFim, diaFim, 23, 59, 59)
 
   return { inicio, fim, offset }
 }
@@ -32,17 +54,32 @@ export function formatCicloISO(data: Date): string {
 
 /**
  * Calcula o ciclo_inicio para uma determinada data.
- * Se dia >= 9, ciclo começa dia 9 do próprio mês.
- * Se dia < 9, ciclo começou dia 9 do mês anterior.
+ * Baseado no dia de início configurado.
  */
-export function getCicloInicioParaData(data: Date): string {
+export function getCicloInicioParaData(
+  data: Date,
+  diaInicio = DIA_INICIO_PADRAO
+): string {
   const dia = data.getDate()
-  const inicio = new Date(data)
+  const mes = data.getMonth()
+  const ano = data.getFullYear()
 
-  if (dia < 9) {
-    inicio.setMonth(inicio.getMonth() - 1)
+  let cicloMes = mes
+  let cicloAno = ano
+
+  if (dia >= diaInicio) {
+    cicloMes = mes
+    cicloAno = ano
+  } else if (mes === 0) {
+    // Janeiro: ciclo começou em dezembro do ano anterior
+    cicloMes = 11
+    cicloAno = ano - 1
+  } else {
+    cicloMes = mes - 1
+    cicloAno = ano
   }
-  inicio.setDate(9)
+
+  const inicio = new Date(cicloAno, cicloMes, diaInicio)
   inicio.setHours(0, 0, 0, 0)
 
   return formatCicloISO(inicio)

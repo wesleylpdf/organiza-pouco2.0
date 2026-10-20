@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { appStore } from '@/stores/AppState'
 import type { Transacao, TipoTransacao } from '@/types'
 import { getCicloInicioParaData, formatCicloISO } from '@/utils/ciclo'
 
@@ -34,7 +35,10 @@ export async function criarTransacao(params: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
 
-  const cicloInicio = getCicloInicioParaData(new Date(params.data + 'T00:00:00'))
+  const cicloInicio = getCicloInicioParaData(
+    new Date(params.data + 'T00:00:00'),
+    appStore.getDiaInicioCiclo()
+  )
 
   const { data, error } = await supabase
     .from('transacoes')
@@ -64,7 +68,10 @@ export async function atualizarTransacao(
 ): Promise<Transacao> {
   // Se mudou a data, recalcula ciclo_inicio
   if (params.data) {
-    params.ciclo_inicio = getCicloInicioParaData(new Date(params.data + 'T00:00:00'))
+    params.ciclo_inicio = getCicloInicioParaData(
+      new Date(params.data + 'T00:00:00'),
+      appStore.getDiaInicioCiclo()
+    )
   }
 
   const { data, error } = await supabase

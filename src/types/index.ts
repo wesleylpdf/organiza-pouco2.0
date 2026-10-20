@@ -30,6 +30,11 @@ export interface Ciclo {
   offset: number
 }
 
+export interface ConfiguracaoCiclo {
+  diaInicio: number
+  diaFim: number
+}
+
 export interface TotaisCiclo {
   entradas: number
   saidas: number

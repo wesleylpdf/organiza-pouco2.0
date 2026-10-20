@@ -7,6 +7,7 @@ export interface HeaderProps {
   totais: TotaisCiclo
   onCicloAnterior: () => void
   onCicloProximo: () => void
+  onAlterarDiaCiclo: (diaInicio: number, diaFim: number) => void
   user: string
 }
 
@@ -30,6 +31,20 @@ export function criarHeader(container: HTMLElement): void {
         <button id="ciclo-anterior" class="bg-slate-100 px-2 sm:px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs sm:text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">←</button>
         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center flex-1" id="cycle-dates">Resumo do Ciclo</span>
         <button id="ciclo-proximo" class="bg-slate-100 px-2 sm:px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs sm:text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">→</button>
+      </div>
+      <div class="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
+        <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Início:</label>
+        <select id="dia-inicio-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          ${Array.from({ length: 28 }, (_, i) => i + 1)
+            .map(d => `<option value="${d}">${d}</option>`)
+            .join('')}
+        </select>
+        <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fim:</label>
+        <select id="dia-fim-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          ${Array.from({ length: 28 }, (_, i) => i + 1)
+            .map(d => `<option value="${d}">${d}</option>`)
+            .join('')}
+        </select>
       </div>
       <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
         <div>
@@ -60,6 +75,22 @@ export function criarHeader(container: HTMLElement): void {
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
     // Dispara evento para atualizar gráfico
     window.dispatchEvent(new CustomEvent('themechange', { detail: { isDark } }))
+  })
+
+  // Selectores de ciclo
+  const inicioSelect = container.querySelector('#dia-inicio-ciclo') as HTMLSelectElement
+  const fimSelect = container.querySelector('#dia-fim-ciclo') as HTMLSelectElement
+
+  inicioSelect.addEventListener('change', () => {
+    const diaInicio = parseInt(inicioSelect.value, 10)
+    const diaFim = parseInt(fimSelect.value, 10)
+    window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
+  })
+
+  fimSelect.addEventListener('change', () => {
+    const diaInicio = parseInt(inicioSelect.value, 10)
+    const diaFim = parseInt(fimSelect.value, 10)
+    window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
   })
 }
 

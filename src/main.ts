@@ -73,6 +73,9 @@ async function setupApp(_userEmail: string): Promise<void> {
   const offsetInicial = getOffsetInicial()
   appStore.setCycleOffset(offsetInicial)
 
+  // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
+  await carregarConfiguracaoCiclo()
+
   // Carrega categorias do usuário (aguarda para popular o select antes do form)
   await categoriasHook.carregarCategorias()
 
@@ -109,6 +112,14 @@ async function setupApp(_userEmail: string): Promise<void> {
     debouncedUpdateDashboard()
   })
 
+  // Evento de alteração de configuração do ciclo (início/fim)
+  window.addEventListener('cicloConfigChange', (e: Event) => {
+    const { diaInicio, diaFim } = (e as CustomEvent).detail
+    appStore.setConfiguracaoCiclo(diaInicio, diaFim)
+    salvarConfiguracaoCiclo(diaInicio, diaFim)
+    debouncedUpdateDashboard()
+  })
+
   // Outros eventos
   document.getElementById('btn-aplicar-fixos')!.addEventListener('click', handleAplicarFixos)
   document.getElementById('filter-fixed')!.addEventListener('change', () => updateLista())
@@ -121,6 +132,24 @@ async function setupApp(_userEmail: string): Promise<void> {
 
   // Primeira carga
   updateDashboard()
+}
+
+// Carrega configuração de ciclo do usuário (localStorage ou Supabase)
+async function carregarConfiguracaoCiclo(): Promise<void> {
+  const salva = localStorage.getItem('configuracao_ciclo')
+  if (salva) {
+    try {
+      const { diaInicio, diaFim } = JSON.parse(salva)
+      appStore.setConfiguracaoCiclo(diaInicio, diaFim)
+    } catch {
+      // Ignora erro de parse, usa padrão
+    }
+  }
+}
+
+// Salva configuração de ciclo
+function salvarConfiguracaoCiclo(diaInicio: number, diaFim: number): void {
+  localStorage.setItem('configuracao_ciclo', JSON.stringify({ diaInicio, diaFim }))
 }
 
 async function updateDashboard(): Promise<void> {
@@ -174,6 +203,11 @@ function updateHeader(): void {
     },
     onCicloProximo: () => {
       appStore.setCycleOffset(appStore.getState().cycleOffset + 1)
+      debouncedUpdateDashboard()
+    },
+    onAlterarDiaCiclo: (diaInicio, diaFim) => {
+      appStore.setConfiguracaoCiclo(diaInicio, diaFim)
+      salvarConfiguracaoCiclo(diaInicio, diaFim)
       debouncedUpdateDashboard()
     },
     user: state.user?.email || 'Usuario',
