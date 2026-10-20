@@ -276,14 +276,6 @@ function updateHeader(): void {
 }
 
 function updateLoadingStates(): void {
-  // Atualiza botão de aplicar fixos
-  const btnFixos = document.getElementById('btn-aplicar-fixos') as HTMLButtonElement
-  if (btnFixos) {
-    const loading = appStore.isLoading('aplicandoFixos')
-    btnFixos.disabled = loading
-    btnFixos.textContent = loading ? 'Aplicando...' : '📋 Aplicar fixos do ciclo anterior'
-  }
-
   // Atualiza botão de salvar do formulário
   const btnSalvar = document.querySelector('#transaction-form button[type="submit"]') as HTMLButtonElement
   if (btnSalvar) {

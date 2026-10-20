@@ -1,16 +1,16 @@
 import { supabase } from '@/lib/supabaseClient'
 import { appStore } from '@/stores/AppState'
 import type { Transacao, TipoTransacao } from '@/types'
-import { getCicloInicioParaData, formatCicloISO } from '@/utils/ciclo'
+import { getCicloInicioParaData } from '@/utils/ciclo'
 
 /**
  * Converte chaves camelCase (TypeScript) para snake_case (Supabase/DB).
- * Ignora chaves já em snake_case ou com valores undefined/null.
+ * Ignora apenas chaves undefined; null é enviado para limpar a coluna.
  */
 function paraSnakeCase(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(obj)) {
-    if (value === undefined || value === null) continue
+    if (value === undefined) continue
     const snakeKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
     result[snakeKey] = value
   }
@@ -19,7 +19,6 @@ function paraSnakeCase(obj: Record<string, unknown>): Record<string, unknown> {
 
 /**
  * Mapeia uma linha do Supabase (snake_case) para o tipo Transacao (camelCase).
- * Os campos total_parcelas / parcela_atual do DB viram totalParcelas / parcelaAtual.
  */
 function paraTransacao(row: any): Transacao {
   return {
@@ -41,8 +40,7 @@ function paraTransacao(row: any): Transacao {
 
 /**
  * Lista transações de um ciclo específico.
- * Aceita cicloInicio (comportamento antigo, filtra por ciclo_inicio)
- * ou dataInicio + dataFim (filtra por período de datas).
+ * Aceita cicloInicio (filtra por ciclo_inicio) ou dataInicio + dataFim.
  */
 export async function listarTransacoes(params: {
   cicloInicio?: string
@@ -122,7 +120,6 @@ export async function atualizarTransacao(
   id: string,
   params: Partial<Omit<Transacao, 'id' | 'user_id' | 'created_at'>>
 ): Promise<Transacao> {
-  // Se mudou a data, recalcula ciclo_inicio
   if (params.data) {
     params.ciclo_inicio = getCicloInicioParaData(
       new Date(params.data + 'T00:00:00'),
@@ -155,8 +152,6 @@ export async function excluirTransacao(id: string): Promise<void> {
 
 /**
  * Lista parcelas relacionadas de uma transação dividida.
- * Busca transações divididas do mesmo usuário com total_parcelas igual
- * e filtra por descrição base (antes do sufixo " N/M").
  */
 export async function listarParcelasRelacionadas(params: {
   userId: string
@@ -177,14 +172,12 @@ export async function listarParcelasRelacionadas(params: {
   if (error) throw error
 
   const prefixo = params.descricaoBase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  // Aceita tanto a descrição pura (sem sufixo) quanto o formato antigo com " N/M"
   const regex = new RegExp(`^${prefixo}(\\s+\\d+/\\d+)?$`)
   return (data || []).map(paraTransacao).filter(tx => regex.test(tx.descricao || ''))
 }
 
 /**
- * Atualiza parcelas relacionadas de uma transação dividida (update em lote).
- * Não recalcula ciclo_inicio por data (parcelas estão em meses diferentes).
+ * Atualiza parcelas relacionadas em lote (sem recalcular ciclo_inicio).
  */
 export async function atualizarParcelasRelacionadas(
   ids: string[],
@@ -201,7 +194,7 @@ export async function atualizarParcelasRelacionadas(
 }
 
 /**
- * Exclui parcelas relacionadas de uma transação dividida (delete em lote).
+ * Exclui parcelas relacionadas em lote.
  */
 export async function excluirParcelasRelacionadas(ids: string[]): Promise<void> {
   if (ids.length === 0) return
@@ -212,55 +205,4 @@ export async function excluirParcelasRelacionadas(ids: string[]): Promise<void> 
     .in('id', ids)
 
   if (error) throw error
-}
-
-/**
- * Duplica transações fixas do ciclo anterior para o ciclo atual
- */
-export async function duplicarFixosCicloAnterior(cicloAtualInicio: string): Promise<number> {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Usuário não autenticado')
-
-  // Calcula ciclo anterior
-  const [ano, mes, dia] = cicloAtualInicio.split('-').map(Number)
-  const inicioAtual = new Date(ano, mes - 1, dia)
-  const inicioAnterior = new Date(inicioAtual)
-  inicioAnterior.setMonth(inicioAnterior.getMonth() - 1)
-  const cicloAnterior = formatCicloISO(inicioAnterior)
-
-  // Busca fixos do ciclo anterior
-  const { data: fixos, error: errorFetch } = await supabase
-    .from('transacoes')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('ciclo_inicio', cicloAnterior)
-    .eq('fixo', true)
-
-  if (errorFetch) throw errorFetch
-  if (!fixos || fixos.length === 0) return 0
-
-  // Duplica para ciclo atual com novas datas (+1 mês)
-  const novasTransacoes = fixos.map(f => {
-    const dataOriginal = new Date(f.data + 'T00:00:00')
-    const novaData = new Date(dataOriginal)
-    novaData.setMonth(novaData.getMonth() + 1)
-
-    return {
-      user_id: user.id,
-      valor: f.valor,
-      data: formatCicloISO(novaData),
-      tipo: f.tipo,
-      categoria: f.categoria,
-      fixo: true,
-      descricao: f.descricao,
-      ciclo_inicio: cicloAtualInicio,
-    }
-  })
-
-  const { error: errorInsert } = await supabase
-    .from('transacoes')
-    .insert(novasTransacoes)
-
-  if (errorInsert) throw errorInsert
-  return novasTransacoes.length
 }

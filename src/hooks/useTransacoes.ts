@@ -13,7 +13,6 @@ import {
   listarParcelasRelacionadas,
   atualizarParcelasRelacionadas,
   excluirParcelasRelacionadas,
-  duplicarFixosCicloAnterior,
 } from '@/services/transacoes'
 import { validarTransacao, extrairMensagemErro } from '@/utils/validation'
 import { logger } from '@/utils/logger'
@@ -98,10 +97,11 @@ export function useTransacoes() {
           relacionadas.sort((a, b) => a.data.localeCompare(b.data))
 
           const qtdeAtual = relacionadas.length
-          const qtdeNova = params.totalParcelas || 1
+          // Se o usuário desmarcou "dividida", mantém apenas um lançamento
+          const qtdeNova = params.dividido && params.totalParcelas > 1 ? params.totalParcelas : 1
           const qtdeManter = Math.min(qtdeAtual, qtdeNova)
 
-          // Atualiza as parcelas que serão mantidas em lote (sem alterar data, pois estão em meses diferentes)
+          // Atualiza as parcelas que serão mantidas (sem alterar data, pois estão em meses diferentes)
           const paraManter = relacionadas.slice(0, qtdeManter)
           if (paraManter.length > 0) {
             await atualizarParcelasRelacionadas(paraManter.map(tx => tx.id), {
@@ -109,9 +109,18 @@ export function useTransacoes() {
               tipo: params.tipo,
               categoria: params.categoria,
               descricao: params.descricao,
-              dividido: params.dividido,
-              totalParcelas: qtdeNova,
+              dividido: qtdeNova > 1,
+              totalParcelas: qtdeNova > 1 ? qtdeNova : null,
             })
+
+            // Renumera as parcelas mantidas quando a quantidade mudou
+            if (qtdeAtual !== qtdeNova) {
+              await Promise.all(
+                paraManter.map((tx, i) =>
+                  atualizarTransacao(tx.id, { parcelaAtual: qtdeNova > 1 ? i + 1 : null })
+                )
+              )
+            }
           }
 
           // Exclui parcelas excedentes quando diminui a quantidade
@@ -140,8 +149,8 @@ export function useTransacoes() {
               })
             )
           }
-        } else {
-          logger.debug('Atualizando transação', { id: editandoId, params })
+        } else { // Se não era dividida ou não tem mais parcelas, atualiza como transação única
+          logger.debug('Atualizando transação única', { id: editandoId, params })
           await atualizarTransacao(editandoId, params)
         }
 
@@ -160,7 +169,7 @@ export function useTransacoes() {
           } as CriarTransacaoParams)
         }
       } else {
-        logger.debug('Criando transação', { params })
+        logger.debug('Criando transação única', { params })
         await criarTransacao(params)
       }
 
@@ -219,35 +228,6 @@ export function useTransacoes() {
     }
   }
 
-  async function aplicarFixos(): Promise<boolean> {
-    try {
-      if (!confirm('Aplicar transações fixas do ciclo anterior?')) {
-        return false
-      }
-
-      appStore.setLoading('aplicandoFixos', true)
-      appStore.clearError()
-
-      const cicloInicio = appStore.getCicloInicioISO()
-      logger.debug('Aplicando fixos', { cicloInicio })
-
-      const quantidade = await duplicarFixosCicloAnterior(cicloInicio)
-
-      logger.info('Fixos aplicados', { quantidade })
-
-      appStore.limparCacheCiclo(appStore.getCicloInicioISO())
-      await carregarTransacoes()
-      return true
-    } catch (error) {
-      const message = extrairMensagemErro(error)
-      logger.error('Erro ao aplicar fixos', { error })
-      appStore.setError(message)
-      return false
-    } finally {
-      appStore.setLoading('aplicandoFixos', false)
-    }
-  }
-
   function iniciarEdicao(transacao: Transacao): void {
     logger.debug('Iniciando edição', { id: transacao.id })
     appStore.setEditandoId(transacao.id)
@@ -262,7 +242,6 @@ export function useTransacoes() {
     carregarTransacoes,
     salvarTransacao,
     excluir,
-    aplicarFixos,
     iniciarEdicao,
     cancelarEdicao,
   }

@@ -22,9 +22,9 @@ export interface Transacao {
   descricao: string | null
   ciclo_inicio: string // ISO date do início do ciclo (dia 9)
   created_at: string
-  dividido?: boolean
-  totalParcelas?: number
-  parcelaAtual?: number
+  dividido?: boolean | null
+  totalParcelas?: number | null
+  parcelaAtual?: number | null
 }
 
 export interface Ciclo {
