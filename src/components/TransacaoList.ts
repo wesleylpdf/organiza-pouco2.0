@@ -9,15 +9,15 @@ let deleteCallback: DeleteCallback
 
 export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-      <button id="btn-aplicar-fixos" class="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-bold text-xs sm:text-sm hover:bg-emerald-700 transition shadow-lg">
-        <span>📋</span> <span class="hidden sm:inline">Aplicar fixos</span><span class="sm:hidden">Fixos</span>
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <button id="btn-aplicar-fixos" class="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 px-6 py-2 py-3 rounded-full font-bold text-sm hover:bg-emerald-700 transition shadow-lg">
+        <span>📋</span> <span class="hidden md:inline">Aplicar fixos</span><span class="md:hidden">Fixos</span>
       </button>
-      <label class="flex items-center justify-center gap-2 cursor-pointer text-xs sm:text-sm font-bold text-slate-600 bg-slate-50 px-3 sm:px-4 py-2 sm:py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
-        <input type="checkbox" id="filter-fixed" class="w-4 h-4"> <span class="hidden sm:inline">Mostrar apenas Fixas</span><span class="sm:hidden">Fixas</span>
+      <label class="flex items-center justify-center gap-2 cursor-pointer text-sm font-bold text-slate-600 bg-slate-50 px-4 py-2 py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+        <input type="checkbox" id="filter-fixed" class="w-4 h-4"> <span class="hidden md:inline">Mostrar apenas Fixas</span><span class="md:hidden">Fixas</span>
       </label>
     </div>
-    <div id="transaction-list" class="space-y-2 sm:space-y-3 pb-10"></div>
+    <div id="transaction-list" class="space-y-3 pb-10"></div>
     <p id="list-empty" class="text-center text-slate-400 py-8 hidden">Nenhuma transação neste ciclo</p>
   `
 

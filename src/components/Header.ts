@@ -1,5 +1,6 @@
 import { logout } from '@/hooks/useAuth'
 import { formatarMoeda } from '@/utils/format'
+import { toast } from '@/utils/toast'
 import type { TotaisCiclo } from '@/types'
 
 export interface HeaderProps {
@@ -104,6 +105,7 @@ export function criarHeader(container: HTMLElement): void {
     const diaInicio = parseInt(inicioSelect.value, 10)
     const diaFim = parseInt(fimSelect.value, 10)
     window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
+    toast.success('Configuração de ciclo salva!')
   })
 }
 

@@ -19,8 +19,8 @@ export function criarTransacaoForm(
   onGerenciarCategorias: () => void
 ): void {
   container.innerHTML = `
-    <div class="rounded-2xl sm:rounded-3xl p-4 sm:p-6 border shadow-sm mb-4 sm:mb-8 bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
-      <h3 id="form-title" class="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
+    <div class="rounded-3xl p-6 mb-8 border bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+      <h3 id="form-title" class="font-bold text-lg mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
       <form id="transaction-form" class="space-y-3 sm:space-y-4">
         <input type="hidden" id="input-id">
         <div class="grid grid-cols-1 gap-3 sm:gap-4">

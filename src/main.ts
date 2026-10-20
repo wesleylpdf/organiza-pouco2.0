@@ -11,6 +11,7 @@ import { criarModalCategorias } from '@/components/ModalCategorias'
 import { formatarIntervaloCiclo, getOffsetInicial } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
+import { toast } from '@/utils/toast'
 import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase } from '@/services/configuracoes'
 import type { Transacao, TotaisCiclo } from '@/types'
 
@@ -87,12 +88,25 @@ async function setupApp(_userEmail: string): Promise<void> {
   const chartContainer = document.createElement('div')
   const listContainer = document.createElement('div')
   listContainer.id = 'list-container'
+  const exportContainer = document.createElement('div')
+  exportContainer.id = 'export-container'
 
   mainContainer.innerHTML = ''
   mainContainer.appendChild(headerContainer)
   mainContainer.appendChild(formContainer)
   mainContainer.appendChild(chartContainer)
   mainContainer.appendChild(listContainer)
+  mainContainer.appendChild(exportContainer)
+
+  // Botão de exportação
+  exportContainer.innerHTML = `
+    <select id="export-format" class="bg-white dark:bg-slate-800 dark:text-white border px-3 rounded-full text-xs font-bold w-1/3">
+      <option value="csv">Exportar como CSV</option>
+      <option value="pdf">Exportar como PDF</option>
+      <option value="xlsx">Exportar como Excel</option>
+    </select>
+    <button id="export-btn" class="bg-blue-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-blue-700 transition">Exportar</button>
+  `
 
   // Inicializa componentes
   criarHeader(headerContainer)
@@ -120,6 +134,9 @@ async function setupApp(_userEmail: string): Promise<void> {
     await salvarConfiguracaoCiclo(diaInicio, diaFim, _userEmail)
     debouncedUpdateDashboard()
   })
+
+  // Evento de exportação
+  document.getElementById('export-btn')!.addEventListener('click', handleExportar)
 
   // Outros eventos
   document.getElementById('btn-aplicar-fixos')!.addEventListener('click', handleAplicarFixos)
@@ -306,6 +323,49 @@ async function handleAplicarFixos(): Promise<void> {
   if (success) {
     updateLista()
     updateHeader()
+  }
+}
+
+function handleExportar(): void {
+  const formatEl = document.getElementById('export-format') as HTMLSelectElement | null
+  const format = formatEl?.value || 'csv'
+  const transacoes = appStore.getTransacoes()
+
+  if (transacoes.length === 0) {
+    toast.warning('Nenhuma transação para exportar')
+    return
+  }
+
+  if (format === 'csv') {
+    const headers = ['id', 'data', 'tipo', 'categoria', 'valor', 'fixo', 'descricao']
+    const rows = transacoes.map((t) => [
+      t.id,
+      t.data,
+      t.tipo,
+      t.categoria,
+      Number(t.valor),
+      t.fixo ? 'Sim' : 'Não',
+      t.descricao || '',
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `transacoes-${new Date().toISOString().slice(0, 10)}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success(`${transacoes.length} transação(ões) exportada(s) para CSV`)
+  } else {
+    toast.warning(`Exportação para ${format.toUpperCase()} não disponível. Use CSV.`)
   }
 }
 
