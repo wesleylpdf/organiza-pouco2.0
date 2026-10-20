@@ -91,6 +91,9 @@ export async function criarTransacao(params: {
     appStore.getDiaInicioCiclo()
   )
 
+  // Remove sufixo de parcelamento ( N/M) da descrição antes de salvar
+  const descricaoLimpa = (params.descricao || '').replace(/\s+\d+\/\d+$/, '')
+
   const { data, error } = await supabase
     .from('transacoes')
     .insert(paraSnakeCase({
@@ -99,7 +102,7 @@ export async function criarTransacao(params: {
       data: params.data,
       tipo: params.tipo,
       categoria: params.categoria,
-      descricao: params.descricao,
+      descricao: descricaoLimpa,
       ciclo_inicio: cicloInicio,
       dividido: params.dividido ?? false,
       totalParcelas: params.totalParcelas ?? null,
@@ -174,7 +177,8 @@ export async function listarParcelasRelacionadas(params: {
   if (error) throw error
 
   const prefixo = params.descricaoBase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const regex = new RegExp(`^${prefixo}\\s+\\d+/\\d+$`)
+  // Aceita tanto a descrição pura (sem sufixo) quanto o formato antigo com " N/M"
+  const regex = new RegExp(`^${prefixo}(\\s+\\d+/\\d+)?$`)
   return (data || []).map(paraTransacao).filter(tx => regex.test(tx.descricao || ''))
 }
 

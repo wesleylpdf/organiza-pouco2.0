@@ -60,12 +60,15 @@ export function renderLista(
     const descSanitizada = sanitizarHTML(t.descricao || '')
     const catSanitizada = sanitizarHTML(t.categoria)
     const fixoIcon = t.fixo ? ' 📌' : ''
+    const parceladoIcon = (t.dividido && t.totalParcelas && t.parcelaAtual)
+      ? ` 🔄 ${t.parcelaAtual}/${t.totalParcelas}`
+      : ''
 
     return `
       <div class="p-3 sm:p-4 bg-white border rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 shadow-sm dark:bg-slate-800 dark:border-slate-700">
         <div class="min-w-0 flex-1">
           <span class="block font-bold text-sm dark:text-white truncate">${descSanitizada}${fixoIcon}</span>
-          <span class="text-[10px] sm:text-xs text-slate-500">${catSanitizada} | ${formatarData(t.data)}</span>
+          <span class="text-[10px] sm:text-xs text-slate-500">${catSanitizada} | ${formatarData(t.data)}${parceladoIcon}</span>
         </div>
         <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 shrink-0">
           <span class="font-bold ${corClasse} text-sm">${sinal} ${formatarMoeda(t.valor)}</span>

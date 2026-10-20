@@ -107,7 +107,7 @@ export function useTransacoes() {
               valor: params.valor,
               tipo: params.tipo,
               categoria: params.categoria,
-              descricao: `${params.descricao} ${i + 1}/${qtdeNova}`,
+              descricao: params.descricao,
               dividido: params.dividido,
               totalParcelas: qtdeNova,
             })
@@ -132,7 +132,7 @@ export function useTransacoes() {
                 ...params,
                 data: dataNova.toISOString().slice(0, 10),
                 parcelaAtual: i + 1,
-                descricao: `${params.descricao} ${i + 1}/${qtdeNova}`,
+                descricao: params.descricao,
                 totalParcelas: qtdeNova,
               } as CriarTransacaoParams)
             }
@@ -153,7 +153,7 @@ export function useTransacoes() {
             ...params,
             data: dataParcela.toISOString().slice(0, 10),
             parcelaAtual: i + 1,
-            descricao: `${params.descricao} ${i + 1}/${params.totalParcelas}`,
+            descricao: params.descricao,
           } as CriarTransacaoParams)
         }
       } else {
