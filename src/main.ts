@@ -12,6 +12,7 @@ import { formatarIntervaloCiclo, getOffsetInicial } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
+import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
 import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase } from '@/services/configuracoes'
 import jsPDF from 'jspdf'
 import * as XLSX from 'xlsx'
@@ -68,6 +69,9 @@ function init(): void {
   })
 
   window.addEventListener('beforeunload', unsubAuth)
+
+  // Detecta e aplica novas versões sem precisar de Ctrl+Shift+R
+  iniciarVerificacaoDeAtualizacoes()
 }
 
 async function setupApp(_userEmail: string): Promise<void> {
