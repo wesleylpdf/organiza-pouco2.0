@@ -46,6 +46,17 @@ export function getCicloAtual(
 }
 
 /**
+ * Converte data para string ISO (YYYY-MM-DD) usando o fuso horário local.
+ * Evita problemas de fuso quando a data tem hora próxima da meia-noite UTC.
+ */
+export function formatDateLocalISO(data: Date): string {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
+}
+
+/**
  * Converte data para string ISO (YYYY-MM-DD)
  */
 export function formatCicloISO(data: Date): string {

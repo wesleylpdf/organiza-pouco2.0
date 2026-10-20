@@ -76,14 +76,25 @@ CREATE OR REPLACE FUNCTION public.update_ciclo_inicio()
 RETURNS TRIGGER
 LANGUAGE PLPGSQL
 AS $$
+DECLARE
+  dia_inicio_ciclo INTEGER;
 BEGIN
-  -- Calcula ciclo_inicio baseado na data
-  -- Se dia < 9, ciclo começou dia 9 do mês anterior
-  -- Se dia >= 9, ciclo começou dia 9 do próprio mês
+  -- Busca o dia de início do ciclo configurado pelo usuário
+  SELECT dia_inicio_ciclo INTO dia_inicio_ciclo
+  FROM configuracoes_usuario
+  WHERE user_id = NEW.user_id;
+
+  IF dia_inicio_ciclo IS NULL THEN
+    dia_inicio_ciclo := 9; -- padrão
+  END IF;
+
+  -- Calcula ciclo_inicio baseado na data e configuração do usuário
+  -- Se dia < dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do mês anterior
+  -- Se dia >= dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do próprio mês
   NEW.ciclo_inicio := CASE
-    WHEN EXTRACT(DAY FROM NEW.data) < 9
-    THEN date_trunc('month', NEW.data)::DATE - INTERVAL '1 month' + INTERVAL '8 days'
-    ELSE date_trunc('month', NEW.data)::DATE + INTERVAL '8 days'
+    WHEN EXTRACT(DAY FROM NEW.data) < dia_inicio_ciclo
+    THEN (date_trunc('month', NEW.data) - INTERVAL '1 month')::DATE + (dia_inicio_ciclo - 1) * INTERVAL '1 day'
+    ELSE date_trunc('month', NEW.data)::DATE + (dia_inicio_ciclo - 1) * INTERVAL '1 day'
   END;
 
   RETURN NEW;
@@ -109,7 +120,7 @@ COMMENT ON COLUMN public.transacoes.tipo IS 'Tipo: entrada ou saída';
 COMMENT ON COLUMN public.transacoes.categoria IS 'Categoria da transação';
 COMMENT ON COLUMN public.transacoes.fixo IS 'Indica se é transação fixa recorrente';
 COMMENT ON COLUMN public.transacoes.descricao IS 'Descrição opcional da transação';
-COMMENT ON COLUMN public.transacoes.ciclo_inicio IS 'Data de início do ciclo financeiro (dia 9)';
+COMMENT ON COLUMN public.transacoes.ciclo_inicio IS 'Data de início do ciclo financeiro (respeita dia_inicio_ciclo do usuário)';
 COMMENT ON COLUMN public.transacoes.created_at IS 'Timestamp de criação';
 
 -- ============================================
