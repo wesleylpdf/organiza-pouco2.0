@@ -193,6 +193,7 @@ function updateHeader(): void {
   const ciclo = appStore.getCicloAtual()
   const transacoes = appStore.getTransacoes()
   const state = getAuthState()
+  const config = appStore.getState()
 
   atualizarHeader({
     cicloDatas: formatarIntervaloCiclo(ciclo.inicio, ciclo.fim),
@@ -211,6 +212,8 @@ function updateHeader(): void {
       debouncedUpdateDashboard()
     },
     user: state.user?.email || 'Usuario',
+    diaInicioCiclo: config.diaInicioCiclo,
+    diaFimCiclo: config.diaFimCiclo,
   })
 }
 

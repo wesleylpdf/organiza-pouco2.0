@@ -9,6 +9,8 @@ export interface HeaderProps {
   onCicloProximo: () => void
   onAlterarDiaCiclo: (diaInicio: number, diaFim: number) => void
   user: string
+  diaInicioCiclo?: number
+  diaFimCiclo?: number
 }
 
 export function criarHeader(container: HTMLElement): void {
@@ -35,13 +37,13 @@ export function criarHeader(container: HTMLElement): void {
       <div class="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
         <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Início:</label>
         <select id="dia-inicio-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
-          ${Array.from({ length: 28 }, (_, i) => i + 1)
+          ${Array.from({ length: 31 }, (_, i) => i + 1)
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
         </select>
         <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fim:</label>
         <select id="dia-fim-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
-          ${Array.from({ length: 28 }, (_, i) => i + 1)
+          ${Array.from({ length: 31 }, (_, i) => i + 1)
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
         </select>
@@ -104,4 +106,10 @@ export function atualizarHeader(props: HeaderProps): void {
   root.querySelector('#cycle-total')!.textContent = formatarMoeda(props.totais.saldo)
 
   document.querySelector('#header-user')!.textContent = props.user
+
+  // Mantém os selects com o valor atual do ciclo
+  const inicioSelect = document.querySelector('#dia-inicio-ciclo') as HTMLSelectElement | null
+  const fimSelect = document.querySelector('#dia-fim-ciclo') as HTMLSelectElement | null
+  if (inicioSelect) inicioSelect.value = String(props.diaInicioCiclo ?? 9)
+  if (fimSelect) fimSelect.value = String(props.diaFimCiclo ?? 8)
 }
