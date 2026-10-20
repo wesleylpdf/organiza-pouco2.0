@@ -4,11 +4,15 @@
  */
 
 import { appStore } from '@/stores/AppState'
+import { supabase } from '@/lib/supabaseClient'
 import {
   listarTransacoes,
   criarTransacao,
   atualizarTransacao,
   excluirTransacao,
+  listarParcelasRelacionadas,
+  atualizarParcelasRelacionadas,
+  excluirParcelasRelacionadas,
   duplicarFixosCicloAnterior,
 } from '@/services/transacoes'
 import { validarTransacao, extrairMensagemErro } from '@/utils/validation'
@@ -75,8 +79,29 @@ export function useTransacoes() {
       const editandoId = appStore.getEditandoId()
 
       if (editandoId) {
-        logger.debug('Atualizando transação', { id: editandoId, params })
-        await atualizarTransacao(editandoId, params)
+        const transacoes = appStore.getTransacoes()
+        const original = transacoes.find(tx => tx.id === editandoId)
+
+        if (original?.dividido && original.totalParcelas) {
+          logger.debug('Atualizando parcelas relacionadas', { id: editandoId, totalParcelas: original.totalParcelas })
+          const descricaoBase = (original.descricao || '').replace(/\s+\d+\/\d+$/, '')
+          const { data: { user } } = await supabase.auth.getUser()
+          if (!user) throw new Error('Usuário não autenticado')
+
+          const relacionadas = await listarParcelasRelacionadas({
+            userId: user.id,
+            totalParcelas: original.totalParcelas,
+            descricaoBase,
+          })
+
+          // Não alterar data em edição em massa (parcelas estão em meses diferentes)
+          const { data: _, ...paramsSemData } = params
+          await atualizarParcelasRelacionadas(relacionadas.map(tx => tx.id), paramsSemData)
+        } else {
+          logger.debug('Atualizando transação', { id: editandoId, params })
+          await atualizarTransacao(editandoId, params)
+        }
+
         appStore.setEditandoId(null)
       } else if (params.dividido && params.totalParcelas > 1) {
         logger.debug('Criando transação dividida', { totalParcelas: params.totalParcelas })
@@ -118,8 +143,26 @@ export function useTransacoes() {
         return false
       }
 
-      logger.debug('Excluindo transação', { id })
-      await excluirTransacao(id)
+      const transacoes = appStore.getTransacoes()
+      const original = transacoes.find(tx => tx.id === id)
+
+      if (original?.dividido && original.totalParcelas) {
+        logger.debug('Excluindo parcelas relacionadas', { id, totalParcelas: original.totalParcelas })
+        const descricaoBase = (original.descricao || '').replace(/\s+\d+\/\d+$/, '')
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Usuário não autenticado')
+
+        const relacionadas = await listarParcelasRelacionadas({
+          userId: user.id,
+          totalParcelas: original.totalParcelas,
+          descricaoBase,
+        })
+
+        await excluirParcelasRelacionadas(relacionadas.map(tx => tx.id))
+      } else {
+        logger.debug('Excluindo transação', { id })
+        await excluirTransacao(id)
+      }
 
       logger.info('Transação excluída', { id })
       appStore.limparCacheCiclo()

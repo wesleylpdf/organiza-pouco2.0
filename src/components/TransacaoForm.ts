@@ -40,9 +40,11 @@ export function criarTransacaoForm(
             <!-- Populado dinamicamente -->
           </select>
         </div>
-        <button type="button" id="btn-gerenciar-categorias" class="w-full text-xs text-blue-500 hover:underline font-bold">
-          ⚙️ Gerenciar categorias
-        </button>
+        <div class="flex justify-end mt-1">
+          <button type="button" id="btn-gerenciar-categorias" class="text-xs text-blue-500 hover:underline font-bold">
+            ⚙️ Gerenciar categorias
+          </button>
+        </div>
         <input type="text" id="input-description" required maxlength="100"
           class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
           placeholder="Descrição">
@@ -164,4 +166,11 @@ export function preencherFormEdicao(container: HTMLElement, t: Transacao): void 
   container.querySelector('#form-title')!.textContent = 'Editar Transação'
   container.querySelector('#cancel-btn')!.classList.remove('hidden')
   window.scrollTo({ top: 0, behavior: 'smooth' })
+
+  const inputDividido = container.querySelector('#input-dividido') as HTMLInputElement
+  const inputTotalParcelas = container.querySelector('#input-total-parcelas') as HTMLInputElement
+  const parcelasContainer = container.querySelector('#parcelas-container')!
+  inputDividido.checked = !!t.dividido
+  inputTotalParcelas.value = String(t.totalParcelas || 1)
+  if (t.dividido) parcelasContainer.classList.remove('hidden')
 }

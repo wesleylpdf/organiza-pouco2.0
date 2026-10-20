@@ -115,6 +115,66 @@ export async function excluirTransacao(id: string): Promise<void> {
 }
 
 /**
+ * Lista parcelas relacionadas de uma transação dividida.
+ * Busca transações divididas do mesmo usuário com total_parcelas igual
+ * e filtra por descrição base (antes do sufixo " N/M").
+ */
+export async function listarParcelasRelacionadas(params: {
+  userId: string
+  totalParcelas: number
+  descricaoBase: string
+}): Promise<Transacao[]> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Usuário não autenticado')
+
+  const { data, error } = await supabase
+    .from('transacoes')
+    .select('*')
+    .eq('user_id', params.userId)
+    .eq('dividido', true)
+    .eq('total_parcelas', params.totalParcelas)
+    .order('data', { ascending: true })
+
+  if (error) throw error
+
+  const prefixo = params.descricaoBase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`^${prefixo}\\s+\\d+/\\d+$`)
+  return (data || []).filter(tx => regex.test(tx.descricao || ''))
+}
+
+/**
+ * Atualiza parcelas relacionadas de uma transação dividida (update em lote).
+ * Não recalcula ciclo_inicio por data (parcelas estão em meses diferentes).
+ */
+export async function atualizarParcelasRelacionadas(
+  ids: string[],
+  params: Partial<Omit<Transacao, 'id' | 'user_id' | 'created_at'>>
+): Promise<void> {
+  if (ids.length === 0) return
+
+  const { error } = await supabase
+    .from('transacoes')
+    .update(params)
+    .in('id', ids)
+
+  if (error) throw error
+}
+
+/**
+ * Exclui parcelas relacionadas de uma transação dividida (delete em lote).
+ */
+export async function excluirParcelasRelacionadas(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+
+  const { error } = await supabase
+    .from('transacoes')
+    .delete()
+    .in('id', ids)
+
+  if (error) throw error
+}
+
+/**
  * Duplica transações fixas do ciclo anterior para o ciclo atual
  */
 export async function duplicarFixosCicloAnterior(cicloAtualInicio: string): Promise<number> {
