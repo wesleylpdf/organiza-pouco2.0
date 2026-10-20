@@ -16,10 +16,10 @@ export interface HeaderProps {
 export function criarHeader(container: HTMLElement): void {
   container.innerHTML = `
     <header class="max-w-4xl mx-auto mb-3 sm:mb-4">
-      <div class="flex justify-between items-center gap-2">
+      <div class="flex flex-col items-center gap-1 sm:gap-2 text-center">
         <h1 class="font-black text-base sm:text-lg text-slate-800 dark:text-white">Organiza Pouco</h1>
-        <div class="flex items-center gap-1 sm:gap-2">
-          <span id="header-user" class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline"></span>
+        <span id="header-user" class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline"></span>
+        <div class="flex items-center gap-1 sm:gap-2 mt-2 sm:mt-3">
           <button id="theme-toggle" class="bg-white p-2 rounded-full shadow border dark:bg-slate-800 dark:border-slate-700">
             <span id="theme-icon">☀️</span>
           </button>
@@ -34,7 +34,7 @@ export function criarHeader(container: HTMLElement): void {
         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center flex-1" id="cycle-dates">Resumo do Ciclo</span>
         <button id="ciclo-proximo" class="bg-slate-100 px-2 sm:px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs sm:text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">→</button>
       </div>
-      <div class="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
+      <div class="flex justify-center items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
         <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Início:</label>
         <select id="dia-inicio-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
           ${Array.from({ length: 31 }, (_, i) => i + 1)
