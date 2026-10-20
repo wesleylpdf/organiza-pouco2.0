@@ -4,6 +4,42 @@ import type { Transacao, TipoTransacao } from '@/types'
 import { getCicloInicioParaData, formatCicloISO } from '@/utils/ciclo'
 
 /**
+ * Converte chaves camelCase (TypeScript) para snake_case (Supabase/DB).
+ * Ignora chaves já em snake_case ou com valores undefined/null.
+ */
+function paraSnakeCase(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined || value === null) continue
+    const snakeKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
+    result[snakeKey] = value
+  }
+  return result
+}
+
+/**
+ * Mapeia uma linha do Supabase (snake_case) para o tipo Transacao (camelCase).
+ * Os campos total_parcelas / parcela_atual do DB viram totalParcelas / parcelaAtual.
+ */
+function paraTransacao(row: any): Transacao {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    valor: row.valor,
+    data: row.data,
+    tipo: row.tipo,
+    categoria: row.categoria,
+    fixo: row.fixo,
+    descricao: row.descricao,
+    ciclo_inicio: row.ciclo_inicio,
+    created_at: row.created_at,
+    dividido: row.dividido,
+    totalParcelas: row.total_parcelas,
+    parcelaAtual: row.parcela_atual,
+  }
+}
+
+/**
  * Lista transações de um ciclo específico.
  * Aceita cicloInicio (comportamento antigo, filtra por ciclo_inicio)
  * ou dataInicio + dataFim (filtra por período de datas).
@@ -31,7 +67,7 @@ export async function listarTransacoes(params: {
   const { data, error } = await query
 
   if (error) throw error
-  return data || []
+  return (data || []).map(paraTransacao)
 }
 
 /**
@@ -57,7 +93,7 @@ export async function criarTransacao(params: {
 
   const { data, error } = await supabase
     .from('transacoes')
-    .insert({
+    .insert(paraSnakeCase({
       user_id: user.id,
       valor: params.valor,
       data: params.data,
@@ -66,14 +102,14 @@ export async function criarTransacao(params: {
       descricao: params.descricao,
       ciclo_inicio: cicloInicio,
       dividido: params.dividido ?? false,
-      total_parcelas: params.totalParcelas ?? null,
-      parcela_atual: params.parcelaAtual ?? null,
-    })
+      totalParcelas: params.totalParcelas ?? null,
+      parcelaAtual: params.parcelaAtual ?? null,
+    }))
     .select()
     .single()
 
   if (error) throw error
-  return data
+  return paraTransacao(data)
 }
 
 /**
@@ -93,13 +129,13 @@ export async function atualizarTransacao(
 
   const { data, error } = await supabase
     .from('transacoes')
-    .update(params)
+    .update(paraSnakeCase(params))
     .eq('id', id)
     .select()
     .single()
 
   if (error) throw error
-  return data
+  return paraTransacao(data)
 }
 
 /**
@@ -139,7 +175,7 @@ export async function listarParcelasRelacionadas(params: {
 
   const prefixo = params.descricaoBase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const regex = new RegExp(`^${prefixo}\\s+\\d+/\\d+$`)
-  return (data || []).filter(tx => regex.test(tx.descricao || ''))
+  return (data || []).map(paraTransacao).filter(tx => regex.test(tx.descricao || ''))
 }
 
 /**
@@ -154,7 +190,7 @@ export async function atualizarParcelasRelacionadas(
 
   const { error } = await supabase
     .from('transacoes')
-    .update(params)
+    .update(paraSnakeCase(params))
     .in('id', ids)
 
   if (error) throw error
