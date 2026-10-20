@@ -13,6 +13,8 @@ import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
 import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase } from '@/services/configuracoes'
+import jsPDF from 'jspdf'
+import * as XLSX from 'xlsx'
 import type { Transacao, TotaisCiclo } from '@/types'
 
 // Elementos DOM
@@ -347,18 +349,19 @@ function handleExportar(): void {
     return
   }
 
-  if (format === 'csv') {
-    const headers = ['id', 'data', 'tipo', 'categoria', 'valor', 'fixo', 'descricao']
-    const rows = transacoes.map((t) => [
-      t.id,
-      t.data,
-      t.tipo,
-      t.categoria,
-      Number(t.valor),
-      t.fixo ? 'Sim' : 'Não',
-      t.descricao || '',
-    ])
+  const headers = ['id', 'data', 'tipo', 'categoria', 'valor', 'fixo', 'descricao']
+  const rows = transacoes.map((t) => [
+    t.id,
+    t.data,
+    t.tipo,
+    t.categoria,
+    Number(t.valor),
+    t.fixo ? 'Sim' : 'Não',
+    t.descricao || '',
+  ])
+  const nomeArquivo = `transacoes-${new Date().toISOString().slice(0, 10)}`
 
+  if (format === 'csv') {
     const csvContent = [
       headers.join(','),
       ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')),
@@ -368,13 +371,54 @@ function handleExportar(): void {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.setAttribute('href', url)
-    link.setAttribute('download', `transacoes-${new Date().toISOString().slice(0, 10)}.csv`)
+    link.setAttribute('download', `${nomeArquivo}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
     toast.success(`${transacoes.length} transação(ões) exportada(s) para CSV`)
+  } else if (format === 'pdf') {
+    const doc = new jsPDF()
+    doc.setFontSize(14)
+    doc.text('Relatório de Transações', 14, 14)
+    doc.setFontSize(10)
+    let y = 28
+    headers.forEach((h, i) => doc.text(h, 14 + i * 28, y))
+    y += 8
+    rows.forEach((row) => {
+      row.forEach((v, i) => doc.text(String(v), 14 + i * 28, y))
+      y += 7
+    })
+    const blob = doc.output('blob')
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${nomeArquivo}.pdf`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success(`${transacoes.length} transação(ões) exportada(s) para PDF`)
+  } else if (format === 'xlsx') {
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Transações')
+    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${nomeArquivo}.xlsx`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success(`${transacoes.length} transação(ões) exportada(s) para Excel`)
   } else {
     toast.warning(`Exportação para ${format.toUpperCase()} não disponível. Use CSV.`)
   }
