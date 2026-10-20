@@ -11,7 +11,6 @@ import {
   atualizarTransacao,
   excluirTransacao,
   listarParcelasRelacionadas,
-  atualizarParcelasRelacionadas,
   excluirParcelasRelacionadas,
   duplicarFixosCicloAnterior,
 } from '@/services/transacoes'
@@ -94,9 +93,50 @@ export function useTransacoes() {
             descricaoBase,
           })
 
-          // Não alterar data em edição em massa (parcelas estão em meses diferentes)
-          const { data: _, ...paramsSemData } = params
-          await atualizarParcelasRelacionadas(relacionadas.map(tx => tx.id), paramsSemData)
+          // Ordena por data crescente (primeira parcela primeiro)
+          relacionadas.sort((a, b) => a.data.localeCompare(b.data))
+
+          const qtdeAtual = relacionadas.length
+          const qtdeNova = params.totalParcelas || 1
+          const qtdeManter = Math.min(qtdeAtual, qtdeNova)
+
+          // Atualiza as parcelas que serão mantidas (sem alterar data, pois estão em meses diferentes)
+          for (let i = 0; i < qtdeManter; i++) {
+            const tx = relacionadas[i]
+            await atualizarTransacao(tx.id, {
+              valor: params.valor,
+              tipo: params.tipo,
+              categoria: params.categoria,
+              descricao: `${params.descricao} ${i + 1}/${qtdeNova}`,
+              dividido: params.dividido,
+              totalParcelas: qtdeNova,
+            })
+          }
+
+          // Exclui parcelas excedentes quando diminui a quantidade
+          const paraExcluir = relacionadas.slice(qtdeManter)
+          if (paraExcluir.length > 0) {
+            await excluirParcelasRelacionadas(paraExcluir.map(tx => tx.id))
+          }
+
+          // Cria parcelas faltantes quando aumenta a quantidade
+          if (qtdeNova > qtdeAtual) {
+            const ultimaParcela = relacionadas[relacionadas.length - 1]
+            const dataBase = ultimaParcela
+              ? new Date(ultimaParcela.data + 'T00:00:00')
+              : new Date(params.data + 'T00:00:00')
+            for (let i = qtdeAtual; i < qtdeNova; i++) {
+              const dataNova = new Date(dataBase)
+              dataNova.setMonth(dataNova.getMonth() + (i - qtdeAtual + 1))
+              await criarTransacao({
+                ...params,
+                data: dataNova.toISOString().slice(0, 10),
+                parcelaAtual: i + 1,
+                descricao: `${params.descricao} ${i + 1}/${qtdeNova}`,
+                totalParcelas: qtdeNova,
+              } as CriarTransacaoParams)
+            }
+          }
         } else {
           logger.debug('Atualizando transação', { id: editandoId, params })
           await atualizarTransacao(editandoId, params)
