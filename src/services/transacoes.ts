@@ -44,6 +44,9 @@ export async function criarTransacao(params: {
   categoria: string
   fixo: boolean
   descricao: string | null
+  dividido?: boolean
+  totalParcelas?: number
+  parcelaAtual?: number
 }): Promise<Transacao> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
@@ -64,6 +67,9 @@ export async function criarTransacao(params: {
       fixo: params.fixo,
       descricao: params.descricao,
       ciclo_inicio: cicloInicio,
+      dividido: params.dividido ?? false,
+      total_parcelas: params.totalParcelas ?? null,
+      parcela_atual: params.parcelaAtual ?? null,
     })
     .select()
     .single()

@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS public.transacoes (
   fixo BOOLEAN NOT NULL DEFAULT FALSE,
   descricao TEXT,
   ciclo_inicio DATE NOT NULL,
+  dividido BOOLEAN NOT NULL DEFAULT FALSE,
+  total_parcelas INTEGER,
+  parcela_atual INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

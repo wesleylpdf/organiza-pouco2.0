@@ -23,6 +23,8 @@ export interface CriarTransacaoParams {
   categoria: string
   fixo: boolean
   descricao: string
+  dividido: boolean
+  totalParcelas: number
 }
 
 export function useTransacoes() {
@@ -77,6 +79,19 @@ export function useTransacoes() {
         logger.debug('Atualizando transação', { id: editandoId, params })
         await atualizarTransacao(editandoId, params)
         appStore.setEditandoId(null)
+      } else if (params.dividido && params.totalParcelas > 1) {
+        logger.debug('Criando transação dividida', { totalParcelas: params.totalParcelas })
+        const dataInicial = new Date(params.data + 'T00:00:00')
+        for (let i = 0; i < params.totalParcelas; i++) {
+          const dataParcela = new Date(dataInicial)
+          dataParcela.setMonth(dataParcela.getMonth() + i)
+          await criarTransacao({
+            ...params,
+            data: dataParcela.toISOString().slice(0, 10),
+            parcelaAtual: i + 1,
+            descricao: `${params.descricao} ${i + 1}/${params.totalParcelas}`,
+          } as CriarTransacaoParams)
+        }
       } else {
         logger.debug('Criando transação', { params })
         await criarTransacao(params)
