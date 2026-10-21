@@ -42,14 +42,17 @@
       const supabaseAnonKey = 'sb_publishable_4UfOScDU3DiJ4vyPrAKakg_1xmw4Qcp'
       const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey)
 
-      const params = new URLSearchParams(window.location.search)
-      const type = params.get('type') // 'signup'
-      const accessToken = params.get('access_token')
-      const refreshToken = params.get('refresh_token')
-      const expiresIn = params.get('expires_in')
-      const error = params.get('error')
-      const errorCode = params.get('error_code')
-      const errorDescription = params.get('error_description')
+      const searchParams = new URLSearchParams(window.location.search)
+      const hashParams = new URLSearchParams(window.location.hash.replace('#', ''))
+      const get = (name) => searchParams.get(name) || hashParams.get(name)
+
+      const type = get('type') // 'signup'
+      const accessToken = get('access_token')
+      const refreshToken = get('refresh_token')
+      const expiresIn = get('expires_in')
+      const error = get('error')
+      const errorCode = get('error_code')
+      const errorDescription = get('error_description')
 
       const REDIRAZEE_PARA_LOGIN = 5000 // 5 segundos
 
