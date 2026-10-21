@@ -87,14 +87,14 @@ export function criarAuthForm(container: HTMLElement): void {
       else await resetSenha(email)
 
       if (modo === 'cadastro') {
-        errorEl.textContent = 'Conta criada! Faça login.'
+        errorEl.textContent = 'Conta criada! Confirmar no e-mail cadastrado!'
         errorEl.classList.remove('hidden')
         errorEl.classList.replace('text-rose-500', 'text-emerald-500')
         modo = 'login'
         setTimeout(() => atualizarUI(), 2000)
       } else if (modo === 'reset') {
         passInput.value = ''
-        errorEl.textContent = 'Email de recuperação enviado!'
+        errorEl.textContent = 'Email de recuperação enviado, Confirmar no e-mail cadastrado!'
         errorEl.classList.remove('hidden')
         errorEl.classList.replace('text-rose-500', 'text-emerald-500')
         modo = 'login'
