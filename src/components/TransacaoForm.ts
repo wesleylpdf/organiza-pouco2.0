@@ -1,5 +1,6 @@
 import type { TipoTransacao, Transacao } from '@/types'
 import { appStore } from '@/stores/AppState'
+import { formatDateLocalISO } from '@/utils/ciclo'
 
 type SaveCallback = (data: {
   valor: number
@@ -89,6 +90,7 @@ export function criarTransacaoForm(
   })
 
   const inputDividido = container.querySelector('#input-dividido') as HTMLInputElement
+  const inputTotalParcelas = container.querySelector('#input-total-parcelas') as HTMLInputElement
   const parcelasContainer = container.querySelector('#parcelas-container')!
   const dividirValorCheckboxLabel = container.querySelector('#dividir-valor-checkbox-label') as HTMLLabelElement
 
@@ -108,14 +110,13 @@ export function criarTransacaoForm(
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
 
-    const valor = parseFloat((container.querySelector('#input-value') as HTMLInputElement).value)
+    const valor = parsearValor((container.querySelector('#input-value') as HTMLInputElement).value)
     const dividirValor = (container.querySelector('#input-dividir-valor') as HTMLInputElement).checked
     const totalParcelas = parseInt((container.querySelector('#input-total-parcelas') as HTMLInputElement).value) || 1
 
-    let valorFinal = valor
-    if (dividirValor && totalParcelas > 0) {
-      valorFinal = Math.round((valor / totalParcelas) * 100) / 100
-    }
+    // Sem "Dividir valor pelas parcelas?" o valor digitado é usado exatamente
+    // como está; ao dividir, cada parcela recebe o valor em centavos.
+    const valorFinal = dividirValor ? dividirEmCentavos(valor, totalParcelas) : valor
 
     if (isNaN(valor) || valor <= 0) {
       alert('O valor deve ser maior que zero')
@@ -157,13 +158,31 @@ export function criarTransacaoForm(
     dividirValorCheckboxLabel.classList.add('hidden')
     inputDividido.checked = false
     ;(container.querySelector('#input-dividir-valor') as HTMLInputElement).checked = false
+    inputTotalParcelas.value = '2'
     inputId.value = ''
+    // Sempre volta para a data de hoje no fuso local
+    ;(container.querySelector('#input-date') as HTMLInputElement).value = formatDateLocalISO(new Date())
     formTitle.textContent = 'Nova Transação'
     cancelBtn.classList.add('hidden')
   }
 
   // Define data atual como valor padrão
-  ;(container.querySelector('#input-date') as HTMLInputElement).valueAsDate = new Date()
+  ;(container.querySelector('#input-date') as HTMLInputElement).value = formatDateLocalISO(new Date())
+}
+
+/**
+ * Lê o valor digitado aceitando vírgula (padrão pt-BR) como separador decimal.
+ */
+function parsearValor(texto: string): number {
+  const normalizado = texto.trim().replace(/\s/g, '').replace(',', '.')
+  return normalizado ? Number(normalizado) : NaN
+}
+
+/**
+ * Divide um valor monetário em centavos, arredondando o centavo.
+ */
+function dividirEmCentavos(valor: number, parcelas: number): number {
+  return Math.round(Math.round(valor * 100) / parcelas) / 100
 }
 
 /**

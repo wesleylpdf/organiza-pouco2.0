@@ -143,7 +143,7 @@ export function useTransacoes() {
                 dataNova.setMonth(dataNova.getMonth() + (i + 1))
                 return criarTransacao({
                   ...params,
-                  data: dataNova.toISOString().slice(0, 10),
+                  data: formatDateLocalISO(dataNova),
                   parcelaAtual: qtdeAtual + i + 1,
                   descricao: params.descricao,
                   totalParcelas: qtdeNova,
@@ -165,7 +165,7 @@ export function useTransacoes() {
           dataParcela.setMonth(dataParcela.getMonth() + i)
           await criarTransacao({
             ...params,
-            data: dataParcela.toISOString().slice(0, 10),
+            data: formatDateLocalISO(dataParcela),
             parcelaAtual: i + 1,
             descricao: params.descricao,
           } as CriarTransacaoParams)

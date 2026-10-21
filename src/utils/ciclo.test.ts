@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { getCicloAtual, getCicloInicioParaData, formatarIntervaloCiclo } from './ciclo'
+import { getCicloAtual, getCicloInicioParaData, formatarIntervaloCiclo, diasForaDoCiclo } from './ciclo'
 
 describe('getCicloAtual', () => {
   beforeEach(() => {
@@ -94,20 +94,31 @@ describe('getCicloAtual', () => {
     expect(ciclo.fim.getDate()).toBe(8)
   })
 
-  it('não deve deixar lacuna entre ciclos com início 9 e fim 31', () => {
+  it('deve respeitar o fim escolhido pelo usuário (início 9 e fim 31)', () => {
     vi.setSystemTime(new Date('2026-03-05T12:00:00'))
 
     const atual = getCicloAtual(0, 9, 31)
-    const proximo = getCicloAtual(1, 9, 31)
 
     // 05/03 pertence ao ciclo iniciado em 09/02
     expect(atual.inicio.getMonth()).toBe(1)
     expect(atual.inicio.getDate()).toBe(9)
+    expect(atual.fim.getMonth()).toBe(1)
+    expect(atual.fim.getDate()).toBe(28) // fevereiro/2026
 
-    // O ciclo seguinte começa no dia imediatamente posterior ao fim
+    // O usuário aceitou dias fora do ciclo (01/03 a 08/03)
+    expect(diasForaDoCiclo(9, 31)).toBeGreaterThan(0)
+  })
+
+  it('não deve deixar lacuna com o fim padrão (dia anterior ao início)', () => {
+    vi.setSystemTime(new Date('2026-03-05T12:00:00'))
+
+    const atual = getCicloAtual(0, 9, 8)
+    const proximo = getCicloAtual(1, 9, 8)
+
     const diaSeguinte = new Date(atual.fim)
     diaSeguinte.setDate(diaSeguinte.getDate() + 1)
     expect(diaSeguinte.toDateString()).toBe(proximo.inicio.toDateString())
+    expect(diasForaDoCiclo(9, 8)).toBe(0)
   })
 
   it('não deve sobrepor ciclos em fevereiro com início 31', () => {
@@ -141,13 +152,14 @@ describe('getCicloAtual', () => {
     expect(ciclo.fim.getDate()).toBe(27)
   })
 
-  it('deve manter ciclos contíguos para todos os dias de início', () => {
+  it('deve manter ciclos contíguos para todos os dias de início (fim padrão)', () => {
     vi.setSystemTime(new Date('2026-02-15T12:00:00'))
 
     for (let diaInicio = 1; diaInicio <= 31; diaInicio++) {
+      const diaFim = diaInicio === 1 ? 31 : diaInicio - 1
       for (let offset = -3; offset <= 3; offset++) {
-        const ciclo = getCicloAtual(offset, diaInicio, 8)
-        const proximo = getCicloAtual(offset + 1, diaInicio, 8)
+        const ciclo = getCicloAtual(offset, diaInicio, diaFim)
+        const proximo = getCicloAtual(offset + 1, diaInicio, diaFim)
 
         const diaSeguinte = new Date(ciclo.fim)
         diaSeguinte.setDate(diaSeguinte.getDate() + 1)

@@ -1,5 +1,7 @@
 import { logout } from '@/hooks/useAuth'
 import { formatarMoeda } from '@/utils/format'
+import { diasForaDoCiclo, DIA_FIM_PADRAO } from '@/utils/ciclo'
+import { toast } from '@/utils/toast'
 import type { TotaisCiclo } from '@/types'
 
 export interface HeaderProps {
@@ -44,8 +46,8 @@ export function criarHeader(container: HTMLElement): void {
             .join('')}
         </select>
         <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fim:</label>
-        <select id="dia-fim-ciclo" disabled title="Calculado automaticamente a partir do início"
-          class="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-500 dark:text-slate-300 cursor-not-allowed">
+        <select id="dia-fim-ciclo" title="Fim do ciclo (dia do mês)"
+          class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
           ${Array.from({ length: 31 }, (_, i) => i + 1)
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
@@ -87,29 +89,34 @@ export function criarHeader(container: HTMLElement): void {
   const inicioSelect = container.querySelector('#dia-inicio-ciclo') as HTMLSelectElement
   const fimSelect = container.querySelector('#dia-fim-ciclo') as HTMLSelectElement
 
+  // Sugere o fim padrão (dia anterior ao início) ao trocar o início,
+  // mas o usuário pode escolher outro dia no campo "Fim".
   inicioSelect.addEventListener('change', () => {
     const diaInicio = parseInt(inicioSelect.value, 10)
-    // O fim é sempre o dia anterior ao próximo início (ver src/utils/ciclo.ts)
-    const diaFim = diaInicio === 1 ? 31 : diaInicio - 1
-    fimSelect.value = String(diaFim)
-    window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
+    fimSelect.value = String(diaInicio === 1 ? 31 : diaInicio - 1)
+    emitirConfigCiclo()
   })
 
-  fimSelect.addEventListener('change', () => {
-    // O campo de fim é calculado a partir do início e fica desabilitado;
-    // mantido apenas para blindar contra alterações programáticas.
-    const diaInicio = parseInt(inicioSelect.value, 10)
-    const diaFim = parseInt(fimSelect.value, 10)
-    window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
-  })
+  fimSelect.addEventListener('change', () => emitirConfigCiclo())
 
   // Botão salvar configuração de ciclo
   const btnSalvarConfig = container.querySelector('#salvar-config-ciclo') as HTMLButtonElement
-  btnSalvarConfig.addEventListener('click', () => {
+  btnSalvarConfig.addEventListener('click', () => emitirConfigCiclo())
+
+  function emitirConfigCiclo(): void {
     const diaInicio = parseInt(inicioSelect.value, 10)
-    const diaFim = diaInicio === 1 ? 31 : diaInicio - 1
+    const diaFim = parseInt(fimSelect.value, 10)
+
+    const dias = diasForaDoCiclo(diaInicio, diaFim)
+    if (dias > 0) {
+      toast.warning(
+        `Atenção: ${dias} dia(s) entre o fim e o próximo início ficarão fora do ciclo. ` +
+        'Para ciclos contíguos, use o fim no dia anterior ao início.'
+      )
+    }
+
     window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
-  })
+  }
 }
 
 export function atualizarHeader(props: HeaderProps): void {
@@ -123,12 +130,11 @@ export function atualizarHeader(props: HeaderProps): void {
 
   document.querySelector('#header-user')!.textContent = props.user
 
-  // Mantém os selects com o valor atual do ciclo.
-  // O "Fim" é sempre derivado do início (dia anterior), por isso é exibido
-  // calculado — não reflete o valor salvo, que pode estar desatualizado.
+  // Mantém os selects com a configuração atual do ciclo.
   const inicioSelect = document.querySelector('#dia-inicio-ciclo') as HTMLSelectElement | null
   const fimSelect = document.querySelector('#dia-fim-ciclo') as HTMLSelectElement | null
   const diaInicio = props.diaInicioCiclo ?? 9
+  const diaFim = props.diaFimCiclo ?? DIA_FIM_PADRAO
   if (inicioSelect) inicioSelect.value = String(diaInicio)
-  if (fimSelect) fimSelect.value = String(diaInicio === 1 ? 31 : diaInicio - 1)
+  if (fimSelect) fimSelect.value = String(diaFim)
 }

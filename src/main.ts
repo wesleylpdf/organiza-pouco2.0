@@ -8,7 +8,7 @@ import { criarTransacaoForm, preencherFormEdicao, atualizarSelectCategorias } fr
 import { criarGrafico, atualizarGrafico } from '@/components/GraficoPizza'
 import { criarTransacaoList, renderLista } from '@/components/TransacaoList'
 import { criarModalCategorias } from '@/components/ModalCategorias'
-import { formatarIntervaloCiclo, getOffsetInicial } from '@/utils/ciclo'
+import { formatarIntervaloCiclo, getOffsetInicial, formatDateLocalISO } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
@@ -359,7 +359,7 @@ function handleExportar(): void {
     t.fixo ? 'Sim' : 'Não',
     t.descricao || '',
   ])
-  const nomeArquivo = `transacoes-${new Date().toISOString().slice(0, 10)}`
+  const nomeArquivo = `transacoes-${formatDateLocalISO(new Date())}`
 
   if (format === 'csv') {
     const csvContent = [

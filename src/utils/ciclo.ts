@@ -40,17 +40,14 @@ function inicioDoCicloDaData(data: Date, diaInicio: number): Date {
 /**
  * Calcula o ciclo financeiro baseado em um offset.
  *
- * O ciclo começa no dia `diaInicio` e termina no dia anterior ao início do
- * ciclo seguinte. O fim é sempre derivado do início: assim os ciclos são
- * contíguos, sem lacunas nem sobreposição, mesmo para dias 29, 30 e 31.
- *
- * `diaFim` é mantido na assinatura por compatibilidade, mas não é usado no
- * cálculo — dias de fim escolhidos livremente criariam dias sem ciclo.
+ * O ciclo começa no dia `diaInicio` e termina no dia `diaFim`, respeitando a
+ * escolha do usuário. Com o fim padrão (dia anterior ao próximo início) os
+ * ciclos ficam contíguos, sem lacunas.
  */
 export function getCicloAtual(
   offset = 0,
   diaInicio = DIA_INICIO_PADRAO,
-  _diaFim = DIA_FIM_PADRAO
+  diaFim = DIA_FIM_PADRAO
 ): Ciclo {
   const base = inicioDoCicloDaData(new Date(), diaInicio)
 
@@ -61,11 +58,40 @@ export function getCicloAtual(
   const proxRef = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 1)
   const proximoInicio = inicioNoMes(proxRef.getFullYear(), proxRef.getMonth(), diaInicio)
 
-  const fim = new Date(proximoInicio)
-  fim.setDate(fim.getDate() - 1)
-  fim.setHours(23, 59, 0, 0)
+  return { inicio, fim: fimDoCiclo(inicio, diaInicio, diaFim, proximoInicio), offset }
+}
 
-  return { inicio, fim, offset }
+/**
+ * Fim do ciclo: no dia `diaFim` do mês do início quando ele vem depois do
+ * início (ex.: 1 → 31) ou do mês seguinte quando vem antes (ex.: 9 → 8).
+ * Nunca passa do dia anterior ao próximo início, para não sobrepor ciclos.
+ */
+function fimDoCiclo(
+  inicio: Date,
+  diaInicio: number,
+  diaFim: number,
+  proximoInicio: Date
+): Date {
+  const mesFim = inicio.getMonth() + (diaFim < diaInicio ? 1 : 0)
+  const fim = criarDataNoMes(inicio.getFullYear(), mesFim, diaFim, 23, 59)
+
+  const limite = new Date(proximoInicio)
+  limite.setDate(limite.getDate() - 1)
+  limite.setHours(23, 59, 0, 0)
+
+  return fim.getTime() > limite.getTime() ? limite : fim
+}
+
+/**
+ * Quantos dias ficam fora de qualquer ciclo com a configuração informada.
+ * Zero quando o fim é o dia anterior ao próximo início.
+ */
+export function diasForaDoCiclo(diaInicio: number, diaFim: number): number {
+  const ciclo = getCicloAtual(0, diaInicio, diaFim)
+  const proximo = getCicloAtual(1, diaInicio, diaFim)
+  const MS_POR_DIA = 24 * 60 * 60 * 1000
+  const dias = Math.round((proximo.inicio.getTime() - ciclo.fim.getTime()) / MS_POR_DIA) - 1
+  return Math.max(0, dias)
 }
 
 /**
@@ -80,10 +106,10 @@ export function formatDateLocalISO(data: Date): string {
 }
 
 /**
- * Converte data para string ISO (YYYY-MM-DD)
+ * Converte data para string ISO (YYYY-MM-DD) no fuso local.
  */
 export function formatCicloISO(data: Date): string {
-  return data.toISOString().split('T')[0]
+  return formatDateLocalISO(data)
 }
 
 /**
