@@ -43,16 +43,19 @@ export function criarAuthForm(container: HTMLElement): void {
       submitBtn.textContent = 'Entrar'
       toggleLink.textContent = 'Não tem conta? Cadastre-se'
       resetLink.classList.remove('hidden')
+      passInput.placeholder = 'Senha'
     } else if (modo === 'cadastro') {
       subtitle.textContent = 'Crie sua conta'
       submitBtn.textContent = 'Cadastrar'
       toggleLink.textContent = 'Já tem conta? Entre'
       resetLink.classList.add('hidden')
+      passInput.placeholder = 'Senha'
     } else {
       subtitle.textContent = 'Recupere sua senha'
       submitBtn.textContent = 'Enviar email'
       toggleLink.textContent = 'Voltar para login'
       resetLink.classList.add('hidden')
+      passInput.placeholder = 'Digitar nova senha'
     }
   }
 
@@ -90,6 +93,7 @@ export function criarAuthForm(container: HTMLElement): void {
         modo = 'login'
         setTimeout(() => atualizarUI(), 2000)
       } else if (modo === 'reset') {
+        passInput.value = ''
         errorEl.textContent = 'Email de recuperação enviado!'
         errorEl.classList.remove('hidden')
         errorEl.classList.replace('text-rose-500', 'text-emerald-500')
@@ -99,6 +103,8 @@ export function criarAuthForm(container: HTMLElement): void {
     } catch (e: any) {
       errorEl.classList.remove('hidden')
       errorEl.classList.replace('text-emerald-500', 'text-rose-500')
+
+      if (modo === 'login') passInput.value = ''
 
       if (e.message?.includes('Invalid login credentials') || e.message?.includes('Invalid email or password')) {
         errorEl.textContent = 'Email ou senha incorretos'
@@ -126,6 +132,7 @@ export function criarAuthForm(container: HTMLElement): void {
   resetLink.addEventListener('click', (e) => {
     e.preventDefault()
     modo = 'reset'
+    passInput.value = ''
     atualizarUI()
   })
 
