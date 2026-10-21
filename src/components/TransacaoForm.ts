@@ -26,12 +26,12 @@ export function criarTransacaoForm(
       <h3 id="form-title" class="font-bold text-lg mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
       <form id="transaction-form" class="space-y-3 sm:space-y-4">
         <input type="hidden" id="input-id">
-        <div class="grid grid-cols-1 gap-3 sm:gap-4">
+        <div class="grid grid-cols-2 gap-2 sm:gap-4">
           <input type="number" id="input-value" step="0.01" min="0.01" required
-            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base"
+            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base"
             placeholder="Valor" inputmode="decimal">
           <input type="date" id="input-date" required
-            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base">
+            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base">
         </div>
         <div class="grid grid-cols-2 gap-2 sm:gap-4">
           <select id="input-type" class="w-full p-2 sm:p-3 rounded-xl border bg-white font-bold text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">

@@ -19,9 +19,9 @@ export function criarHeader(container: HTMLElement): void {
   container.innerHTML = `
     <header class="max-w-4xl mx-auto mb-3 sm:mb-4">
       <div class="flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <h1 class="font-black text-base sm:text-lg text-slate-800 dark:text-white">Organiza Pouco</h1>
-          <span id="header-user" class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline"></span>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
+          <h1 class="font-black text-base sm:text-lg text-slate-800 dark:text-white shrink-0">Organiza Pouco</h1>
+          <span id="header-user" class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate"></span>
         </div>
         <div class="flex items-center gap-1 sm:gap-2">
           <button id="theme-toggle" class="bg-white p-2 rounded-full shadow border dark:bg-slate-800 dark:border-slate-700">
@@ -69,7 +69,7 @@ export function criarHeader(container: HTMLElement): void {
           <span class="text-[10px] text-slate-400 uppercase font-bold">Saldo Final</span>
           <h2 id="cycle-total" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">R$ 0,00</h2>
         </div>
-        <div class="text-[9px] text-slate-500 font-bold uppercase hidden sm:block">Versão: 2.2.0</div>
+        <div class="text-[10px] text-slate-500 font-bold uppercase shrink-0">Versão: 2.2.0</div>
       </div>
     </div>
   `
