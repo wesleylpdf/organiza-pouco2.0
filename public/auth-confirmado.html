@@ -47,35 +47,52 @@
       const accessToken = params.get('access_token')
       const refreshToken = params.get('refresh_token')
       const expiresIn = params.get('expires_in')
+      const error = params.get('error')
+      const errorCode = params.get('error_code')
+      const errorDescription = params.get('error_description')
+
+      const REDIRAZEE_PARA_LOGIN = 5000 // 5 segundos
+
+      function redirecionarLogin() {
+        window.location.replace('/organiza-pouco2.0/')
+      }
 
       async function confirmar() {
         const status = document.getElementById('status')
+
+        // Link inválido ou expirado (ex: reset de senha / cadastro com token expirado)
+        if (error || errorCode) {
+          status.textContent =
+            'Link inválido ou expirado. Redirecionando para o login...'
+          setTimeout(redirecionarLogin, REDIRAZEE_PARA_LOGIN)
+          return
+        }
+
         try {
           if (accessToken && refreshToken) {
             // Define a sessão com os tokens recebidos do redirect
-            const { error } = await supabase.auth.setSession({
+            const { error: sessError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
             })
-            if (error) throw error
+            if (sessError) throw sessError
           } else if (type === 'signup') {
             // Fallback: verifica OTP do signup
             const token = params.get('token') || accessToken
-            const { error } = await supabase.auth.verifyOtp({
+            const { error: otpError } = await supabase.auth.verifyOtp({
               token,
               type: 'signup',
             })
-            if (error) throw error
+            if (otpError) throw otpError
           }
 
           status.textContent = 'E-mail confirmado com sucesso! Redirecionando...'
-          setTimeout(() => {
-            window.location.replace('/organiza-pouco2.0/')
-          }, 1500)
+          setTimeout(redirecionarLogin, REDIRAZEE_PARA_LOGIN)
         } catch (err) {
           console.error(err)
           status.textContent =
-            'Não foi possível confirmar o e-mail. Tente novamente.'
+            'Não foi possível confirmar o e-mail. Redirecionando para o login...'
+          setTimeout(redirecionarLogin, REDIRAZEE_PARA_LOGIN)
         }
       }
 
