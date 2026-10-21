@@ -92,7 +92,14 @@ export async function cadastro(email: string, password: string): Promise<void> {
  * Envia email de reset de senha
  */
 export async function resetSenha(email: string): Promise<void> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email)
+  const base = import.meta.env.VITE_SITE_URL
+    ? import.meta.env.VITE_SITE_URL
+    : `${window.location.origin}${import.meta.env.BASE_URL}`
+  const redirectTo = `${base}auth-confirmado.html`
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  })
   if (error) throw error
 }
 
