@@ -77,9 +77,10 @@ export async function login(email: string, password: string): Promise<void> {
  * Cadastro com email e senha
  */
 export async function cadastro(email: string, password: string): Promise<void> {
-  const redirectTo = import.meta.env.VITE_SITE_URL
-    ? `${import.meta.env.VITE_SITE_URL}/auth-confirmado.html`
-    : `${window.location.origin}/auth-confirmado.html`
+  const base = import.meta.env.VITE_SITE_URL
+    ? import.meta.env.VITE_SITE_URL
+    : `${window.location.origin}${import.meta.env.BASE_URL}`
+  const redirectTo = `${base}auth-confirmado.html`
 
   const { error } = await supabase.auth.signUp({ email, password, options: {
     emailRedirectTo: redirectTo
