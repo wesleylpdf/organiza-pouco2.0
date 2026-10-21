@@ -40,7 +40,7 @@
     <script>
       const supabaseUrl = 'https://bqhtemwakomvfhkjmzqs.supabase.co'
       const supabaseAnonKey = 'sb_publishable_4UfOScDU3DiJ4vyPrAKakg_1xmw4Qcp'
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey)
+      const sb = window.supabase.createClient(supabaseUrl, supabaseAnonKey)
 
       const searchParams = new URLSearchParams(window.location.search)
       const hashParams = new URLSearchParams(window.location.hash.replace('#', ''))
@@ -74,7 +74,7 @@
         try {
           if (accessToken && refreshToken) {
             // Define a sessão com os tokens recebidos do redirect
-            const { error: sessError } = await supabase.auth.setSession({
+            const { error: sessError } = await sb.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
             })
@@ -82,7 +82,7 @@
           } else if (type === 'signup') {
             // Fallback: verifica OTP do signup
             const token = params.get('token') || accessToken
-            const { error: otpError } = await supabase.auth.verifyOtp({
+            const { error: otpError } = await sb.auth.verifyOtp({
               token,
               type: 'signup',
             })
