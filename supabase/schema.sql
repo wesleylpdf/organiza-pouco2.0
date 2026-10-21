@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.transacoes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   valor NUMERIC(12, 2) NOT NULL CHECK (valor > 0),
+  valor_original NUMERIC(12, 2),
   data DATE NOT NULL,
   tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'saida')),
   categoria TEXT NOT NULL,
@@ -135,6 +136,7 @@ COMMENT ON TABLE public.transacoes IS 'Transações financeiras dos usuários';
 COMMENT ON COLUMN public.transacoes.id IS 'UUID único da transação';
 COMMENT ON COLUMN public.transacoes.user_id IS 'ID do usuário (auth.users)';
 COMMENT ON COLUMN public.transacoes.valor IS 'Valor da transação (sempre positivo)';
+COMMENT ON COLUMN public.transacoes.valor_original IS 'Valor original (sem divisão) quando o usuário marcou "Dividir valor pelas parcelas?"';
 COMMENT ON COLUMN public.transacoes.data IS 'Data da transação';
 COMMENT ON COLUMN public.transacoes.tipo IS 'Tipo: entrada ou saída';
 COMMENT ON COLUMN public.transacoes.categoria IS 'Categoria da transação';

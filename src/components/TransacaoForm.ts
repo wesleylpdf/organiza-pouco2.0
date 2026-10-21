@@ -9,6 +9,7 @@ type SaveCallback = (data: {
   descricao: string
   dividido: boolean
   totalParcelas: number
+  valorOriginal: number | null
 }) => Promise<void>
 
 type CancelCallback = () => void
@@ -134,6 +135,7 @@ export function criarTransacaoForm(
         descricao: (container.querySelector('#input-description') as HTMLInputElement).value.trim(),
         dividido: (container.querySelector('#input-dividido') as HTMLInputElement).checked,
         totalParcelas: totalParcelas,
+        valorOriginal: dividirValor ? valor : null,
       })
       resetarForm()
     } catch (err: any) {
@@ -183,7 +185,11 @@ export { atualizarSelectCategorias }
  */
 export function preencherFormEdicao(container: HTMLElement, t: Transacao): void {
   ;(container.querySelector('#input-id') as HTMLInputElement).value = t.id
-  ;(container.querySelector('#input-value') as HTMLInputElement).value = String(t.valor)
+  // Se o valor foi dividido entre as parcelas, o campo mostra o valor original
+  const temValorOriginal = t.dividido && t.valorOriginal != null
+  ;(container.querySelector('#input-value') as HTMLInputElement).value = String(
+    temValorOriginal ? t.valorOriginal : t.valor
+  )
   ;(container.querySelector('#input-date') as HTMLInputElement).value = t.data
   ;(container.querySelector('#input-type') as HTMLSelectElement).value = t.tipo
   atualizarSelectCategorias()
@@ -200,7 +206,7 @@ export function preencherFormEdicao(container: HTMLElement, t: Transacao): void 
   const inputDividirValor = container.querySelector('#input-dividir-valor') as HTMLInputElement
   inputDividido.checked = !!t.dividido
   inputTotalParcelas.value = String(t.totalParcelas || 1)
-  inputDividirValor.checked = false
+  inputDividirValor.checked = !!temValorOriginal
   parcelasContainer.classList.toggle('hidden', !t.dividido)
   dividirValorCheckboxLabel.classList.toggle('hidden', !t.dividido)
 }

@@ -35,6 +35,7 @@ function paraTransacao(row: any): Transacao {
     dividido: row.dividido,
     totalParcelas: row.total_parcelas,
     parcelaAtual: row.parcela_atual,
+    valorOriginal: row.valor_original,
   }
 }
 
@@ -80,6 +81,7 @@ export async function criarTransacao(params: {
   dividido?: boolean
   totalParcelas?: number
   parcelaAtual?: number
+  valorOriginal?: number | null
 }): Promise<Transacao> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
@@ -105,6 +107,7 @@ export async function criarTransacao(params: {
       dividido: params.dividido ?? false,
       totalParcelas: params.totalParcelas ?? null,
       parcelaAtual: params.parcelaAtual ?? null,
+      valorOriginal: params.valorOriginal ?? null,
     }))
     .select()
     .single()

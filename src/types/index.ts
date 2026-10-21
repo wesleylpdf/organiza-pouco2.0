@@ -25,6 +25,7 @@ export interface Transacao {
   dividido?: boolean | null
   totalParcelas?: number | null
   parcelaAtual?: number | null
+  valorOriginal?: number | null
 }
 
 export interface Ciclo {

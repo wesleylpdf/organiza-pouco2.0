@@ -27,6 +27,7 @@ export interface CriarTransacaoParams {
   descricao: string
   dividido: boolean
   totalParcelas: number
+  valorOriginal?: number | null
 }
 
 export function useTransacoes() {
@@ -111,6 +112,7 @@ export function useTransacoes() {
               descricao: params.descricao,
               dividido: qtdeNova > 1,
               totalParcelas: qtdeNova > 1 ? qtdeNova : null,
+              valorOriginal: params.valorOriginal ?? null,
             })
 
             // Renumera as parcelas mantidas quando a quantidade mudou
