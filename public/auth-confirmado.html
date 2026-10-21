@@ -81,7 +81,7 @@
             if (sessError) throw sessError
           } else if (type === 'signup') {
             // Fallback: verifica OTP do signup
-            const token = params.get('token') || accessToken
+            const token = get('token') || accessToken
             const { error: otpError } = await sb.auth.verifyOtp({
               token,
               type: 'signup',
