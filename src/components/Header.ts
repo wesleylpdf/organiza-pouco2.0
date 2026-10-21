@@ -44,7 +44,8 @@ export function criarHeader(container: HTMLElement): void {
             .join('')}
         </select>
         <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fim:</label>
-        <select id="dia-fim-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+        <select id="dia-fim-ciclo" disabled title="Calculado automaticamente a partir do início"
+          class="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-500 dark:text-slate-300 cursor-not-allowed">
           ${Array.from({ length: 31 }, (_, i) => i + 1)
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
@@ -88,11 +89,15 @@ export function criarHeader(container: HTMLElement): void {
 
   inicioSelect.addEventListener('change', () => {
     const diaInicio = parseInt(inicioSelect.value, 10)
-    const diaFim = parseInt(fimSelect.value, 10)
+    // O fim é sempre o dia anterior ao próximo início (ver src/utils/ciclo.ts)
+    const diaFim = diaInicio === 1 ? 31 : diaInicio - 1
+    fimSelect.value = String(diaFim)
     window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
   })
 
   fimSelect.addEventListener('change', () => {
+    // O campo de fim é calculado a partir do início e fica desabilitado;
+    // mantido apenas para blindar contra alterações programáticas.
     const diaInicio = parseInt(inicioSelect.value, 10)
     const diaFim = parseInt(fimSelect.value, 10)
     window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
@@ -102,7 +107,7 @@ export function criarHeader(container: HTMLElement): void {
   const btnSalvarConfig = container.querySelector('#salvar-config-ciclo') as HTMLButtonElement
   btnSalvarConfig.addEventListener('click', () => {
     const diaInicio = parseInt(inicioSelect.value, 10)
-    const diaFim = parseInt(fimSelect.value, 10)
+    const diaFim = diaInicio === 1 ? 31 : diaInicio - 1
     window.dispatchEvent(new CustomEvent('cicloConfigChange', { detail: { diaInicio, diaFim } }))
   })
 }
@@ -118,9 +123,12 @@ export function atualizarHeader(props: HeaderProps): void {
 
   document.querySelector('#header-user')!.textContent = props.user
 
-  // Mantém os selects com o valor atual do ciclo
+  // Mantém os selects com o valor atual do ciclo.
+  // O "Fim" é sempre derivado do início (dia anterior), por isso é exibido
+  // calculado — não reflete o valor salvo, que pode estar desatualizado.
   const inicioSelect = document.querySelector('#dia-inicio-ciclo') as HTMLSelectElement | null
   const fimSelect = document.querySelector('#dia-fim-ciclo') as HTMLSelectElement | null
-  if (inicioSelect) inicioSelect.value = String(props.diaInicioCiclo ?? 9)
-  if (fimSelect) fimSelect.value = String(props.diaFimCiclo ?? 8)
+  const diaInicio = props.diaInicioCiclo ?? 9
+  if (inicioSelect) inicioSelect.value = String(diaInicio)
+  if (fimSelect) fimSelect.value = String(diaInicio === 1 ? 31 : diaInicio - 1)
 }

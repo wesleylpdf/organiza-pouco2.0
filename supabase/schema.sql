@@ -74,7 +74,31 @@ $$;
 -- TRIGGERS
 -- ============================================
 
+-- Início do ciclo que contém `p_data`, limitando o dia ao último dia do mês.
+CREATE OR REPLACE FUNCTION public.calcular_ciclo_inicio(
+  p_data DATE,
+  p_dia_inicio INTEGER
+)
+RETURNS DATE
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT CASE
+    WHEN p_data >= date_trunc('month', p_data)::DATE
+                    + (LEAST(p_dia_inicio,
+                             EXTRACT(DAY FROM (date_trunc('month', p_data)::DATE + INTERVAL '1 month - 1 day'))::INTEGER) - 1)
+    THEN date_trunc('month', p_data)::DATE
+         + (LEAST(p_dia_inicio,
+                  EXTRACT(DAY FROM (date_trunc('month', p_data)::DATE + INTERVAL '1 month - 1 day'))::INTEGER) - 1)
+    ELSE (date_trunc('month', p_data)::DATE - INTERVAL '1 month')::DATE
+         + (LEAST(p_dia_inicio,
+                  EXTRACT(DAY FROM ((date_trunc('month', p_data)::DATE - INTERVAL '1 month')::DATE + INTERVAL '1 month - 1 day'))::INTEGER) - 1)
+  END;
+$$;
+
 -- Trigger: Atualiza ciclo_inicio automaticamente se data mudar
+-- Mantém a mesma lógica do cliente (src/utils/ciclo.ts): o dia de início é
+-- limitado ao último dia do mês, garantindo ciclos contíguos.
 CREATE OR REPLACE FUNCTION public.update_ciclo_inicio()
 RETURNS TRIGGER
 LANGUAGE PLPGSQL
@@ -91,30 +115,7 @@ BEGIN
     v_dia_inicio_ciclo := 9; -- padrão
   END IF;
 
-  -- Calcula ciclo_inicio baseado na data e configuração do usuário
-  -- Se dia < dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do mês anterior
-  -- Se dia >= dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do próprio mês
-  NEW.ciclo_inicio := CASE
-    WHEN EXTRACT(DAY FROM NEW.data) < v_dia_inicio_ciclo
-    THEN (date_trunc('month', NEW.data) - INTERVAL '1 month')::DATE + (v_dia_inicio_ciclo - 1) * INTERVAL '1 day'
-    ELSE date_trunc('month', NEW.data)::DATE + (v_dia_inicio_ciclo - 1) * INTERVAL '1 day'
-  END;
-
-  RETURN NEW;
-END;
-
-  IF dia_inicio_ciclo IS NULL THEN
-    dia_inicio_ciclo := 9; -- padrão
-  END IF;
-
-  -- Calcula ciclo_inicio baseado na data e configuração do usuário
-  -- Se dia < dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do mês anterior
-  -- Se dia >= dia_inicio_ciclo, ciclo começou dia dia_inicio_ciclo do próprio mês
-  NEW.ciclo_inicio := CASE
-    WHEN EXTRACT(DAY FROM NEW.data) < dia_inicio_ciclo
-    THEN (date_trunc('month', NEW.data) - INTERVAL '1 month')::DATE + (dia_inicio_ciclo - 1) * INTERVAL '1 day'
-    ELSE date_trunc('month', NEW.data)::DATE + (dia_inicio_ciclo - 1) * INTERVAL '1 day'
-  END;
+  NEW.ciclo_inicio := public.calcular_ciclo_inicio(NEW.data, v_dia_inicio_ciclo);
 
   RETURN NEW;
 END;

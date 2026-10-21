@@ -17,53 +17,53 @@ function criarDataNoMes(ano: number, mes: number, dia: number, horas = 0, minuto
 }
 
 /**
+ * Início do ciclo no mês informado, limitando o dia ao último dia do mês.
+ */
+function inicioNoMes(ano: number, mes: number, diaInicio: number): Date {
+  return criarDataNoMes(ano, mes, diaInicio)
+}
+
+/**
+ * Início do ciclo que contém a data informada.
+ * Em meses mais curtos que `diaInicio`, o início efetivo é o último dia do mês.
+ */
+function inicioDoCicloDaData(data: Date, diaInicio: number): Date {
+  const mesRef = new Date(data.getFullYear(), data.getMonth(), 1)
+  const inicioMes = inicioNoMes(mesRef.getFullYear(), mesRef.getMonth(), diaInicio)
+
+  if (data.getTime() >= inicioMes.getTime()) return inicioMes
+
+  const anterior = new Date(mesRef.getFullYear(), mesRef.getMonth() - 1, 1)
+  return inicioNoMes(anterior.getFullYear(), anterior.getMonth(), diaInicio)
+}
+
+/**
  * Calcula o ciclo financeiro baseado em um offset.
- * O ciclo começa no dia `diaInicio` e termina no dia `diaFim`.
- * Se diaFim < diaInicio, o ciclo cruza para o mês seguinte.
+ *
+ * O ciclo começa no dia `diaInicio` e termina no dia anterior ao início do
+ * ciclo seguinte. O fim é sempre derivado do início: assim os ciclos são
+ * contíguos, sem lacunas nem sobreposição, mesmo para dias 29, 30 e 31.
+ *
+ * `diaFim` é mantido na assinatura por compatibilidade, mas não é usado no
+ * cálculo — dias de fim escolhidos livremente criariam dias sem ciclo.
  */
 export function getCicloAtual(
   offset = 0,
   diaInicio = DIA_INICIO_PADRAO,
-  diaFim = DIA_FIM_PADRAO
+  _diaFim = DIA_FIM_PADRAO
 ): Ciclo {
-  const agora = new Date()
-  const dia = agora.getDate()
-  const mes = agora.getMonth()
-  const ano = agora.getFullYear()
+  const base = inicioDoCicloDaData(new Date(), diaInicio)
 
-  let cicloMes = mes
-  let cicloAno = ano
+  // Normaliza mês/ano via Date (ex.: janeiro - 1 → dezembro do ano anterior)
+  const ref = new Date(base.getFullYear(), base.getMonth() + offset, 1)
+  const inicio = inicioNoMes(ref.getFullYear(), ref.getMonth(), diaInicio)
 
-  // Em meses mais curtos que diaInicio (ex.: 31 em fevereiro), o ciclo
-  // começa no último dia do mês.
-  const diaInicioEfetivo = Math.min(diaInicio, ultimoDiaDoMes(ano, mes))
+  const proxRef = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 1)
+  const proximoInicio = inicioNoMes(proxRef.getFullYear(), proxRef.getMonth(), diaInicio)
 
-  if (dia >= diaInicioEfetivo) {
-    cicloMes = mes
-    cicloAno = ano
-  } else {
-    // Ainda estamos dentro do ciclo do mês anterior (ou na lacuna)
-    cicloMes = mes - 1
-    cicloAno = mes === 0 ? ano - 1 : ano
-  }
-
-  // Aplica offset
-  const totalMeses = cicloMes + offset
-  const anoCiclo = cicloAno + Math.floor(totalMeses / 12)
-  const mesCiclo = ((totalMeses % 12) + 12) % 12
-
-  const inicio = criarDataNoMes(anoCiclo, mesCiclo, diaInicio)
-
-  // Fim: se fim < inicio, cruza para o mês seguinte.
-  // Normaliza mês negativo/overflow via Date (ex.: mesCiclo = -1 → dezembro anterior).
-  const mesFimRef = new Date(anoCiclo, diaFim < diaInicio ? mesCiclo + 1 : mesCiclo, 1)
-  const fim = criarDataNoMes(
-    mesFimRef.getFullYear(),
-    mesFimRef.getMonth(),
-    diaFim,
-    23,
-    59
-  )
+  const fim = new Date(proximoInicio)
+  fim.setDate(fim.getDate() - 1)
+  fim.setHours(23, 59, 0, 0)
 
   return { inicio, fim, offset }
 }
@@ -94,31 +94,7 @@ export function getCicloInicioParaData(
   data: Date,
   diaInicio = DIA_INICIO_PADRAO
 ): string {
-  const dia = data.getDate()
-  const mes = data.getMonth()
-  const ano = data.getFullYear()
-
-  let cicloMes = mes
-  let cicloAno = ano
-
-  const diaInicioEfetivo = Math.min(diaInicio, ultimoDiaDoMes(ano, mes))
-
-  if (dia >= diaInicioEfetivo) {
-    cicloMes = mes
-    cicloAno = ano
-  } else if (mes === 0) {
-    // Janeiro: ciclo começou em dezembro do ano anterior
-    cicloMes = 11
-    cicloAno = ano - 1
-  } else {
-    cicloMes = mes - 1
-    cicloAno = ano
-  }
-
-  const mesRef = new Date(cicloAno, cicloMes, 1)
-  const inicio = criarDataNoMes(mesRef.getFullYear(), mesRef.getMonth(), diaInicio)
-
-  return formatDateLocalISO(inicio)
+  return formatDateLocalISO(inicioDoCicloDaData(data, diaInicio))
 }
 
 /**

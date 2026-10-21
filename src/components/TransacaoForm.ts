@@ -48,14 +48,16 @@ export function criarTransacaoForm(
         <input type="text" id="input-description" required maxlength="100"
           class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
           placeholder="Descrição">
-        <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
-          <input type="checkbox" id="input-dividido" class="w-4 h-4">
-          É transação dividida?
-        </label>
-        <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 hidden" id="dividir-valor-checkbox-label">
-          <input type="checkbox" id="input-dividir-valor" class="w-4 h-4">
-          Dividir valor pelas parcelas?
-        </label>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6">
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+            <input type="checkbox" id="input-dividido" class="w-4 h-4">
+            Parcelado?
+          </label>
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 hidden" id="dividir-valor-checkbox-label">
+            <input type="checkbox" id="input-dividir-valor" class="w-4 h-4">
+            Dividir valor pelas parcelas?
+          </label>
+        </div>
         <div id="parcelas-container" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <input type="number" id="input-total-parcelas" min="2" step="1" value="2"
             class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base"
@@ -94,7 +96,7 @@ export function criarTransacaoForm(
     parcelasContainer.classList.toggle('hidden', !isChecked)
     dividirValorCheckboxLabel.classList.toggle('hidden', !isChecked)
 
-    // Se 'É transação dividida?' for desmarcado, desmarca e esconde 'Dividir valor pelas parcelas?'
+    // Se 'Parcelado?' for desmarcado, desmarca e esconde 'Dividir valor pelas parcelas?'
     if (!isChecked) {
       const dividirValorCheckbox = container.querySelector('#input-dividir-valor') as HTMLInputElement
       dividirValorCheckbox.checked = false
