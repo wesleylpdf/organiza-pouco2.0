@@ -8,6 +8,8 @@ import { criarTransacaoForm, preencherFormEdicao, atualizarSelectCategorias } fr
 import { criarGrafico, atualizarGrafico } from '@/components/GraficoPizza'
 import { criarTransacaoList, renderLista } from '@/components/TransacaoList'
 import { criarModalCategorias } from '@/components/ModalCategorias'
+import { criarModalFixos } from '@/components/ModalFixos'
+import { listarTransacoes } from '@/services/transacoes'
 import { formatarIntervaloCiclo, getOffsetInicial, formatDateLocalISO } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
@@ -116,7 +118,7 @@ async function setupApp(_userEmail: string): Promise<void> {
   `
 
   // Inicializa componentes
-  criarHeader(headerContainer)
+  criarHeader(headerContainer, handleAbrirFixos)
   criarTransacaoForm(formContainer, handleSalvar, handleCancelarEdicao, handleGerenciarCategorias)
   criarGrafico(chartContainer)
   criarTransacaoList(listContainer)
@@ -217,7 +219,7 @@ async function updateDashboard(): Promise<void> {
     await transacoesHook.carregarTransacoes()
 
     updateLista()
-    updateHeader()
+    await updateHeader()
   } catch (err) {
     logger.error('Erro ao atualizar dashboard', err as any)
     appStore.setError('Erro ao atualizar o dashboard')
@@ -245,19 +247,39 @@ function updateGrafico(transacoes?: Transacao[]): void {
   const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
   const filtradas = showOnlyDividido ? txs.filter(t => t.dividido) : txs
-  const saidas = filtradas.filter(t => t.tipo === 'saida')
+  // Transações fixas não aparecem na distribuição de gastos do gráfico
+  const saidas = filtradas.filter(t => t.tipo === 'saida' && !t.fixo)
   atualizarGrafico(saidas)
 }
 
-function updateHeader(): void {
+async function updateHeader(): Promise<void> {
   const ciclo = appStore.getCicloAtual()
   const transacoes = appStore.getTransacoes()
   const state = getAuthState()
   const config = appStore.getState()
 
+  // Saldo Final inclui transações fixas de TODOS os meses (não apenas o ciclo atual)
+  let totais = calcularTotais(transacoes)
+  try {
+    const todasTransacoes = await listarTransacoes({})
+    const fixosTodas = todasTransacoes.filter(t => t.fixo)
+    const fixosCiclo = transacoes.filter(t => t.fixo)
+
+    const fixosTodasEntradas = fixosTodas.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
+    const fixosTodasSaidas = fixosTodas.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
+    const fixosCicloEntradas = fixosCiclo.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
+    const fixosCicloSaidas = fixosCiclo.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
+
+    const entradas = totais.entradas - fixosCicloEntradas + fixosTodasEntradas
+    const saidas = totais.saidas - fixosCicloSaidas + fixosTodasSaidas
+    totais = { entradas, saidas, saldo: entradas - saidas }
+  } catch (err) {
+    logger.error('Erro ao buscar todas as transações para saldo final', err as any)
+  }
+
   atualizarHeader({
     cicloDatas: formatarIntervaloCiclo(ciclo.inicio, ciclo.fim),
-    totais: calcularTotais(transacoes),
+    totais,
     onCicloAnterior: () => {
       appStore.setCycleOffset(appStore.getState().cycleOffset - 1)
       debouncedUpdateDashboard()
@@ -273,6 +295,7 @@ function updateHeader(): void {
       await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
       debouncedUpdateDashboard()
     },
+    onFixosClick: handleAbrirFixos,
     user: state.user?.email || 'Usuario',
     diaInicioCiclo: config.diaInicioCiclo,
     diaFimCiclo: config.diaFimCiclo,
@@ -302,7 +325,7 @@ async function handleSalvar(data: Parameters<typeof transacoesHook.salvarTransac
   if (success) {
     toast.success('Transação salva com sucesso!')
     updateLista()
-    updateHeader()
+    await updateHeader()
   } else {
     const error = appStore.getError()
     if (error) {
@@ -328,15 +351,24 @@ function handleEditar(id: string): void {
   preencherFormEdicao(formContainer, t)
 }
 
-async function handleExcluir(id: string): Promise<void> {
+async function handleExcluir(id: string): Promise<boolean> {
   logger.debug('Excluindo transação', { id })
   const success = await transacoesHook.excluir(id)
 
   if (success) {
     toast.success('Transação excluída!')
     updateLista()
-    updateHeader()
+    await updateHeader()
   }
+  return success
+}
+
+async function handleAbrirFixos(): Promise<void> {
+  const transacoes = await listarTransacoes({})
+  criarModalFixos(transacoes, async (id) => {
+    const sucesso = await handleExcluir(id)
+    return sucesso
+  })
 }
 
 function handleExportar(): void {

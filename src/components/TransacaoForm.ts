@@ -11,6 +11,7 @@ type SaveCallback = (data: {
   dividido: boolean
   totalParcelas: number
   valorOriginal: number | null
+  fixo: boolean
 }) => Promise<void>
 
 type CancelCallback = () => void
@@ -55,6 +56,10 @@ export function criarTransacaoForm(
             <input type="checkbox" id="input-dividido" class="w-4 h-4">
             Parcelado?
           </label>
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 ml-2">
+            <input type="checkbox" id="input-fixo" class="w-4 h-4">
+            Fixo?
+          </label>
           <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 hidden" id="dividir-valor-checkbox-label">
             <input type="checkbox" id="input-dividir-valor" class="w-4 h-4">
             Dividir valor pelas parcelas?
@@ -90,6 +95,7 @@ export function criarTransacaoForm(
   })
 
   const inputDividido = container.querySelector('#input-dividido') as HTMLInputElement
+  const inputFixo = container.querySelector('#input-fixo') as HTMLInputElement
   const inputTotalParcelas = container.querySelector('#input-total-parcelas') as HTMLInputElement
   const parcelasContainer = container.querySelector('#parcelas-container')!
   const dividirValorCheckboxLabel = container.querySelector('#dividir-valor-checkbox-label') as HTMLLabelElement
@@ -101,6 +107,19 @@ export function criarTransacaoForm(
 
     // Se 'Parcelado?' for desmarcado, desmarca e esconde 'Dividir valor pelas parcelas?'
     if (!isChecked) {
+      const dividirValorCheckbox = container.querySelector('#input-dividir-valor') as HTMLInputElement
+      dividirValorCheckbox.checked = false
+    }
+
+    // Parcelado e Fixo são mutuamente exclusivos
+    if (isChecked) inputFixo.checked = false
+  })
+
+  inputFixo.addEventListener('change', () => {
+    if (inputFixo.checked) {
+      inputDividido.checked = false
+      parcelasContainer.classList.add('hidden')
+      dividirValorCheckboxLabel.classList.add('hidden')
       const dividirValorCheckbox = container.querySelector('#input-dividir-valor') as HTMLInputElement
       dividirValorCheckbox.checked = false
     }
@@ -137,6 +156,7 @@ export function criarTransacaoForm(
         dividido: (container.querySelector('#input-dividido') as HTMLInputElement).checked,
         totalParcelas: totalParcelas,
         valorOriginal: dividirValor ? valor : null,
+        fixo: inputFixo.checked,
       })
       resetarForm()
     } catch (err: any) {
@@ -157,6 +177,7 @@ export function criarTransacaoForm(
     parcelasContainer.classList.add('hidden')
     dividirValorCheckboxLabel.classList.add('hidden')
     inputDividido.checked = false
+    inputFixo.checked = false
     ;(container.querySelector('#input-dividir-valor') as HTMLInputElement).checked = false
     inputTotalParcelas.value = '2'
     inputId.value = ''
@@ -219,11 +240,13 @@ export function preencherFormEdicao(container: HTMLElement, t: Transacao): void 
   window.scrollTo({ top: 0, behavior: 'smooth' })
 
   const inputDividido = container.querySelector('#input-dividido') as HTMLInputElement
+  const inputFixo = container.querySelector('#input-fixo') as HTMLInputElement
   const inputTotalParcelas = container.querySelector('#input-total-parcelas') as HTMLInputElement
   const parcelasContainer = container.querySelector('#parcelas-container')!
   const dividirValorCheckboxLabel = container.querySelector('#dividir-valor-checkbox-label')!
   const inputDividirValor = container.querySelector('#input-dividir-valor') as HTMLInputElement
   inputDividido.checked = !!t.dividido
+  inputFixo.checked = !!t.fixo
   inputTotalParcelas.value = String(t.totalParcelas || 1)
   inputDividirValor.checked = !!temValorOriginal
   parcelasContainer.classList.toggle('hidden', !t.dividido)

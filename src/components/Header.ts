@@ -10,12 +10,13 @@ export interface HeaderProps {
   onCicloAnterior: () => void
   onCicloProximo: () => void
   onAlterarDiaCiclo: (diaInicio: number, diaFim: number) => void
+  onFixosClick: () => void
   user: string
   diaInicioCiclo?: number
   diaFimCiclo?: number
 }
 
-export function criarHeader(container: HTMLElement): void {
+export function criarHeader(container: HTMLElement, onFixosClick: () => void): void {
   container.innerHTML = `
     <header class="max-w-4xl mx-auto mb-3 sm:mb-4">
       <div class="flex items-center justify-between gap-2">
@@ -69,7 +70,10 @@ export function criarHeader(container: HTMLElement): void {
           <span class="text-[10px] text-slate-400 uppercase font-bold">Saldo Final</span>
           <h2 id="cycle-total" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">R$ 0,00</h2>
         </div>
-        <div class="text-[10px] text-slate-500 font-bold uppercase shrink-0">Versão: 2.2.0</div>
+        <div class="flex flex-col items-end gap-1 shrink-0">
+          <button id="fixos-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs sm:text-sm font-bold hover:bg-blue-700 transition dark:bg-blue-700">FIXOS</button>
+          <div class="text-[10px] text-slate-500 font-bold uppercase shrink-0">Versão: 2.2.0</div>
+        </div>
       </div>
     </div>
   `
@@ -102,6 +106,9 @@ export function criarHeader(container: HTMLElement): void {
   // Botão salvar configuração de ciclo
   const btnSalvarConfig = container.querySelector('#salvar-config-ciclo') as HTMLButtonElement
   btnSalvarConfig.addEventListener('click', () => emitirConfigCiclo())
+
+  // Botão FIXOS
+  container.querySelector('#fixos-btn')!.addEventListener('click', onFixosClick)
 
   function emitirConfigCiclo(): void {
     const diaInicio = parseInt(inicioSelect.value, 10)
