@@ -68,14 +68,13 @@ export function renderLista(
       : ''
 
     return `
-      <div class="p-3 bg-white border rounded-xl flex flex-col justify-between items-center gap-2 shadow-sm dark:bg-slate-800 dark:border-slate-700">
-        <div class="min-w-0 flex-1">
-          <span class="block font-bold text-sm dark:text-white truncate">${descSanitizada}${fixoIcon}</span>
-          <span class="text-xs text-slate-500">${catSanitizada} | ${formatarData(t.data)}${parceladoIcon}</span>
-        </div>
-        <div class="flex items-center justify-between gap-2 shrink-0">
-          <span class="font-bold ${corClasse} text-sm">${sinal} ${formatarMoeda(t.valor)}</span>
-          <div class="flex gap-2">
+      <div class="p-3 bg-white border rounded-xl flex flex-col gap-2 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+        <div class="flex items-start justify-between gap-2 min-w-0">
+          <div class="min-w-0 flex-1">
+            <span class="block font-bold text-sm dark:text-white truncate">${descSanitizada}${fixoIcon} <span class="${corClasse}">${sinal} ${formatarMoeda(t.valor)}</span></span>
+            <span class="text-xs text-slate-500">${catSanitizada} | ${formatarData(t.data)}${parceladoIcon}</span>
+          </div>
+          <div class="flex gap-2 shrink-0">
             <button data-action="edit" data-id="${t.id}" class="text-blue-500 text-xs font-bold hover:underline px-2 py-1">Editar</button>
             <button data-action="delete" data-id="${t.id}" class="text-rose-500 text-xs font-bold hover:underline px-2 py-1">Excluir</button>
           </div>
