@@ -153,6 +153,7 @@ async function setupApp(_userEmail: string): Promise<void> {
 
   // Outros eventos
   document.getElementById('filter-dividido')!.addEventListener('change', async () => await updateLista())
+  document.getElementById('filter-descricao')!.addEventListener('input', async () => await updateLista())
   window.addEventListener('themechange', () => updateDashboard())
 
   // Subscribe to store changes
@@ -231,8 +232,14 @@ async function updateDashboard(): Promise<void> {
 async function updateLista(): Promise<void> {
   const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
+  const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
+  const search = searchEl?.value.trim().toLowerCase() || ''
   const transacoes = appStore.getTransacoes()
-  const filtradas = showOnlyDividido ? transacoes.filter(t => t.dividido) : transacoes
+  const filtradas = transacoes.filter((t) => {
+    if (showOnlyDividido && !t.dividido) return false
+    if (search && !t.descricao?.toLowerCase().includes(search)) return false
+    return true
+  })
 
   renderLista(
     filtradas,
