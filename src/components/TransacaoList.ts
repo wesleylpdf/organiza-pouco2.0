@@ -10,7 +10,7 @@ let deleteCallback: DeleteCallback
 export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
     <div class="mb-6 grid grid-cols-1 gap-4">
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 w-full">
+      <div class="flex items-center justify-center gap-3 w-full">
         <label class="flex items-center justify-center gap-2 cursor-pointer text-sm font-bold text-slate-600 bg-slate-50 px-4 py-2 py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
           <input type="checkbox" id="filter-dividido" class="w-4 h-4"> <span class="hidden md:inline">Mostrar parcelados</span><span class="md:hidden">Parcelados</span>
         </label>
