@@ -44,3 +44,13 @@ export interface TotaisCiclo {
   saidas: number
   saldo: number
 }
+
+export interface AjusteSaldo {
+  id: string
+  user_id: string
+  valor: number
+  tipo: 'entrada' | 'saida'
+  descricao: string | null
+  data: string // ISO date YYYY-MM-DD
+  created_at: string
+}

@@ -10,6 +10,7 @@ import { criarTransacaoList, renderLista } from '@/components/TransacaoList'
 import { criarModalCategorias } from '@/components/ModalCategorias'
 import { criarModalFixos } from '@/components/ModalFixos'
 import { listarTransacoes } from '@/services/transacoes'
+import { somarAjustesSaldo } from '@/services/ajustes'
 import { formatarIntervaloCiclo, getOffsetInicial, formatDateLocalISO } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
@@ -281,10 +282,28 @@ async function updateHeader(): Promise<void> {
     const entradasExtras = fixosForaDoCiclo.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
     const saidasExtras = fixosForaDoCiclo.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
 
+    // Ajustes manuais de saldo final (invisíveis na UI): apenas os ajustes cuja
+    // data cai dentro do ciclo selecionado afetam o saldo final.
+    let ajustesEntradas = 0
+    let ajustesSaidas = 0
+    try {
+      const state = getAuthState()
+      const userId = state.user?.id
+      if (userId) {
+        const dataInicio = formatDateLocalISO(ciclo.inicio)
+        const dataFim = formatDateLocalISO(ciclo.fim)
+        const somas = await somarAjustesSaldo({ userId, dataInicio, dataFim })
+        ajustesEntradas = somas.entradas
+        ajustesSaidas = somas.saidas
+      }
+    } catch (err) {
+      logger.error('Erro ao buscar ajustes de saldo', err as any)
+    }
+
     totais = {
-      entradas: totais.entradas + entradasExtras,
-      saidas: totais.saidas + saidasExtras,
-      saldo: (totais.entradas + entradasExtras) - (totais.saidas + saidasExtras),
+      entradas: totais.entradas + entradasExtras + ajustesEntradas,
+      saidas: totais.saidas + saidasExtras + ajustesSaidas,
+      saldo: (totais.entradas + entradasExtras + ajustesEntradas) - (totais.saidas + saidasExtras + ajustesSaidas),
     }
   } catch (err) {
     logger.error('Erro ao buscar todas as transações para saldo final', err as any)
