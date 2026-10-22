@@ -10,12 +10,12 @@ let deleteCallback: DeleteCallback
 export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="flex items-center justify-center gap-3 sm:gap-4 w-full">
+      <div class="flex flex-col items-center justify-center gap-2 sm:gap-3 w-full">
         <label class="flex items-center justify-center gap-2 cursor-pointer text-sm font-bold text-slate-600 bg-slate-50 px-4 py-2 py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
           <input type="checkbox" id="filter-dividido" class="w-4 h-4"> <span class="hidden md:inline">Mostrar parcelados</span><span class="md:hidden">Parcelados</span>
         </label>
         <input type="text" id="filter-descricao" placeholder="Buscar por descrição"
-          class="w-full sm:w-64 p-2 sm:p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          class="w-full sm:w-80 p-2 sm:p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-emerald-500 focus:outline-none">
       </div>
     <div id="transaction-list" class="space-y-3 pb-10"></div>
     <p id="list-empty" class="text-center text-slate-400 py-8 hidden">Nenhuma transação neste ciclo</p>
