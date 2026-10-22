@@ -151,7 +151,7 @@ async function setupApp(_userEmail: string): Promise<void> {
   document.getElementById('export-btn')!.addEventListener('click', handleExportar)
 
   // Outros eventos
-  document.getElementById('filter-dividido')!.addEventListener('change', () => updateLista())
+  document.getElementById('filter-dividido')!.addEventListener('change', async () => await updateLista())
   window.addEventListener('themechange', () => updateDashboard())
 
   // Subscribe to store changes
@@ -218,7 +218,7 @@ async function updateDashboard(): Promise<void> {
     // Carrega transações via hook
     await transacoesHook.carregarTransacoes()
 
-    updateLista()
+    await updateLista()
     await updateHeader()
   } catch (err) {
     logger.error('Erro ao atualizar dashboard', err as any)
@@ -227,7 +227,7 @@ async function updateDashboard(): Promise<void> {
   }
 }
 
-function updateLista(): void {
+async function updateLista(): Promise<void> {
   const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
   const transacoes = appStore.getTransacoes()
@@ -239,16 +239,26 @@ function updateLista(): void {
     (id) => handleExcluir(id)
   )
 
-  updateGrafico(filtradas)
+  await updateGrafico(filtradas)
 }
 
-function updateGrafico(transacoes?: Transacao[]): void {
+async function updateGrafico(transacoes?: Transacao[]): Promise<void> {
   const txs = transacoes ?? appStore.getTransacoes()
   const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
   const filtradas = showOnlyDividido ? txs.filter(t => t.dividido) : txs
+
+  // Busca transações fixas de TODOS os meses para aparecerem no gráfico pizza
+  const todasTransacoes = await listarTransacoes({})
+  const fixosTodos = todasTransacoes.filter(t => t.fixo)
+
+  // Combina transações do ciclo com fixas de todos os meses, evitando duplicatas
+  const idsDoCiclo = new Set(filtradas.map(t => t.id))
+  const fixosForaDoCiclo = fixosTodos.filter(t => !idsDoCiclo.has(t.id))
+  const todasParaGrafico = [...filtradas, ...fixosForaDoCiclo]
+
   // Transações fixas aparecem na distribuição de gastos do gráfico
-  const saidas = filtradas.filter(t => t.tipo === 'saida')
+  const saidas = todasParaGrafico.filter(t => t.tipo === 'saida')
   atualizarGrafico(saidas)
 }
 
@@ -324,7 +334,7 @@ async function handleSalvar(data: Parameters<typeof transacoesHook.salvarTransac
 
   if (success) {
     toast.success('Transação salva com sucesso!')
-    updateLista()
+    await updateLista()
     await updateHeader()
   } else {
     const error = appStore.getError()
@@ -357,7 +367,7 @@ async function handleExcluir(id: string): Promise<boolean> {
 
   if (success) {
     toast.success('Transação excluída!')
-    updateLista()
+    await updateLista()
     await updateHeader()
   }
   return success
@@ -472,7 +482,7 @@ function handleGerenciarCategorias(): void {
       const success = await categoriasHook.criarCategoria(nome, icone, cor)
       if (success) {
         atualizarSelectCategorias()
-        updateGrafico()
+        await updateGrafico()
       }
       return success
     },
@@ -480,7 +490,7 @@ function handleGerenciarCategorias(): void {
       const success = await categoriasHook.atualizarCategoria(id, nome, icone, cor)
       if (success) {
         atualizarSelectCategorias()
-        updateGrafico()
+        await updateGrafico()
       }
       return success
     },
@@ -488,7 +498,7 @@ function handleGerenciarCategorias(): void {
       const success = await categoriasHook.excluirCategoria(id)
       if (success) {
         atualizarSelectCategorias()
-        updateGrafico()
+        await updateGrafico()
       }
       return success
     }
