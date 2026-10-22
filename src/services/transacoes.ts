@@ -82,6 +82,7 @@ export async function criarTransacao(params: {
   totalParcelas?: number
   parcelaAtual?: number
   valorOriginal?: number | null
+  fixo?: boolean
 }): Promise<Transacao> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Usuário não autenticado')
@@ -108,6 +109,7 @@ export async function criarTransacao(params: {
       totalParcelas: params.totalParcelas ?? null,
       parcelaAtual: params.parcelaAtual ?? null,
       valorOriginal: params.valorOriginal ?? null,
+      fixo: params.fixo ?? false,
     }))
     .select()
     .single()

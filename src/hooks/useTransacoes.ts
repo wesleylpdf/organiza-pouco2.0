@@ -28,6 +28,7 @@ export interface CriarTransacaoParams {
   dividido: boolean
   totalParcelas: number
   valorOriginal?: number | null
+  fixo: boolean
 }
 
 export function useTransacoes() {
@@ -113,6 +114,7 @@ export function useTransacoes() {
               dividido: qtdeNova > 1,
               totalParcelas: qtdeNova > 1 ? qtdeNova : null,
               valorOriginal: params.valorOriginal ?? null,
+              fixo: params.fixo,
             })
 
             // Renumera as parcelas mantidas quando a quantidade mudou
@@ -147,13 +149,14 @@ export function useTransacoes() {
                   parcelaAtual: qtdeAtual + i + 1,
                   descricao: params.descricao,
                   totalParcelas: qtdeNova,
+                  fixo: params.fixo,
                 } as CriarTransacaoParams)
               })
             )
           }
         } else { // Se não era dividida ou não tem mais parcelas, atualiza como transação única
           logger.debug('Atualizando transação única', { id: editandoId, params })
-          await atualizarTransacao(editandoId, params)
+          await atualizarTransacao(editandoId, { ...params, fixo: params.fixo })
         }
 
         appStore.setEditandoId(null)
@@ -168,11 +171,12 @@ export function useTransacoes() {
             data: formatDateLocalISO(dataParcela),
             parcelaAtual: i + 1,
             descricao: params.descricao,
+            fixo: params.fixo,
           } as CriarTransacaoParams)
         }
       } else {
         logger.debug('Criando transação única', { params })
-        await criarTransacao(params)
+        await criarTransacao({ ...params, fixo: params.fixo })
       }
 
       logger.info('Transação salva com sucesso')

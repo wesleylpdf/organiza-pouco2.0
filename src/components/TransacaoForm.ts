@@ -52,11 +52,11 @@ export function criarTransacaoForm(
           class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
           placeholder="Descrição">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6">
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300" for="input-dividido">
             <input type="checkbox" id="input-dividido" class="w-4 h-4">
             Parcelado?
           </label>
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 ml-2">
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 ml-2" for="input-fixo">
             <input type="checkbox" id="input-fixo" class="w-4 h-4">
             Fixo?
           </label>
@@ -111,17 +111,27 @@ export function criarTransacaoForm(
       dividirValorCheckbox.checked = false
     }
 
-    // Parcelado e Fixo são mutuamente exclusivos
-    if (isChecked) inputFixo.checked = false
+    // Parcelado e Fixo são mutuamente exclusivos: selecionar um esconde o outro
+    inputFixo.classList.toggle('hidden', isChecked)
+    container.querySelector('label[for="input-fixo"]')?.classList.toggle('hidden', isChecked)
+    if (isChecked) {
+      inputFixo.checked = false
+    }
   })
 
   inputFixo.addEventListener('change', () => {
-    if (inputFixo.checked) {
+    const isChecked = inputFixo.checked
+    inputDividido.classList.toggle('hidden', isChecked)
+    container.querySelector('label[for="input-dividido"]')?.classList.toggle('hidden', isChecked)
+    if (isChecked) {
       inputDividido.checked = false
       parcelasContainer.classList.add('hidden')
       dividirValorCheckboxLabel.classList.add('hidden')
       const dividirValorCheckbox = container.querySelector('#input-dividir-valor') as HTMLInputElement
       dividirValorCheckbox.checked = false
+    } else {
+      inputDividido.classList.remove('hidden')
+      container.querySelector('label[for="input-dividido"]')?.classList.remove('hidden')
     }
   })
 

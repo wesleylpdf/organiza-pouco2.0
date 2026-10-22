@@ -247,8 +247,8 @@ function updateGrafico(transacoes?: Transacao[]): void {
   const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
   const filtradas = showOnlyDividido ? txs.filter(t => t.dividido) : txs
-  // Transações fixas não aparecem na distribuição de gastos do gráfico
-  const saidas = filtradas.filter(t => t.tipo === 'saida' && !t.fixo)
+  // Transações fixas aparecem na distribuição de gastos do gráfico
+  const saidas = filtradas.filter(t => t.tipo === 'saida')
   atualizarGrafico(saidas)
 }
 
