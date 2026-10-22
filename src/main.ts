@@ -268,21 +268,24 @@ async function updateHeader(): Promise<void> {
   const state = getAuthState()
   const config = appStore.getState()
 
-  // Saldo Final inclui transações fixas de TODOS os meses (não apenas o ciclo atual)
+  // Saldo Final inclui transações do ciclo atual + transações fixas de TODOS os meses
   let totais = calcularTotais(transacoes)
   try {
     const todasTransacoes = await listarTransacoes({})
-    const fixosTodas = todasTransacoes.filter(t => t.fixo)
-    const fixosCiclo = transacoes.filter(t => t.fixo)
+    const fixosTodos = todasTransacoes.filter(t => t.fixo)
 
-    const fixosTodasEntradas = fixosTodas.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
-    const fixosTodasSaidas = fixosTodas.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
-    const fixosCicloEntradas = fixosCiclo.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
-    const fixosCicloSaidas = fixosCiclo.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
+    // Fixas que já estão no ciclo não precisam ser somadas novamente
+    const idsCiclo = new Set(transacoes.map(t => t.id))
+    const fixosForaDoCiclo = fixosTodos.filter(t => !idsCiclo.has(t.id))
 
-    const entradas = totais.entradas - fixosCicloEntradas + fixosTodasEntradas
-    const saidas = totais.saidas - fixosCicloSaidas + fixosTodasSaidas
-    totais = { entradas, saidas, saldo: entradas - saidas }
+    const entradasExtras = fixosForaDoCiclo.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
+    const saidasExtras = fixosForaDoCiclo.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
+
+    totais = {
+      entradas: totais.entradas + entradasExtras,
+      saidas: totais.saidas + saidasExtras,
+      saldo: (totais.entradas + entradasExtras) - (totais.saidas + saidasExtras),
+    }
   } catch (err) {
     logger.error('Erro ao buscar todas as transações para saldo final', err as any)
   }
