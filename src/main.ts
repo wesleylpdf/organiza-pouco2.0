@@ -86,6 +86,80 @@ function removerTelaCarregamento(): void {
   }
 }
 
+// Controle do carregamento de navegação de ciclo (voltar/avançar)
+let carregamentoCicloEl: HTMLElement | null = null
+
+function criarCarregamentoCiclo(): void {
+  carregamentoCicloEl = document.createElement('div')
+  carregamentoCicloEl.id = 'carregamento-ciclo'
+  carregamentoCicloEl.className = 'fixed inset-0 bg-slate-900/95 flex items-center justify-center z-[9999] p-4 backdrop-blur-sm'
+  carregamentoCicloEl.innerHTML = `
+    <div class="text-center">
+      <img src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-6 w-24 h-24 rounded-full object-cover border-2 border-emerald-500 dark:border-emerald-400">
+      <h3 class="text-xl font-bold text-white mb-2">Organiza Pouco</h3>
+      <p id="ciclo-texto" class="text-emerald-400 mb-6">Carregando ciclo...</p>
+      <div class="w-64 h-2 bg-slate-700 rounded-full overflow-hidden mx-auto mb-4">
+        <div id="ciclo-barra" class="h-full bg-emerald-500 w-0 transition-width duration-300"></div>
+      </div>
+      <span id="ciclo-percentual" class="text-2xl font-black text-white">0%</span>
+    </div>
+  `
+  mainContainer.appendChild(carregamentoCicloEl)
+}
+
+function atualizarCarregamentoCiclo(percentual: number, texto?: string): void {
+  const barra = document.getElementById('ciclo-barra')
+  const pct = document.getElementById('ciclo-percentual')
+  const txt = document.getElementById('ciclo-texto')
+  if (barra) barra.style.width = `${percentual}%`
+  if (pct) pct.textContent = `${percentual}%`
+  if (texto && txt) txt.textContent = texto
+}
+
+function removerCarregamentoCiclo(): void {
+  if (carregamentoCicloEl) {
+    carregamentoCicloEl.remove()
+    carregamentoCicloEl = null
+  }
+}
+
+/**
+ * Desabilita (ou reabilita) todos os botões da aplicação durante o carregamento de ciclo:
+ * Guardar, Editar, Excluir, FIXOS, Voltar/Avançar ciclo e Salvar configuração.
+ */
+function setBotoesDesabilitados(desabilitado: boolean): void {
+  const seletores = [
+    '#ciclo-anterior', '#ciclo-proximo', '#salvar-config-ciclo',
+    '#transaction-form button[type="submit"]', '#fixos-btn',
+    'button[data-action="edit"]', 'button[data-action="delete"]',
+  ]
+  seletores.forEach((sel) => {
+    document.querySelectorAll(sel).forEach((el) => {
+      const btn = el as HTMLButtonElement
+      btn.disabled = desabilitado
+    })
+  })
+}
+
+async function carregarCicloComFeedback(): Promise<void> {
+  criarCarregamentoCiclo()
+  setBotoesDesabilitados(true)
+  try {
+    atualizarCarregamentoCiclo(10, 'Iniciando carregamento...')
+    await new Promise((r) => setTimeout(r, 150))
+    await updateDashboard()
+    atualizarCarregamentoCiclo(100, 'Pronto!')
+    await new Promise((r) => setTimeout(r, 150))
+  } catch (err) {
+    logger.error('Erro ao carregar ciclo', err as any)
+    appStore.setError('Erro ao carregar ciclo')
+    toast.error('Erro ao carregar ciclo')
+  } finally {
+    removerCarregamentoCiclo()
+    setBotoesDesabilitados(false)
+  }
+}
+
 // Inicialização
 function init(): void {
   // Restaura tema
@@ -184,17 +258,17 @@ async function setupApp(_userEmail: string): Promise<void> {
   criarGrafico(chartContainer)
   criarTransacaoList(listContainer)
 
-  // Eventos de ciclo com debounce
+  // Eventos de ciclo com feedback de carregamento
   document.getElementById('ciclo-anterior')!.addEventListener('click', () => {
     const currentOffset = appStore.getState().cycleOffset
     appStore.setCycleOffset(currentOffset - 1)
-    debouncedUpdateDashboard()
+    carregarCicloComFeedback()
   })
 
   document.getElementById('ciclo-proximo')!.addEventListener('click', () => {
     const currentOffset = appStore.getState().cycleOffset
     appStore.setCycleOffset(currentOffset + 1)
-    debouncedUpdateDashboard()
+    carregarCicloComFeedback()
   })
 
   // Evento de alteração de configuração do ciclo (início/fim)
@@ -389,11 +463,11 @@ async function updateHeader(): Promise<void> {
     totais,
     onCicloAnterior: () => {
       appStore.setCycleOffset(appStore.getState().cycleOffset - 1)
-      debouncedUpdateDashboard()
+      carregarCicloComFeedback()
     },
     onCicloProximo: () => {
       appStore.setCycleOffset(appStore.getState().cycleOffset + 1)
-      debouncedUpdateDashboard()
+      carregarCicloComFeedback()
     },
     onAlterarDiaCiclo: async (diaInicio, diaFim) => {
       const state = getAuthState()
