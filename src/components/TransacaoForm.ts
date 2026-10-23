@@ -111,10 +111,14 @@ export function criarTransacaoForm(
       dividirValorCheckbox.checked = false
     }
 
-    // Parcelado e Fixo são mutuamente exclusivos: selecionar um desmarca o outro
-    // Ambos permanecem visíveis nas mesmas posições iniciais
+    // Parcelado e Fixo são mutuamente exclusivos: selecionar um desmarca o outro e esconde o outro (mantém o espaço no layout)
     if (isChecked) {
       inputFixo.checked = false
+      inputFixo.classList.add('invisible')
+      container.querySelector('label[for="input-fixo"]')?.classList.add('invisible')
+    } else {
+      inputFixo.classList.remove('invisible')
+      container.querySelector('label[for="input-fixo"]')?.classList.remove('invisible')
     }
   })
 
@@ -122,12 +126,15 @@ export function criarTransacaoForm(
     const isChecked = inputFixo.checked
     if (isChecked) {
       inputDividido.checked = false
+      inputDividido.classList.add('invisible')
+      container.querySelector('label[for="input-dividido"]')?.classList.add('invisible')
       parcelasContainer.classList.add('hidden')
       dividirValorCheckboxLabel.classList.add('hidden')
       const dividirValorCheckbox = container.querySelector('#input-dividir-valor') as HTMLInputElement
       dividirValorCheckbox.checked = false
     } else {
-      // Parcelado permanece visível (não é mais escondido)
+      inputDividido.classList.remove('invisible')
+      container.querySelector('label[for="input-dividido"]')?.classList.remove('invisible')
     }
   })
 
@@ -193,10 +200,10 @@ export function criarTransacaoForm(
     cancelBtn.classList.add('hidden')
 
     // Restaura a visibilidade dos checkboxes mutuamente exclusivos
-    inputDividido.classList.remove('hidden')
-    inputFixo.classList.remove('hidden')
-    container.querySelector('label[for="input-dividido"]')?.classList.remove('hidden')
-    container.querySelector('label[for="input-fixo"]')?.classList.remove('hidden')
+    inputDividido.classList.remove('invisible')
+    inputFixo.classList.remove('invisible')
+    container.querySelector('label[for="input-dividido"]')?.classList.remove('invisible')
+    container.querySelector('label[for="input-fixo"]')?.classList.remove('invisible')
   }
 
   // Define data atual como valor padrão
