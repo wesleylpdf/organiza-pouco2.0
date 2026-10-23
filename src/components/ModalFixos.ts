@@ -86,10 +86,26 @@ export function criarModalFixos(
       // Primeira vez: mostra botões Confirmar? e Cancelar, esconde Excluir
       confirmandoExclusao.add(id)
       modoConfirmacao()
+
+      // Bloqueia todos os outros botões de excluir enquanto aguarda confirmação
+      const todosBtnDelete = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
+      todosBtnDelete.forEach(b => {
+        if (b.dataset.id !== id) b.disabled = true
+      })
     } else if (action === 'confirm-delete') {
       confirmandoExclusao.delete(id)
       btn.disabled = true
       btn.textContent = 'Excluindo...'
+
+      // Esconde o botão Cancelar ao clicar em Confirmar?
+      btnCancel?.classList.add('hidden')
+
+      // Desabilita todos os outros botões de excluir até o retorno do Supabase
+      const todosBtnDelete = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
+      todosBtnDelete.forEach(b => {
+        if (b !== btn) b.disabled = true
+      })
+
       try {
         const sucesso = await onExcluir(id)
         if (sucesso) {
@@ -99,10 +115,16 @@ export function criarModalFixos(
       } finally {
         btn.disabled = false
         btn.textContent = 'Confirmar?'
+        todosBtnDelete.forEach(b => b.disabled = false)
         modoNormal()
       }
     } else if (action === 'cancel-delete') {
       confirmandoExclusao.delete(id)
+
+      // Desbloqueia todos os botões de excluir ao cancelar
+      const todosBtnDelete = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
+      todosBtnDelete.forEach(b => b.disabled = false)
+
       modoNormal()
     }
   })

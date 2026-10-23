@@ -65,15 +65,31 @@ export function criarTransacaoList(container: HTMLElement): void {
       confirmandoExclusao.delete(id)
       btn.disabled = true
       btn.textContent = 'Excluindo...'
+
+      // Esconde o botão Cancelar ao clicar em Confirmar?
+      btnCancel?.classList.add('hidden')
+
+      // Desabilita todos os outros botões de excluir até o retorno do Supabase
+      const todosBtnDelete = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
+      todosBtnDelete.forEach(b => {
+        if (b !== btn) b.disabled = true
+      })
+
       try {
         await deleteCallback(id)
       } finally {
         btn.disabled = false
         btn.textContent = 'Confirmar?'
+        todosBtnDelete.forEach(b => b.disabled = false)
         modoNormal()
       }
     } else if (action === 'cancel-delete') {
       confirmandoExclusao.delete(id)
+
+      // Desbloqueia todos os botões de excluir ao cancelar
+      const todosBtnDelete = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
+      todosBtnDelete.forEach(b => b.disabled = false)
+
       modoNormal()
     }
   })
