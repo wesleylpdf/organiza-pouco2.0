@@ -67,6 +67,12 @@ export function criarTransacaoList(container: HTMLElement): void {
       todosBtnDelete.forEach(b => {
         if (b.dataset.id !== id) b.disabled = true
       })
+
+      // Bloqueia todos os outros botões de editar enquanto aguarda confirmação
+      const todosBtnEdit = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="edit"]'))
+      todosBtnEdit.forEach(b => {
+        if (b.dataset.id !== id) b.disabled = true
+      })
     } else if (action === 'confirm-delete' && deleteCallback) {
       confirmandoExclusao.delete(id)
       btn.disabled = true
@@ -78,6 +84,12 @@ export function criarTransacaoList(container: HTMLElement): void {
       // Desabilita todos os outros botões de excluir até o retorno do Supabase
       const todosBtnDelete = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
       todosBtnDelete.forEach(b => {
+        if (b !== btn) b.disabled = true
+      })
+
+      // Desabilita todos os outros botões de editar até o retorno do Supabase
+      const todosBtnEdit = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="edit"]'))
+      todosBtnEdit.forEach(b => {
         if (b !== btn) b.disabled = true
       })
 
@@ -95,6 +107,10 @@ export function criarTransacaoList(container: HTMLElement): void {
       // Desbloqueia todos os botões de excluir ao cancelar
       const todosBtnDelete = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
       todosBtnDelete.forEach(b => b.disabled = false)
+
+      // Desbloqueia todos os botões de editar ao cancelar
+      const todosBtnEdit = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="edit"]'))
+      todosBtnEdit.forEach(b => b.disabled = false)
 
       modoNormal()
     }
