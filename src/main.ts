@@ -36,6 +36,9 @@ const debouncedUpdateDashboard = debounce(() => updateDashboard(), 250)
 // Cache de transações fixas de todos os meses (evita buscas duplicadas no gráfico e no header)
 let fixosTodosCache: Transacao[] | null = null
 
+// Função para limpar o formulário de edição (definida ao inicializar o form)
+let limparFormEdicao: () => void
+
 async function carregarFixosTodos(): Promise<Transacao[]> {
   if (fixosTodosCache) return fixosTodosCache
   const todasTransacoes = await listarTransacoes({})
@@ -231,7 +234,12 @@ async function setupApp(_userEmail: string): Promise<void> {
 
   // Inicializa componentes
   criarHeader(headerContainer, handleAbrirFixos)
-  criarTransacaoForm(formContainer, handleSalvar, handleCancelarEdicao, handleGerenciarCategorias)
+  ;({ limparFormEdicao } = criarTransacaoForm(
+    formContainer,
+    handleSalvar,
+    handleCancelarEdicao,
+    handleGerenciarCategorias
+  ))
   criarGrafico(chartContainer)
   criarTransacaoList(listContainer)
 
@@ -515,6 +523,12 @@ async function handleExcluir(id: string): Promise<boolean> {
   const success = await transacoesHook.excluir(id)
 
   if (success) {
+    // Se a transação excluída está em edição, fecha/limpa o formulário de edição
+    const inputId = document.getElementById('input-id') as HTMLInputElement | null
+    if (inputId && inputId.value === id) {
+      limparFormEdicao()
+    }
+
     toast.success('Transação excluída!')
     limparCacheFixos()
     await updateLista()

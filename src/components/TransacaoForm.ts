@@ -16,12 +16,16 @@ type SaveCallback = (data: {
 
 type CancelCallback = () => void
 
+export type FormApi = {
+  limparFormEdicao: () => void
+}
+
 export function criarTransacaoForm(
   container: HTMLElement,
   onSave: SaveCallback,
   onCancel: CancelCallback,
   onGerenciarCategorias: () => void
-): void {
+): FormApi {
   container.innerHTML = `
     <div class="rounded-3xl p-6 mb-8 border bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
       <h3 id="form-title" class="font-bold text-lg mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
@@ -208,6 +212,14 @@ export function criarTransacaoForm(
 
   // Define data atual como valor padrão
   ;(container.querySelector('#input-date') as HTMLInputElement).value = formatDateLocalISO(new Date())
+
+  return {
+    /**
+     * Limpa o formulário de edição, voltando ao estado "Nova Transação".
+     * Chamado quando a transação em edição é excluída pela lista.
+     */
+    limparFormEdicao: () => resetarForm(),
+  }
 }
 
 /**
