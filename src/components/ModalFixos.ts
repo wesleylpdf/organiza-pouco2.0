@@ -27,7 +27,7 @@ export function criarModalFixos(
 
       <div class="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700">
         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total das fixas (todos os ciclos)</span>
-        <p class="text-lg text-xl font-black text-slate-900 dark:text-white">${formatarMoeda(totalFixos)}</p>
+        <p id="total-fixos" class="text-lg text-xl font-black text-slate-900 dark:text-white">${formatarMoeda(totalFixos)}</p>
       </div>
 
       <div id="lista-fixos" class="flex-1 overflow-y-auto mb-3">
@@ -78,12 +78,25 @@ export function criarModalFixos(
       const sucesso = await onExcluir(id)
       if (sucesso) {
         btn.closest('.flex.items-center.justify-between')?.remove()
+        atualizarTotalFixos()
       }
     } finally {
       btn.disabled = false
       btn.textContent = 'Excluir'
     }
   })
+
+  function atualizarTotalFixos(): void {
+    const itens = lista.querySelectorAll('[data-action="delete"]')
+    let total = 0
+    itens.forEach(btn => {
+      const card = btn.closest('.flex.items-center.justify-between')!
+      const valorSpan = card.querySelector('span') as HTMLSpanElement
+      total += Number(valorSpan.textContent?.replace(/[^0-9,-]/g, '').replace('.', '').replace(',', '.') || 0)
+    })
+    const totalEl = document.getElementById('total-fixos')
+    if (totalEl) totalEl.textContent = formatarMoeda(total)
+  }
 
   document.body.appendChild(modal)
 }
