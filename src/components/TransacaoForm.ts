@@ -111,9 +111,8 @@ export function criarTransacaoForm(
       dividirValorCheckbox.checked = false
     }
 
-    // Parcelado e Fixo são mutuamente exclusivos: selecionar um esconde o outro
-    inputFixo.classList.toggle('hidden', isChecked)
-    container.querySelector('label[for="input-fixo"]')?.classList.toggle('hidden', isChecked)
+    // Parcelado e Fixo são mutuamente exclusivos: selecionar um desmarca o outro
+    // Ambos permanecem visíveis nas mesmas posições iniciais
     if (isChecked) {
       inputFixo.checked = false
     }
@@ -121,8 +120,6 @@ export function criarTransacaoForm(
 
   inputFixo.addEventListener('change', () => {
     const isChecked = inputFixo.checked
-    inputDividido.classList.toggle('hidden', isChecked)
-    container.querySelector('label[for="input-dividido"]')?.classList.toggle('hidden', isChecked)
     if (isChecked) {
       inputDividido.checked = false
       parcelasContainer.classList.add('hidden')
@@ -130,8 +127,7 @@ export function criarTransacaoForm(
       const dividirValorCheckbox = container.querySelector('#input-dividir-valor') as HTMLInputElement
       dividirValorCheckbox.checked = false
     } else {
-      inputDividido.classList.remove('hidden')
-      container.querySelector('label[for="input-dividido"]')?.classList.remove('hidden')
+      // Parcelado permanece visível (não é mais escondido)
     }
   })
 
