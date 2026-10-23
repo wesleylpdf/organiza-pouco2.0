@@ -197,10 +197,6 @@ export function useTransacoes() {
     try {
       appStore.clearError()
 
-      if (!confirm('Deseja realmente excluir esta transação?')) {
-        return false
-      }
-
       const transacoes = appStore.getTransacoes()
       const original = transacoes.find(tx => tx.id === id)
 

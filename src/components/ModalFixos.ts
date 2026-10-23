@@ -52,6 +52,9 @@ export function criarModalFixos(
     }
   })
 
+  // Rastreia quais botões estão em modo de confirmação de exclusão
+  const confirmandoExclusao = new Set<string>()
+
   // Delegação de eventos para botões de excluir
   const lista = modal.querySelector('#lista-fixos')!
   lista.addEventListener('click', async (e) => {
@@ -60,10 +63,15 @@ export function criarModalFixos(
     const id = btn.dataset.id
     if (!id) return
 
-    const confirmado = confirm('Deseja realmente excluir esta transação fixa?')
-    if (!confirmado) return
+    // Primeira vez: pede confirmação trocando o texto do botão
+    if (!confirmandoExclusao.has(id)) {
+      confirmandoExclusao.add(id)
+      btn.textContent = 'Confirmar exclusão?'
+      return
+    }
 
-    const textoOriginal = btn.textContent
+    // Segunda vez: confirma e executa a exclusão
+    confirmandoExclusao.delete(id)
     btn.disabled = true
     btn.textContent = 'Excluindo...'
     try {
@@ -73,7 +81,7 @@ export function criarModalFixos(
       }
     } finally {
       btn.disabled = false
-      btn.textContent = textoOriginal
+      btn.textContent = 'Excluir'
     }
   })
 
