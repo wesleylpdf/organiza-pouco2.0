@@ -33,17 +33,35 @@ export function criarTransacaoList(container: HTMLElement): void {
     const id = btn?.dataset.id
     if (!action || !id) return
 
-    if (action === 'edit' && editCallback) {
-      editCallback(id)
-    } else if (action === 'delete' && deleteCallback) {
-      // Primeira vez: pede confirmação trocando o texto do botão
-      if (!confirmandoExclusao.has(id)) {
-        confirmandoExclusao.add(id)
-        btn.textContent = 'Confirmar exclusão?'
-        return
-      }
+    const btnGroup = btn.closest('.flex.gap-2.shrink-0')
+    if (!btnGroup) return
 
-      // Segunda vez: confirma e executa a exclusão
+    const btnEdit = btnGroup.querySelector(`button[data-action="edit"][data-id="${id}"]`) as HTMLButtonElement | null
+    const btnDelete = btnGroup.querySelector(`button[data-action="delete"][data-id="${id}"]`) as HTMLButtonElement | null
+    const btnConfirm = btnGroup.querySelector(`button[data-action="confirm-delete"][data-id="${id}"]`) as HTMLButtonElement | null
+    const btnCancel = btnGroup.querySelector(`button[data-action="cancel-delete"][data-id="${id}"]`) as HTMLButtonElement | null
+
+    const modoConfirmacao = () => {
+      btnEdit?.classList.add('hidden')
+      btnDelete?.classList.add('hidden')
+      btnConfirm?.classList.remove('hidden')
+      btnCancel?.classList.remove('hidden')
+    }
+
+    const modoNormal = () => {
+      btnEdit?.classList.remove('hidden')
+      btnDelete?.classList.remove('hidden')
+      btnConfirm?.classList.add('hidden')
+      btnCancel?.classList.add('hidden')
+    }
+
+    if (action === 'edit') {
+      editCallback(id)
+    } else if (action === 'delete') {
+      // Primeira vez: mostra botões Confirmar? e Cancelar, esconde Editar e Excluir
+      confirmandoExclusao.add(id)
+      modoConfirmacao()
+    } else if (action === 'confirm-delete' && deleteCallback) {
       confirmandoExclusao.delete(id)
       btn.disabled = true
       btn.textContent = 'Excluindo...'
@@ -51,8 +69,12 @@ export function criarTransacaoList(container: HTMLElement): void {
         await deleteCallback(id)
       } finally {
         btn.disabled = false
-        btn.textContent = 'Excluir'
+        btn.textContent = 'Confirmar?'
+        modoNormal()
       }
+    } else if (action === 'cancel-delete') {
+      confirmandoExclusao.delete(id)
+      modoNormal()
     }
   })
 }
@@ -100,6 +122,8 @@ export function renderLista(
           <div class="flex gap-2 shrink-0">
             <button data-action="edit" data-id="${t.id}" class="bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition px-2 py-1 rounded">Editar</button>
             <button data-action="delete" data-id="${t.id}" class="bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition px-2 py-1 rounded">Excluir</button>
+            <button data-action="confirm-delete" data-id="${t.id}" class="bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition px-2 py-1 rounded hidden">Confirmar?</button>
+            <button data-action="cancel-delete" data-id="${t.id}" class="bg-slate-300 text-slate-800 text-xs font-bold hover:bg-slate-400 transition px-2 py-1 rounded hidden">Cancelar</button>
           </div>
         </div>
       </div>
