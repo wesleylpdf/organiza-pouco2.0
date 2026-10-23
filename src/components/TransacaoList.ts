@@ -21,6 +21,9 @@ export function criarTransacaoList(container: HTMLElement): void {
     <p id="list-empty" class="text-center text-slate-400 py-8 hidden">Nenhuma transação neste ciclo</p>
   `
 
+  // Rastreia quais botões estão em modo de confirmação de exclusão
+  const confirmandoExclusao = new Set<string>()
+
   // Delegação de eventos registrada UMA VEZ
   const listContainer = document.getElementById('transaction-list')!
   listContainer.addEventListener('click', async (e) => {
@@ -33,14 +36,22 @@ export function criarTransacaoList(container: HTMLElement): void {
     if (action === 'edit' && editCallback) {
       editCallback(id)
     } else if (action === 'delete' && deleteCallback) {
-      const textoOriginal = btn.textContent
+      // Primeira vez: pede confirmação trocando o texto do botão
+      if (!confirmandoExclusao.has(id)) {
+        confirmandoExclusao.add(id)
+        btn.textContent = 'Confirmar exclusão?'
+        return
+      }
+
+      // Segunda vez: confirma e executa a exclusão
+      confirmandoExclusao.delete(id)
       btn.disabled = true
       btn.textContent = 'Excluindo...'
       try {
         await deleteCallback(id)
       } finally {
         btn.disabled = false
-        btn.textContent = textoOriginal
+        btn.textContent = 'Excluir'
       }
     }
   })
