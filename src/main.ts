@@ -527,6 +527,7 @@ async function handleExcluir(id: string): Promise<boolean> {
     const inputId = document.getElementById('input-id') as HTMLInputElement | null
     if (inputId && inputId.value === id) {
       limparFormEdicao()
+      transacoesHook.cancelarEdicao()
     }
 
     toast.success('Transação excluída!')
