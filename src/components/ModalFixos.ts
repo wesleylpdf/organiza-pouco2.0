@@ -90,8 +90,7 @@ export function criarModalFixos(
     const itens = lista.querySelectorAll('[data-action="delete"]')
     let total = 0
     itens.forEach(btn => {
-      const card = btn.closest('.flex.items-center.justify-between')!
-      const valorSpan = card.querySelector('span') as HTMLSpanElement
+      const valorSpan = btn.previousElementSibling as HTMLSpanElement
       total += Number(valorSpan.textContent?.replace(/[^0-9,-]/g, '').replace('.', '').replace(',', '.') || 0)
     })
     const totalEl = document.getElementById('total-fixos')
