@@ -58,31 +58,52 @@ export function criarModalFixos(
   // Delegação de eventos para botões de excluir
   const lista = modal.querySelector('#lista-fixos')!
   lista.addEventListener('click', async (e) => {
-    const btn = (e.target as HTMLElement).closest('button[data-action="delete"]') as HTMLButtonElement | null
-    if (!btn) return
-    const id = btn.dataset.id
-    if (!id) return
+    const btn = (e.target as HTMLElement).closest('button[data-action]') as HTMLButtonElement | null
+    const action = btn?.dataset.action
+    const id = btn?.dataset.id
+    if (!action || !id) return
 
-    // Primeira vez: pede confirmação trocando o texto do botão
-    if (!confirmandoExclusao.has(id)) {
-      confirmandoExclusao.add(id)
-      btn.textContent = 'Confirmar exclusão?'
-      return
+    const btnGroup = btn.closest('.flex.items-center.gap-3')
+    if (!btnGroup) return
+
+    const btnDelete = btnGroup.querySelector(`button[data-action="delete"][data-id="${id}"]`) as HTMLButtonElement | null
+    const btnConfirm = btnGroup.querySelector(`button[data-action="confirm-delete"][data-id="${id}"]`) as HTMLButtonElement | null
+    const btnCancel = btnGroup.querySelector(`button[data-action="cancel-delete"][data-id="${id}"]`) as HTMLButtonElement | null
+
+    const modoConfirmacao = () => {
+      btnDelete?.classList.add('hidden')
+      btnConfirm?.classList.remove('hidden')
+      btnCancel?.classList.remove('hidden')
     }
 
-    // Segunda vez: confirma e executa a exclusão
-    confirmandoExclusao.delete(id)
-    btn.disabled = true
-    btn.textContent = 'Excluindo...'
-    try {
-      const sucesso = await onExcluir(id)
-      if (sucesso) {
-        btn.closest('.flex.items-center.justify-between')?.remove()
-        atualizarTotalFixos()
+    const modoNormal = () => {
+      btnDelete?.classList.remove('hidden')
+      btnConfirm?.classList.add('hidden')
+      btnCancel?.classList.add('hidden')
+    }
+
+    if (action === 'delete') {
+      // Primeira vez: mostra botões Confirmar? e Cancelar, esconde Excluir
+      confirmandoExclusao.add(id)
+      modoConfirmacao()
+    } else if (action === 'confirm-delete') {
+      confirmandoExclusao.delete(id)
+      btn.disabled = true
+      btn.textContent = 'Excluindo...'
+      try {
+        const sucesso = await onExcluir(id)
+        if (sucesso) {
+          btn.closest('.flex.items-center.justify-between')?.remove()
+          atualizarTotalFixos()
+        }
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Confirmar?'
+        modoNormal()
       }
-    } finally {
-      btn.disabled = false
-      btn.textContent = 'Excluir'
+    } else if (action === 'cancel-delete') {
+      confirmandoExclusao.delete(id)
+      modoNormal()
     }
   })
 
@@ -114,6 +135,8 @@ function renderListaFixos(fixos: Transacao[]): string {
           <div class="flex items-center gap-3">
             <span class="text-xs text-sm font-bold text-slate-600 dark:text-slate-300">${formatarMoeda(tx.valor)}</span>
             <button data-action="delete" data-id="${tx.id}" class="text-[10px] text-xs text-white bg-rose-500 hover:bg-rose-600 font-bold px-2 py-1 rounded transition">Excluir</button>
+            <button data-action="confirm-delete" data-id="${tx.id}" class="text-[10px] text-xs text-white bg-rose-600 hover:bg-rose-700 font-bold px-2 py-1 rounded transition hidden">Confirmar?</button>
+            <button data-action="cancel-delete" data-id="${tx.id}" class="text-[10px] text-xs text-slate-800 bg-slate-300 hover:bg-slate-400 font-bold px-2 py-1 rounded transition hidden">Cancelar</button>
           </div>
         </div>
       `).join('')}
