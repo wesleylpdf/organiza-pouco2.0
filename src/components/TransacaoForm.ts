@@ -195,6 +195,12 @@ export function criarTransacaoForm(
     ;(container.querySelector('#input-date') as HTMLInputElement).value = formatDateLocalISO(new Date())
     formTitle.textContent = 'Nova Transação'
     cancelBtn.classList.add('hidden')
+
+    // Restaura a visibilidade dos checkboxes mutuamente exclusivos
+    inputDividido.classList.remove('hidden')
+    inputFixo.classList.remove('hidden')
+    container.querySelector('label[for="input-dividido"]')?.classList.remove('hidden')
+    container.querySelector('label[for="input-fixo"]')?.classList.remove('hidden')
   }
 
   // Define data atual como valor padrão
