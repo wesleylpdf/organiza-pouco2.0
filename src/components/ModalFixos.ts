@@ -55,17 +55,25 @@ export function criarModalFixos(
   // Delegação de eventos para botões de excluir
   const lista = modal.querySelector('#lista-fixos')!
   lista.addEventListener('click', async (e) => {
-    const btn = (e.target as HTMLElement).closest('button[data-action="delete"]')
+    const btn = (e.target as HTMLElement).closest('button[data-action="delete"]') as HTMLButtonElement | null
     if (!btn) return
-    const id = (btn as HTMLElement).dataset.id
+    const id = btn.dataset.id
     if (!id) return
 
     const confirmado = confirm('Deseja realmente excluir esta transação fixa?')
     if (!confirmado) return
 
-    const sucesso = await onExcluir(id)
-    if (sucesso) {
-      btn.closest('.flex.items-center.justify-between')?.remove()
+    const textoOriginal = btn.textContent
+    btn.disabled = true
+    btn.textContent = 'Excluindo...'
+    try {
+      const sucesso = await onExcluir(id)
+      if (sucesso) {
+        btn.closest('.flex.items-center.justify-between')?.remove()
+      }
+    } finally {
+      btn.disabled = false
+      btn.textContent = textoOriginal
     }
   })
 
@@ -85,7 +93,7 @@ function renderListaFixos(fixos: Transacao[]): string {
           </div>
           <div class="flex items-center gap-3">
             <span class="text-xs text-sm font-bold text-slate-600 dark:text-slate-300">${formatarMoeda(tx.valor)}</span>
-            <button data-action="delete" data-id="${tx.id}" class="text-[10px] text-xs text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 underline font-bold">Excluir</button>
+            <button data-action="delete" data-id="${tx.id}" class="text-[10px] text-xs text-white bg-rose-500 hover:bg-rose-600 font-bold px-2 py-1 rounded transition">Excluir</button>
           </div>
         </div>
       `).join('')}

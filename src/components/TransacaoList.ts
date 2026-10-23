@@ -23,14 +23,26 @@ export function criarTransacaoList(container: HTMLElement): void {
 
   // Delegação de eventos registrada UMA VEZ
   const listContainer = document.getElementById('transaction-list')!
-  listContainer.addEventListener('click', (e) => {
+  listContainer.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement
-    const action = target.dataset.action
-    const id = target.dataset.id
+    const btn = target.closest('button[data-action]') as HTMLButtonElement | null
+    const action = btn?.dataset.action
+    const id = btn?.dataset.id
     if (!action || !id) return
 
-    if (action === 'edit' && editCallback) editCallback(id)
-    else if (action === 'delete' && deleteCallback) deleteCallback(id)
+    if (action === 'edit' && editCallback) {
+      editCallback(id)
+    } else if (action === 'delete' && deleteCallback) {
+      const textoOriginal = btn.textContent
+      btn.disabled = true
+      btn.textContent = 'Excluindo...'
+      try {
+        await deleteCallback(id)
+      } finally {
+        btn.disabled = false
+        btn.textContent = textoOriginal
+      }
+    }
   })
 }
 
