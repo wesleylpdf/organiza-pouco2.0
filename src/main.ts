@@ -33,6 +33,20 @@ const categoriasHook = useCategorias()
 // Debounce para navegação de ciclos
 const debouncedUpdateDashboard = debounce(() => updateDashboard(), 250)
 
+// Cache de transações fixas de todos os meses (evita buscas duplicadas no gráfico e no header)
+let fixosTodosCache: Transacao[] | null = null
+
+async function carregarFixosTodos(): Promise<Transacao[]> {
+  if (fixosTodosCache) return fixosTodosCache
+  const todasTransacoes = await listarTransacoes({})
+  fixosTodosCache = todasTransacoes.filter(t => t.fixo)
+  return fixosTodosCache
+}
+
+function limparCacheFixos(): void {
+  fixosTodosCache = null
+}
+
 // Inicialização
 function init(): void {
   // Restaura tema
@@ -86,10 +100,12 @@ async function setupApp(_userEmail: string): Promise<void> {
 
   // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
   const userId = getAuthState().user?.id ?? null
-  await carregarConfiguracaoCiclo(userId)
 
-  // Carrega categorias do usuário (aguarda para popular o select antes do form)
-  await categoriasHook.carregarCategorias()
+  // Carrega configuração de ciclo e categorias em paralelo (independentes entre si)
+  await Promise.all([
+    carregarConfiguracaoCiclo(userId),
+    categoriasHook.carregarCategorias(),
+  ])
 
   // Cria estrutura DOM
   const headerContainer = document.createElement('div')
@@ -107,6 +123,21 @@ async function setupApp(_userEmail: string): Promise<void> {
   mainContainer.appendChild(chartContainer)
   mainContainer.appendChild(listContainer)
   mainContainer.appendChild(exportContainer)
+
+  // Esqueleto de carregamento exibido imediatamente após o login,
+  // para o usuário não ver tela branca enquanto os dados carregam.
+  const skeletonEl = document.createElement('div')
+  skeletonEl.id = 'skeleton-loading'
+  skeletonEl.className = 'max-w-4xl mx-auto py-8 text-center'
+  skeletonEl.innerHTML = `
+    <div class="inline-block animate-pulse rounded-full h-12 w-12 bg-slate-200 dark:bg-slate-700 mb-4"></div>
+    <h3 class="text-slate-600 dark:text-slate-300 font-semibold mb-2 animate-pulse">Carregando seus dados...</h3>
+    <div class="flex justify-center gap-2">
+      <div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
+      <div class="h-4 w-40 rounded bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
+    </div>
+  `
+  mainContainer.appendChild(skeletonEl)
 
   // Botão de exportação
   exportContainer.innerHTML = `
@@ -217,6 +248,10 @@ async function updateDashboard(): Promise<void> {
     // Mostra loading
     updateLoadingStates()
 
+    // Remove esqueleto de carregamento assim que os dados começam a renderizar
+    const skeleton = document.getElementById('skeleton-loading')
+    if (skeleton) skeleton.remove()
+
     // Carrega transações via hook
     await transacoesHook.carregarTransacoes()
 
@@ -257,8 +292,7 @@ async function updateGrafico(transacoes?: Transacao[]): Promise<void> {
   const filtradas = showOnlyDividido ? txs.filter(t => t.dividido) : txs
 
   // Busca transações fixas de TODOS os meses para aparecerem no gráfico pizza
-  const todasTransacoes = await listarTransacoes({})
-  const fixosTodos = todasTransacoes.filter(t => t.fixo)
+  const fixosTodos = await carregarFixosTodos()
 
   // Combina transações do ciclo com fixas de todos os meses, evitando duplicatas
   const idsDoCiclo = new Set(filtradas.map(t => t.id))
@@ -279,8 +313,8 @@ async function updateHeader(): Promise<void> {
   // Saldo Final inclui transações do ciclo atual + transações fixas de TODOS os meses
   let totais = calcularTotais(transacoes)
   try {
-    const todasTransacoes = await listarTransacoes({})
-    const fixosTodos = todasTransacoes.filter(t => t.fixo)
+    // Reusa transações fixas já carregadas pelo gráfico (evita busca duplicada)
+    const fixosTodos = await carregarFixosTodos()
 
     // Fixas que já estão no ciclo não precisam ser somadas novamente
     const idsCiclo = new Set(transacoes.map(t => t.id))
@@ -363,6 +397,7 @@ async function handleSalvar(data: Parameters<typeof transacoesHook.salvarTransac
 
   if (success) {
     toast.success('Transação salva com sucesso!')
+    limparCacheFixos()
     await updateLista()
     await updateHeader()
   } else {
@@ -396,6 +431,7 @@ async function handleExcluir(id: string): Promise<boolean> {
 
   if (success) {
     toast.success('Transação excluída!')
+    limparCacheFixos()
     await updateLista()
     await updateHeader()
   }

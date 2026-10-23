@@ -19,7 +19,7 @@ export function criarModalFixos(
   const totalFixos = fixos.reduce((acc, t) => acc + Number(t.valor), 0)
 
   modal.innerHTML = `
-    <div id="modal-content" class="bg-white rounded-3xl p-4 sm:p-6 w-full max-w-md shadow-2xl dark:bg-slate-800 max-h-[85vh] flex flex-col">
+    <div id="modal-content" class="bg-white rounded-3xl p-4 p-6 w-full max-w-md shadow-2xl dark:bg-slate-800 max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-lg text-slate-800 dark:text-white">Transações Fixas</h3>
         <button id="fechar-modal-fixos" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl">&times;</button>
@@ -27,7 +27,7 @@ export function criarModalFixos(
 
       <div class="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700">
         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total das fixas (todos os ciclos)</span>
-        <p class="text-lg sm:text-xl font-black text-slate-900 dark:text-white">${formatarMoeda(totalFixos)}</p>
+        <p class="text-lg text-xl font-black text-slate-900 dark:text-white">${formatarMoeda(totalFixos)}</p>
       </div>
 
       <div id="lista-fixos" class="flex-1 overflow-y-auto mb-3">
@@ -84,8 +84,8 @@ function renderListaFixos(fixos: Transacao[]): string {
             <span class="text-[10px] text-slate-500 dark:text-slate-400">${formatarData(tx.data)}</span>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300">${formatarMoeda(tx.valor)}</span>
-            <button data-action="delete" data-id="${tx.id}" class="text-[10px] sm:text-xs text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 underline font-bold">Excluir</button>
+            <span class="text-xs text-sm font-bold text-slate-600 dark:text-slate-300">${formatarMoeda(tx.valor)}</span>
+            <button data-action="delete" data-id="${tx.id}" class="text-[10px] text-xs text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 underline font-bold">Excluir</button>
           </div>
         </div>
       `).join('')}

@@ -25,21 +25,21 @@ export function criarTransacaoForm(
   container.innerHTML = `
     <div class="rounded-3xl p-6 mb-8 border bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
       <h3 id="form-title" class="font-bold text-lg mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
-      <form id="transaction-form" class="space-y-3 sm:space-y-4">
+      <form id="transaction-form" class="space-y-3 space-y-4">
         <input type="hidden" id="input-id">
-        <div class="grid grid-cols-2 gap-2 sm:gap-4">
+        <div class="grid grid-cols-2 gap-2 gap-4">
           <input type="number" id="input-value" step="0.01" min="0.01" required
-            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base"
+            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm text-base"
             placeholder="Valor" inputmode="decimal">
           <input type="date" id="input-date" required
-            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base">
+            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm text-base">
         </div>
-        <div class="grid grid-cols-2 gap-2 sm:gap-4">
-          <select id="input-type" class="w-full p-2 sm:p-3 rounded-xl border bg-white font-bold text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+        <div class="grid grid-cols-2 gap-2 gap-4">
+          <select id="input-type" class="w-full p-2 p-3 rounded-xl border bg-white font-bold text-sm text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
             <option value="saida">Saída (-)</option>
             <option value="entrada">Entrada (+)</option>
           </select>
-          <select id="input-category" class="w-full p-2 sm:p-3 rounded-xl border bg-white text-sm sm:text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+          <select id="input-category" class="w-full p-2 p-3 rounded-xl border bg-white text-sm text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
             <!-- Populado dinamicamente -->
           </select>
         </div>
@@ -51,7 +51,7 @@ export function criarTransacaoForm(
         <input type="text" id="input-description" required maxlength="100"
           class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
           placeholder="Descrição">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 gap-x-6">
           <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300" for="input-dividido">
             <input type="checkbox" id="input-dividido" class="w-4 h-4">
             Parcelado?
@@ -65,9 +65,9 @@ export function criarTransacaoForm(
             Dividir valor pelas parcelas?
           </label>
         </div>
-        <div id="parcelas-container" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div id="parcelas-container" class="hidden grid grid-cols-1 gap-3 gap-4">
           <input type="number" id="input-total-parcelas" min="2" step="1" value="2"
-            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm sm:text-base"
+            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm text-base"
             placeholder="Quantidade de parcelas">
         </div>
         <button type="submit" id="save-btn"

@@ -5,21 +5,21 @@ type Modo = 'login' | 'cadastro' | 'reset'
 export function criarAuthForm(container: HTMLElement): void {
   container.innerHTML = `
     <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[999] p-4">
-      <div class="bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl text-center w-full max-w-sm mx-auto shadow-2xl dark:bg-slate-800">
-        <img id="auth-logo" src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-3 sm:mb-4 w-20 sm:w-24 h-auto rounded-full object-cover border-2 border-emerald-500 dark:border-emerald-400">
-        <h2 class="font-black text-lg sm:text-xl mb-2 text-slate-800 dark:text-white">Organiza Pouco</h2>
-        <p id="auth-subtitle" class="text-xs sm:text-sm text-slate-500 mb-4 sm:mb-6 dark:text-slate-400">Entre na sua conta</p>
+      <div class="bg-white p-4 p-6 p-8 rounded-2xl rounded-3xl text-center w-full max-w-sm mx-auto shadow-2xl dark:bg-slate-800">
+        <img id="auth-logo" src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-3 mb-4 w-20 w-24 h-auto rounded-full object-cover border-2 border-emerald-500 dark:border-emerald-400">
+        <h2 class="font-black text-lg text-xl mb-2 text-slate-800 dark:text-white">Organiza Pouco</h2>
+        <p id="auth-subtitle" class="text-xs text-sm text-slate-500 mb-4 mb-6 dark:text-slate-400">Entre na sua conta</p>
 
-        <div id="auth-fields" class="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
-          <input type="email" id="auth-email" class="border p-3 rounded-xl w-full bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm sm:text-base" placeholder="Email" autocomplete="email">
-          <input type="password" id="auth-pass" class="border p-3 rounded-xl w-full bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm sm:text-base" placeholder="Senha" autocomplete="current-password">
+        <div id="auth-fields" class="space-y-2 space-y-3 mb-3 mb-4">
+          <input type="email" id="auth-email" class="border p-3 rounded-xl w-full bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-base" placeholder="Email" autocomplete="email">
+          <input type="password" id="auth-pass" class="border p-3 rounded-xl w-full bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-base" placeholder="Senha" autocomplete="current-password">
         </div>
 
         <p id="auth-error" class="text-rose-500 text-xs mb-3 hidden"></p>
 
-        <button id="auth-submit" class="bg-slate-900 text-white px-6 sm:px-8 py-3 rounded-xl font-bold w-full hover:bg-slate-800 transition dark:bg-slate-700 text-sm sm:text-base">Entrar</button>
+        <button id="auth-submit" class="bg-slate-900 text-white px-6 px-8 py-3 rounded-xl font-bold w-full hover:bg-slate-800 transition dark:bg-slate-700 text-sm text-base">Entrar</button>
 
-        <div class="mt-3 sm:mt-4 space-y-2 text-xs sm:text-sm">
+        <div class="mt-3 mt-4 space-y-2 text-xs text-sm">
           <a id="auth-toggle" href="#" class="text-blue-500 hover:underline block">Não tem conta? Cadastre-se</a>
           <a id="auth-reset" href="#" class="text-slate-400 hover:underline block">Esqueci minha senha</a>
         </div>

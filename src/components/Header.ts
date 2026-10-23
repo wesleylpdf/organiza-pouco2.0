@@ -18,60 +18,60 @@ export interface HeaderProps {
 
 export function criarHeader(container: HTMLElement, onFixosClick: () => void): void {
   container.innerHTML = `
-    <header class="max-w-4xl mx-auto mb-3 sm:mb-4">
+    <header class="max-w-4xl mx-auto mb-3 mb-4">
       <div class="flex items-center justify-between gap-2">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
-          <h1 class="font-black text-base sm:text-lg text-slate-800 dark:text-white shrink-0">Organiza Pouco</h1>
-          <span id="header-user" class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate"></span>
+        <div class="flex flex-col items-center gap-0.5 gap-2 min-w-0">
+          <h1 class="font-black text-base text-lg text-slate-800 dark:text-white shrink-0">Organiza Pouco</h1>
+          <span id="header-user" class="text-[11px] text-xs text-slate-500 dark:text-slate-400 truncate"></span>
         </div>
-        <div class="flex items-center gap-1 sm:gap-2">
+        <div class="flex items-center gap-1 gap-2">
           <button id="theme-toggle" class="bg-white p-2 rounded-full shadow border dark:bg-slate-800 dark:border-slate-700">
             <span id="theme-icon">☀️</span>
           </button>
-          <button id="logout-btn" class="bg-rose-500 text-white px-2 sm:px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-600 transition">Sair</button>
+          <button id="logout-btn" class="bg-rose-500 text-white px-2 px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-600 transition">Sair</button>
         </div>
       </div>
     </header>
 
-    <div id="resumo-ciclo" class="max-w-4xl mx-auto bg-white border border-slate-200 p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm mb-4 sm:mb-8 dark:bg-slate-800 dark:border-slate-700">
-      <div class="flex justify-between items-center mb-3 sm:mb-4 gap-2">
-        <button id="ciclo-anterior" class="bg-slate-100 px-2 sm:px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs sm:text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">←</button>
+    <div id="resumo-ciclo" class="max-w-4xl mx-auto bg-white border border-slate-200 p-4 p-6 rounded-2xl rounded-3xl shadow-sm mb-4 mb-8 dark:bg-slate-800 dark:border-slate-700">
+      <div class="flex justify-between items-center mb-3 mb-4 gap-2">
+        <button id="ciclo-anterior" class="bg-slate-100 px-2 px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">←</button>
         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center flex-1" id="cycle-dates">Resumo do Ciclo</span>
-        <button id="ciclo-proximo" class="bg-slate-100 px-2 sm:px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs sm:text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">→</button>
+        <button id="ciclo-proximo" class="bg-slate-100 px-2 px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">→</button>
       </div>
-      <div class="flex justify-center items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
+      <div class="flex justify-center items-center gap-4 gap-6 mb-3 mb-4">
         <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Início:</label>
-        <select id="dia-inicio-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+        <select id="dia-inicio-ciclo" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
           ${Array.from({ length: 31 }, (_, i) => i + 1)
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
         </select>
         <label class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fim:</label>
         <select id="dia-fim-ciclo" title="Fim do ciclo (dia do mês)"
-          class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
+          class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
           ${Array.from({ length: 31 }, (_, i) => i + 1)
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
         </select>
-        <button id="salvar-config-ciclo" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-emerald-700 transition dark:bg-emerald-700">Salvar</button>
+        <button id="salvar-config-ciclo" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs text-sm font-bold hover:bg-emerald-700 transition dark:bg-emerald-700">Salvar</button>
       </div>
-      <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+      <div class="grid grid-cols-2 gap-3 gap-4 mb-3 mb-4">
         <div>
           <span class="text-[10px] text-emerald-600 uppercase font-bold">Entradas</span>
-          <h2 id="total-entradas" class="text-base sm:text-xl font-bold text-emerald-600 truncate">R$ 0,00</h2>
+          <h2 id="total-entradas" class="text-base text-xl font-bold text-emerald-600 truncate">R$ 0,00</h2>
         </div>
         <div>
           <span class="text-[10px] text-rose-600 uppercase font-bold">Saídas</span>
-          <h2 id="total-saidas" class="text-base sm:text-xl font-bold text-rose-600 truncate">R$ 0,00</h2>
+          <h2 id="total-saidas" class="text-base text-xl font-bold text-rose-600 truncate">R$ 0,00</h2>
         </div>
       </div>
-      <div class="border-t border-slate-200 pt-2 sm:pt-3 flex justify-between items-end dark:border-slate-700">
+      <div class="border-t border-slate-200 pt-2 pt-3 flex justify-between items-end dark:border-slate-700">
         <div>
           <span class="text-[10px] text-slate-400 uppercase font-bold">Saldo Final</span>
-          <h2 id="cycle-total" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">R$ 0,00</h2>
+          <h2 id="cycle-total" class="text-2xl text-3xl font-black text-slate-900 dark:text-white">R$ 0,00</h2>
         </div>
         <div class="flex flex-col items-end gap-1 shrink-0">
-          <button id="fixos-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs sm:text-sm font-bold hover:bg-blue-700 transition dark:bg-blue-700">FIXOS</button>
+          <button id="fixos-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs text-sm font-bold hover:bg-blue-700 transition dark:bg-blue-700">FIXOS</button>
           <div class="text-[10px] text-slate-500 font-bold uppercase shrink-0">Versão: 2.2.0</div>
         </div>
       </div>

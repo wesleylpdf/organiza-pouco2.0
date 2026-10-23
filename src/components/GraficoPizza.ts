@@ -14,7 +14,7 @@ export function criarGrafico(container: HTMLElement): void {
       <div class="relative w-full h-full flex items-center justify-center">
         <canvas id="categoryChart" style="max-height: 220px;"></canvas>
       </div>
-      <p id="chart-empty" class="text-slate-400 text-xs sm:text-sm hidden">Sem saídas neste ciclo</p>
+      <p id="chart-empty" class="text-slate-400 text-xs text-sm hidden">Sem saídas neste ciclo</p>
     </div>
   `
 }
