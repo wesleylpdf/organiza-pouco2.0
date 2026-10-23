@@ -47,6 +47,45 @@ function limparCacheFixos(): void {
   fixosTodosCache = null
 }
 
+// Controle da tela de carregamento com porcentagem
+let carregamentoEl: HTMLElement | null = null
+let carregamentoPercentual = 0
+
+function criarTelaCarregamento(): void {
+  carregamentoEl = document.createElement('div')
+  carregamentoEl.id = 'tela-carregamento'
+  carregamentoEl.className = 'fixed inset-0 bg-slate-900 flex items-center justify-center z-[9999] p-4'
+  carregamentoEl.innerHTML = `
+    <div class="text-center">
+      <img id="carregamento-logo" src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-6 w-24 h-24 rounded-full object-cover border-2 border-emerald-500 dark:border-emerald-400">
+      <h3 id="carregamento-titulo" class="text-xl font-bold text-white mb-2">Organiza Pouco</h3>
+      <p id="carregamento-texto" class="text-emerald-400 mb-6">Carregando seus dados...</p>
+      <div class="w-64 h-2 bg-slate-700 rounded-full overflow-hidden mx-auto mb-4">
+        <div id="carregamento-barra" class="h-full bg-emerald-500 w-0 transition-width duration-300"></div>
+      </div>
+      <span id="carregamento-percentual" class="text-2xl font-black text-white">0%</span>
+    </div>
+  `
+  mainContainer.appendChild(carregamentoEl)
+}
+
+function atualizarCarregamento(percentual: number, texto?: string): void {
+  carregamentoPercentual = Math.min(100, Math.max(0, percentual))
+  const barra = document.getElementById('carregamento-barra')
+  const pct = document.getElementById('carregamento-percentual')
+  const txt = document.getElementById('carregamento-texto')
+  if (barra) barra.style.width = `${carregamentoPercentual}%`
+  if (pct) pct.textContent = `${carregamentoPercentual}%`
+  if (texto && txt) txt.textContent = texto
+}
+
+function removerTelaCarregamento(): void {
+  if (carregamentoEl) {
+    carregamentoEl.remove()
+    carregamentoEl = null
+  }
+}
+
 // Inicialização
 function init(): void {
   // Restaura tema
@@ -124,20 +163,10 @@ async function setupApp(_userEmail: string): Promise<void> {
   mainContainer.appendChild(listContainer)
   mainContainer.appendChild(exportContainer)
 
-  // Esqueleto de carregamento exibido imediatamente após o login,
+  // Tela de carregamento com porcentagem exibida imediatamente após o login,
   // para o usuário não ver tela branca enquanto os dados carregam.
-  const skeletonEl = document.createElement('div')
-  skeletonEl.id = 'skeleton-loading'
-  skeletonEl.className = 'max-w-4xl mx-auto py-8 text-center'
-  skeletonEl.innerHTML = `
-    <div class="inline-block animate-pulse rounded-full h-12 w-12 bg-slate-200 dark:bg-slate-700 mb-4"></div>
-    <h3 class="text-slate-600 dark:text-slate-300 font-semibold mb-2 animate-pulse">Carregando seus dados...</h3>
-    <div class="flex justify-center gap-2">
-      <div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
-      <div class="h-4 w-40 rounded bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
-    </div>
-  `
-  mainContainer.appendChild(skeletonEl)
+  criarTelaCarregamento()
+  atualizarCarregamento(10, 'Iniciando aplicação...')
 
   // Botão de exportação
   exportContainer.innerHTML = `
@@ -248,19 +277,24 @@ async function updateDashboard(): Promise<void> {
     // Mostra loading
     updateLoadingStates()
 
-    // Remove esqueleto de carregamento assim que os dados começam a renderizar
-    const skeleton = document.getElementById('skeleton-loading')
-    if (skeleton) skeleton.remove()
-
     // Carrega transações via hook
+    atualizarCarregamento(40, 'Carregando transações...')
     await transacoesHook.carregarTransacoes()
 
+    atualizarCarregamento(60, 'Renderizando lista...')
     await updateLista()
+
+    atualizarCarregamento(80, 'Atualizando resumo do ciclo...')
     await updateHeader()
+
+    atualizarCarregamento(100, 'Pronto!')
+    // Remove tela de carregamento assim que todos os dados estão visíveis
+    removerTelaCarregamento()
   } catch (err) {
     logger.error('Erro ao atualizar dashboard', err as any)
     appStore.setError('Erro ao atualizar o dashboard')
     toast.error('Erro ao atualizar o dashboard')
+    removerTelaCarregamento()
   }
 }
 
@@ -439,11 +473,24 @@ async function handleExcluir(id: string): Promise<boolean> {
 }
 
 async function handleAbrirFixos(): Promise<void> {
-  const transacoes = await listarTransacoes({})
-  criarModalFixos(transacoes, async (id) => {
-    const sucesso = await handleExcluir(id)
-    return sucesso
-  })
+  const btnFixos = document.getElementById('fixos-btn') as HTMLButtonElement | null
+  const textoOriginal = btnFixos?.textContent ?? 'FIXOS'
+  if (btnFixos) {
+    btnFixos.disabled = true
+    btnFixos.textContent = 'Carregando...'
+  }
+  try {
+    const transacoes = await listarTransacoes({})
+    criarModalFixos(transacoes, async (id) => {
+      const sucesso = await handleExcluir(id)
+      return sucesso
+    })
+  } finally {
+    if (btnFixos) {
+      btnFixos.disabled = false
+      btnFixos.textContent = textoOriginal
+    }
+  }
 }
 
 function handleExportar(): void {
