@@ -61,6 +61,12 @@ export function criarTransacaoList(container: HTMLElement): void {
       // Primeira vez: mostra botões Confirmar? e Cancelar, esconde Editar e Excluir
       confirmandoExclusao.add(id)
       modoConfirmacao()
+
+      // Bloqueia todos os outros botões de excluir enquanto aguarda confirmação
+      const todosBtnDelete = Array.from(listContainer.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
+      todosBtnDelete.forEach(b => {
+        if (b.dataset.id !== id) b.disabled = true
+      })
     } else if (action === 'confirm-delete' && deleteCallback) {
       confirmandoExclusao.delete(id)
       btn.disabled = true
