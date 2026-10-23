@@ -75,8 +75,8 @@ export function renderLista(
             <span class="text-xs text-slate-500">${catSanitizada} | ${formatarData(t.data)}${parceladoIcon}</span>
           </div>
           <div class="flex gap-2 shrink-0">
-            <button data-action="edit" data-id="${t.id}" class="text-blue-500 text-xs font-bold hover:underline px-2 py-1">Editar</button>
-            <button data-action="delete" data-id="${t.id}" class="text-rose-500 text-xs font-bold hover:underline px-2 py-1">Excluir</button>
+            <button data-action="edit" data-id="${t.id}" class="bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition px-2 py-1 rounded">Editar</button>
+            <button data-action="delete" data-id="${t.id}" class="bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition px-2 py-1 rounded">Excluir</button>
           </div>
         </div>
       </div>
