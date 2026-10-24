@@ -168,14 +168,16 @@ function init(): void {
       authContainer.innerHTML = ''
       authContainer.classList.add('hidden')
       mainContainer.classList.remove('hidden')
+      appStore.reset()
       limparCacheFixos()
       setupApp(state.user.email || 'Usuario')
     } else {
       logger.info('Usuário desautenticado')
+      appStore.reset()
+      limparCacheFixos()
       mainContainer.classList.add('hidden')
       mainContainer.innerHTML = ''
       authContainer.classList.remove('hidden')
-      limparCacheFixos()
       criarAuthForm(authContainer)
     }
   })
