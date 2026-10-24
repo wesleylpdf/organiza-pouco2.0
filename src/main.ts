@@ -168,12 +168,14 @@ function init(): void {
       authContainer.innerHTML = ''
       authContainer.classList.add('hidden')
       mainContainer.classList.remove('hidden')
+      limparCacheFixos()
       setupApp(state.user.email || 'Usuario')
     } else {
       logger.info('Usuário desautenticado')
       mainContainer.classList.add('hidden')
       mainContainer.innerHTML = ''
       authContainer.classList.remove('hidden')
+      limparCacheFixos()
       criarAuthForm(authContainer)
     }
   })
