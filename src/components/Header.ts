@@ -72,7 +72,7 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
         </div>
         <div class="flex flex-col items-end gap-1 shrink-0">
           <button id="fixos-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs text-sm font-bold hover:bg-blue-700 transition dark:bg-blue-700">FIXOS</button>
-          <div class="text-[10px] text-slate-500 font-bold uppercase shrink-0">Versão: 2.2.0</div>
+          <div class="text-[10px] text-slate-500 font-bold uppercase shrink-0">Versão: 2.2.1</div>
         </div>
       </div>
     </div>
