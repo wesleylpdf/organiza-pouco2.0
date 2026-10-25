@@ -14,7 +14,12 @@ export function criarTransacaoList(container: HTMLElement): void {
         <label class="flex items-center justify-center gap-2 cursor-pointer text-sm font-bold text-slate-600 bg-slate-50 px-4 py-2 py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
           <input type="checkbox" id="filter-dividido" class="w-4 h-4"> <span>Parcelados</span>
         </label>
-        <input type="text" id="filter-descricao" placeholder="Buscar por descrição"
+        <select id="filter-campo" class="p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <option value="descricao">Descrição</option>
+          <option value="categoria">Categoria</option>
+          <option value="data">Data</option>
+        </select>
+        <input type="text" id="filter-descricao" placeholder="Buscar"
           class="w-full p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
       </div>
     <div id="transaction-list" class="space-y-3 pb-10"></div>

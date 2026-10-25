@@ -1,11 +1,13 @@
 {
   "name": "organiza-pouco",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Aplicação de controle financeiro pessoal com Supabase",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run version:pequena && tsc && vite build",
+    "version:pequena": "node scripts/version-bump.js pequena",
+    "version:grande": "node scripts/version-bump.js grande",
     "preview": "vite preview",
     "test": "vitest",
     "test:e2e": "playwright test"
