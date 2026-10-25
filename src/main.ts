@@ -13,6 +13,7 @@ import { listarTransacoes } from '@/services/transacoes'
 import { somarAjustesSaldo } from '@/services/ajustes'
 import { formatarIntervaloCiclo, getOffsetInicial, formatDateLocalISO } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
+import { filtrarTransacoes } from '@/utils/filtroTransacoes'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
 import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
@@ -276,7 +277,8 @@ async function setupApp(_userEmail: string): Promise<void> {
 
   // Outros eventos
   document.getElementById('filter-dividido')!.addEventListener('change', async () => await updateLista())
-  document.getElementById('filter-descricao')!.addEventListener('input', async () => await updateLista())
+  const debouncedUpdateLista = debounce(async () => await updateLista(), 300)
+  document.getElementById('filter-descricao')!.addEventListener('input', () => debouncedUpdateLista())
   window.addEventListener('themechange', () => updateDashboard())
 
   // Subscribe to store changes
@@ -367,17 +369,7 @@ async function updateLista(): Promise<void> {
   const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
   const search = searchEl?.value.trim().toLowerCase() || ''
   const transacoes = appStore.getTransacoes()
-  const filtradas = transacoes.filter((t) => {
-    if (showOnlyDividido && !t.dividido) return false
-    if (!search) return true
-    const [ano, mes, dia] = String(t.data).split('-')
-    const dataBr = `${dia}/${mes}/${ano}`
-    return (
-      t.descricao?.toLowerCase().includes(search) ||
-      t.categoria?.toLowerCase().includes(search) ||
-      dataBr.includes(search)
-    )
-  })
+  const filtradas = filtrarTransacoes(transacoes, search, showOnlyDividido)
 
   renderLista(
     filtradas,
