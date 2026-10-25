@@ -276,7 +276,6 @@ async function setupApp(_userEmail: string): Promise<void> {
 
   // Outros eventos
   document.getElementById('filter-dividido')!.addEventListener('change', async () => await updateLista())
-  document.getElementById('filter-campo')!.addEventListener('change', async () => await updateLista())
   document.getElementById('filter-descricao')!.addEventListener('input', async () => await updateLista())
   window.addEventListener('themechange', () => updateDashboard())
 
@@ -366,22 +365,18 @@ async function updateLista(): Promise<void> {
   const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
   const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
-  const campoEl = document.getElementById('filter-campo') as HTMLSelectElement | null
   const search = searchEl?.value.trim().toLowerCase() || ''
-  const campo = campoEl?.value || 'descricao'
   const transacoes = appStore.getTransacoes()
   const filtradas = transacoes.filter((t) => {
     if (showOnlyDividido && !t.dividido) return false
     if (!search) return true
-    if (campo === 'categoria') {
-      return t.categoria?.toLowerCase().includes(search)
-    }
-    if (campo === 'data') {
-      const [ano, mes, dia] = String(t.data).split('-')
-      const dataBr = `${dia}/${mes}/${ano}`
-      return dataBr.includes(search)
-    }
-    return t.descricao?.toLowerCase().includes(search)
+    const [ano, mes, dia] = String(t.data).split('-')
+    const dataBr = `${dia}/${mes}/${ano}`
+    return (
+      t.descricao?.toLowerCase().includes(search) ||
+      t.categoria?.toLowerCase().includes(search) ||
+      dataBr.includes(search)
+    )
   })
 
   renderLista(
