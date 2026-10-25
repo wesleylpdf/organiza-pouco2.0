@@ -79,6 +79,13 @@ function criarTelaCarregamento(): void {
   mainContainer.appendChild(carregamentoEl)
 }
 
+function removerTelaCarregamento(): void {
+  if (carregamentoEl) {
+    carregamentoEl.remove()
+    carregamentoEl = null
+  }
+}
+
 // Controle do carregamento de navegação de ciclo
 let btnCicloAnterior: HTMLButtonElement | null = null
 let btnCicloProximo: HTMLButtonElement | null = null
@@ -565,6 +572,7 @@ function init(): void {
       }
 
       await updateDashboard()
+      removerTelaCarregamento()
     } else {
       authContainer.classList.remove('hidden')
       mainContainer.classList.add('hidden')
