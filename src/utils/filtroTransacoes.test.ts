@@ -1,10 +1,25 @@
 import { describe, it, expect } from 'vitest'
+import type { Transacao } from '@/types'
 import { filtrarTransacoes } from '@/utils/filtroTransacoes'
 
+const makeTransacao = (overrides: Partial<Transacao>): Transacao => ({
+  id: '1',
+  user_id: 'user-1',
+  valor: 100,
+  data: '2026-10-15',
+  tipo: 'saida',
+  categoria: 'Categoria',
+  fixo: false,
+  descricao: 'Descricao',
+  ciclo_inicio: '2026-10-09',
+  created_at: '2026-10-15T00:00:00Z',
+  ...overrides,
+})
+
 const transacoes = [
-  { id: '1', descricao: 'Supermercado', categoria: 'Alimentação', data: '2026-10-15', valor: 150.00, tipo: 'saida', dividido: false },
-  { id: '2', descricao: 'Salário', categoria: 'Trabalho', data: '2026-10-10', valor: 5000.00, tipo: 'entrada', dividido: false },
-  { id: '3', descricao: 'Internet', categoria: 'Casa', data: '2026-09-20', valor: 99.90, tipo: 'saida', dividido: false },
+  makeTransacao({ id: '1', descricao: 'Supermercado', categoria: 'Alimentação', data: '2026-10-15', valor: 150.00, tipo: 'saida', dividido: false }),
+  makeTransacao({ id: '2', descricao: 'Salário', categoria: 'Trabalho', data: '2026-10-10', valor: 5000.00, tipo: 'entrada', dividido: false }),
+  makeTransacao({ id: '3', descricao: 'Internet', categoria: 'Casa', data: '2026-09-20', valor: 99.90, tipo: 'saida', dividido: false }),
 ]
 
 describe('filtrarTransacoes', () => {
