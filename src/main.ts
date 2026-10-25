@@ -571,8 +571,11 @@ function init(): void {
         }
       }
 
-      await updateDashboard()
-      removerTelaCarregamento()
+      try {
+        await updateDashboard()
+      } finally {
+        removerTelaCarregamento()
+      }
     } else {
       authContainer.classList.remove('hidden')
       mainContainer.classList.add('hidden')
