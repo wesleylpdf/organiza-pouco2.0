@@ -1,57 +1,50 @@
-/**
- * Entry point da aplicação. Orquestra os módulos e inicializa a UI.
- */
-
-import { initAuth, onAuthChange } from '@/hooks/useAuth'
-import { appStore } from '@/stores/AppState'
-import { debounce } from '@/utils/debounce'
-import { buscarConfiguracaoCiclo } from '@/services/configuracoes'
-import { formatDateLocalISO } from '@/utils/ciclo'
-import { logger } from '@/utils/logger'
-import { toast } from '@/utils/toast'
-
-import {
-  preencherFormEdicao as preencherFormEdicaoForm,
-  atualizarSelectCategorias as atualizarSelectCategoriasForm,
-} from '@/components/TransacaoForm'
-
-import { renderLista } from '@/components/TransacaoList'
-import { atualizarHeader } from '@/components/Header'
-import { atualizarGrafico } from '@/components/GraficoPizza'
-import { criarModalCategorias } from '@/components/ModalCategorias'
-import { criarModalFixos } from '@/components/ModalFixos'
-
+import { initAuth, onAuthChange, getAuthState } from '@/hooks/useAuth'
 import { useTransacoes } from '@/hooks/useTransacoes'
 import { useCategorias } from '@/hooks/useCategorias'
+import { appStore } from '@/stores/AppState'
+import { criarAuthForm } from '@/components/AuthForm'
+import { criarHeader, atualizarHeader } from '@/components/Header'
+import { criarTransacaoForm, preencherFormEdicao, atualizarSelectCategorias } from '@/components/TransacaoForm'
+import { criarGrafico, atualizarGrafico } from '@/components/GraficoPizza'
+import { criarTransacaoList, renderLista } from '@/components/TransacaoList'
+import { criarModalCategorias } from '@/components/ModalCategorias'
+import { criarModalFixos } from '@/components/ModalFixos'
 import { listarTransacoes } from '@/services/transacoes'
 import { somarAjustesSaldo } from '@/services/ajustes'
-
-import { formatarIntervaloCiclo } from '@/utils/ciclo'
+import { formatarIntervaloCiclo, getOffsetInicial, formatDateLocalISO } from '@/utils/ciclo'
+import { debounce } from '@/utils/debounce'
 import { filtrarTransacoes } from '@/utils/filtroTransacoes'
-
+import { logger } from '@/utils/logger'
+import { toast } from '@/utils/toast'
+import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
+import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase } from '@/services/configuracoes'
+import jsPDF from 'jspdf'
+import * as XLSX from 'xlsx'
 import type { Transacao, TotaisCiclo } from '@/types'
-
-const transacoesHook = useTransacoes()
-const categoriasHook = useCategorias()
 
 // Elementos DOM
 const app = document.getElementById('app')!
 let authContainer: HTMLElement
 let mainContainer: HTMLElement
 
+// Hook de transações
+const transacoesHook = useTransacoes()
+const categoriasHook = useCategorias()
+
 // Debounce para navegação de ciclos
 const debouncedUpdateDashboard = debounce(() => updateDashboard(), 250)
 
-// Cache de transações fixas de todos os meses (evita buscas duplicadas)
+// Cache de transações fixas de todos os meses (evita buscas duplicadas no gráfico e no header)
 let fixosTodosCache: Transacao[] | null = null
 
-function carregarFixosTodos(): Promise<Transacao[]> {
-  return (async () => {
-    if (fixosTodosCache) return fixosTodosCache
-    const todasTransacoes = await listarTransacoes({})
-    fixosTodosCache = todasTransacoes.filter((t) => t.fixo)
-    return fixosTodosCache
-  })()
+// Função para limpar o formulário de edição (definida ao inicializar o form)
+let limparFormEdicao: () => void
+
+async function carregarFixosTodos(): Promise<Transacao[]> {
+  if (fixosTodosCache) return fixosTodosCache
+  const todasTransacoes = await listarTransacoes({})
+  fixosTodosCache = todasTransacoes.filter(t => t.fixo)
+  return fixosTodosCache
 }
 
 function limparCacheFixos(): void {
@@ -60,6 +53,7 @@ function limparCacheFixos(): void {
 
 // Controle da tela de carregamento com porcentagem
 let carregamentoEl: HTMLElement | null = null
+let carregamentoPercentual = 0
 
 function criarTelaCarregamento(): void {
   carregamentoEl = document.createElement('div')
@@ -79,6 +73,16 @@ function criarTelaCarregamento(): void {
   mainContainer.appendChild(carregamentoEl)
 }
 
+function atualizarCarregamento(percentual: number, texto?: string): void {
+  carregamentoPercentual = Math.min(100, Math.max(0, percentual))
+  const barra = document.getElementById('carregamento-barra')
+  const pct = document.getElementById('carregamento-percentual')
+  const txt = document.getElementById('carregamento-texto')
+  if (barra) barra.style.width = `${carregamentoPercentual}%`
+  if (pct) pct.textContent = `${carregamentoPercentual}%`
+  if (texto && txt) txt.textContent = texto
+}
+
 function removerTelaCarregamento(): void {
   if (carregamentoEl) {
     carregamentoEl.remove()
@@ -86,7 +90,7 @@ function removerTelaCarregamento(): void {
   }
 }
 
-// Controle do carregamento de navegação de ciclo
+// Controle do carregamento de navegação de ciclo (voltar/avançar) - texto dentro dos botoes
 let btnCicloAnterior: HTMLButtonElement | null = null
 let btnCicloProximo: HTMLButtonElement | null = null
 
@@ -95,6 +99,11 @@ function atualizarCarregamentoCicloBtns(percentual: number): void {
   if (btnCicloProximo) btnCicloProximo.textContent = `→ ${percentual}%`
 }
 
+
+/**
+ * Desabilita (ou reabilita) todos os botões da aplicação durante o carregamento de ciclo:
+ * Guardar, Editar, Excluir, FIXOS, Voltar/Avançar ciclo e Salvar configuração.
+ */
 function setBotoesDesabilitados(desabilitado: boolean): void {
   const seletores = [
     '#ciclo-anterior', '#ciclo-proximo', '#salvar-config-ciclo',
@@ -132,6 +141,180 @@ async function carregarCicloComFeedback(): Promise<void> {
   }
 }
 
+// Inicialização
+function init(): void {
+  // Restaura tema
+  const temaSalvo = localStorage.getItem('theme')
+  if (temaSalvo === 'dark') {
+    document.documentElement.classList.add('dark')
+  }
+
+  // Cria containers
+  authContainer = document.createElement('div')
+  mainContainer = document.createElement('div')
+  mainContainer.id = 'main-app'
+  mainContainer.className = 'hidden'
+
+  app.appendChild(authContainer)
+  app.appendChild(mainContainer)
+
+  // Inicializa auth
+  const unsubAuth = initAuth()
+
+  onAuthChange((state) => {
+    if (state.loading) return
+
+    if (state.user) {
+      logger.info('Usuário autenticado', { email: state.user.email })
+      authContainer.innerHTML = ''
+      authContainer.classList.add('hidden')
+      mainContainer.classList.remove('hidden')
+      appStore.reset()
+      limparCacheFixos()
+      setupApp(state.user.email || 'Usuario')
+    } else {
+      logger.info('Usuário desautenticado')
+      appStore.reset()
+      limparCacheFixos()
+      mainContainer.classList.add('hidden')
+      mainContainer.innerHTML = ''
+      authContainer.classList.remove('hidden')
+      criarAuthForm(authContainer)
+    }
+  })
+
+  window.addEventListener('beforeunload', unsubAuth)
+
+  // Detecta e aplica novas versões sem precisar de Ctrl+Shift+R
+  iniciarVerificacaoDeAtualizacoes()
+}
+
+async function setupApp(_userEmail: string): Promise<void> {
+  logger.debug('Configurando aplicação')
+
+  // Inicializa offset do ciclo
+  const offsetInicial = getOffsetInicial()
+  appStore.setCycleOffset(offsetInicial)
+
+  // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
+  const userId = getAuthState().user?.id ?? null
+
+  // Carrega configuração de ciclo e categorias em paralelo (independentes entre si)
+  await Promise.all([
+    carregarConfiguracaoCiclo(userId),
+    categoriasHook.carregarCategorias(),
+  ])
+
+  // Cria estrutura DOM
+  const headerContainer = document.createElement('div')
+  const formContainer = document.createElement('div')
+  formContainer.id = 'form-container'
+  const chartContainer = document.createElement('div')
+  const listContainer = document.createElement('div')
+  listContainer.id = 'list-container'
+  const exportContainer = document.createElement('div')
+  exportContainer.id = 'export-container'
+
+  mainContainer.innerHTML = ''
+  mainContainer.appendChild(headerContainer)
+  mainContainer.appendChild(formContainer)
+  mainContainer.appendChild(chartContainer)
+  mainContainer.appendChild(listContainer)
+  mainContainer.appendChild(exportContainer)
+
+  // Tela de carregamento com porcentagem exibida imediatamente após o login,
+  // para o usuário não ver tela branca enquanto os dados carregam.
+  criarTelaCarregamento()
+  atualizarCarregamento(10, 'Iniciando aplicação...')
+
+  // Botão de exportação
+  exportContainer.innerHTML = `
+    <select id="export-format" class="bg-white dark:bg-slate-800 dark:text-white border px-3 rounded-full text-xs font-bold w-1/3">
+      <option value="csv">Exportar como CSV</option>
+      <option value="pdf">Exportar como PDF</option>
+      <option value="xlsx">Exportar como Excel</option>
+    </select>
+    <button id="export-btn" class="bg-blue-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-blue-700 transition">Exportar</button>
+  `
+
+  // Inicializa componentes
+  criarHeader(headerContainer, handleAbrirFixos)
+  ;({ limparFormEdicao } = criarTransacaoForm(
+    formContainer,
+    handleSalvar,
+    handleCancelarEdicao,
+    handleGerenciarCategorias
+  ))
+  criarGrafico(chartContainer)
+  criarTransacaoList(listContainer)
+
+  // Eventos de ciclo com feedback de carregamento
+  document.getElementById('ciclo-anterior')!.addEventListener('click', () => {
+    const currentOffset = appStore.getState().cycleOffset
+    appStore.setCycleOffset(currentOffset - 1)
+    carregarCicloComFeedback()
+  })
+
+  document.getElementById('ciclo-proximo')!.addEventListener('click', () => {
+    const currentOffset = appStore.getState().cycleOffset
+    appStore.setCycleOffset(currentOffset + 1)
+    carregarCicloComFeedback()
+  })
+
+  // Evento de alteração de configuração do ciclo (início/fim)
+  window.addEventListener('cicloConfigChange', async (e: Event) => {
+    const { diaInicio, diaFim } = (e as CustomEvent).detail
+    appStore.setConfiguracaoCiclo(diaInicio, diaFim)
+    const userId = getAuthState().user?.id
+    if (userId) {
+      await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
+    }
+    debouncedUpdateDashboard()
+  })
+
+  // Evento de exportação
+  document.getElementById('export-btn')!.addEventListener('click', handleExportar)
+
+  // Outros eventos
+  document.getElementById('filter-dividido')!.addEventListener('change', async () => await updateLista())
+  const debouncedUpdateLista = debounce(async () => await updateLista(), 300)
+  document.getElementById('filter-descricao')!.addEventListener('input', () => debouncedUpdateLista())
+  window.addEventListener('themechange', () => updateDashboard())
+
+  // Subscribe to store changes
+  appStore.subscribe(() => {
+    updateLoadingStates()
+  })
+
+  // Primeira carga (depois dos componentes existirem no DOM)
+  updateDashboard()
+}
+
+// Carrega configuração de ciclo do usuário (Supabase com fallback localStorage)
+async function carregarConfiguracaoCiclo(userId: string | null): Promise<void> {
+  if (userId) {
+    try {
+      const salva = await buscarConfiguracaoCiclo(userId)
+      if (salva) {
+        appStore.setConfiguracaoCiclo(salva.dia_inicio_ciclo, salva.dia_fim_ciclo)
+        return
+      }
+    } catch (err) {
+      logger.error('Erro ao buscar configuração de ciclo no Supabase', err as any)
+    }
+  }
+
+  const salvoLocal = localStorage.getItem(`configuracao_ciclo_${userId ?? 'anonimo'}`)
+  if (salvoLocal) {
+    try {
+      const { diaInicio, diaFim } = JSON.parse(salvoLocal)
+      appStore.setConfiguracaoCiclo(diaInicio, diaFim)
+    } catch {
+      // Ignora erro de parse, usa padrão
+    }
+  }
+}
+
 // Salva configuração de ciclo (Supabase + localStorage como fallback)
 async function salvarConfiguracaoCiclo(
   diaInicio: number,
@@ -143,8 +326,7 @@ async function salvarConfiguracaoCiclo(
     return
   }
   try {
-    const { salvarConfiguracaoCiclo: salvarSupabase } = await import('@/services/configuracoes')
-    await salvarSupabase(diaInicio, diaFim, userId)
+    await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId)
     toast.success('Configuração de ciclo salva!')
   } catch (err) {
     logger.error('Erro ao salvar configuração de ciclo no Supabase', err as any)
@@ -153,42 +335,38 @@ async function salvarConfiguracaoCiclo(
   }
 }
 
-function calcularTotais(txs: Transacao[]): TotaisCiclo {
-  const entradas = txs
-    .filter((t) => t.tipo === 'entrada')
-    .reduce((acc, t) => acc + Number(t.valor), 0)
-  const saidas = txs
-    .filter((t) => t.tipo === 'saida')
-    .reduce((acc, t) => acc + Number(t.valor), 0)
-  return { entradas, saidas, saldo: entradas - saidas }
-}
+async function updateDashboard(): Promise<void> {
+  try {
+    logger.debug('Atualizando dashboard')
 
-async function updateGrafico(transacoes?: Transacao[]): Promise<void> {
-  const txs = transacoes ?? appStore.getTransacoes()
-  const filterEl = document.getElementById(
-    'filter-dividido'
-  ) as HTMLInputElement | null
-  const showOnlyDividido = filterEl?.checked || false
-  const filtradas = showOnlyDividido ? txs.filter((t) => t.dividido) : txs
+    // Mostra loading
+    updateLoadingStates()
 
-  const fixosTodos = await carregarFixosTodos()
+    // Carrega transações via hook
+    atualizarCarregamento(40, 'Carregando transações...')
+    await transacoesHook.carregarTransacoes()
 
-  const idsDoCiclo = new Set(filtradas.map((t) => t.id))
-  const fixosForaDoCiclo = fixosTodos.filter((t) => !idsDoCiclo.has(t.id))
-  const todasParaGrafico = [...filtradas, ...fixosForaDoCiclo]
+    atualizarCarregamento(60, 'Renderizando lista...')
+    await updateLista()
 
-  const saidas = todasParaGrafico.filter((t) => t.tipo === 'saida')
-  atualizarGrafico(saidas)
+    atualizarCarregamento(80, 'Atualizando resumo do ciclo...')
+    await updateHeader()
+
+    atualizarCarregamento(100, 'Pronto!')
+    // Remove tela de carregamento assim que todos os dados estão visíveis
+    removerTelaCarregamento()
+  } catch (err) {
+    logger.error('Erro ao atualizar dashboard', err as any)
+    appStore.setError('Erro ao atualizar o dashboard')
+    toast.error('Erro ao atualizar o dashboard')
+    removerTelaCarregamento()
+  }
 }
 
 async function updateLista(): Promise<void> {
-  const filterEl = document.getElementById(
-    'filter-dividido'
-  ) as HTMLInputElement | null
+  const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
-  const searchEl = document.getElementById(
-    'filter-descricao'
-  ) as HTMLInputElement | null
+  const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
   const search = searchEl?.value.trim().toLowerCase() || ''
   const transacoes = appStore.getTransacoes()
   const filtradas = filtrarTransacoes(transacoes, search, showOnlyDividido)
@@ -202,39 +380,55 @@ async function updateLista(): Promise<void> {
   await updateGrafico(filtradas)
 }
 
+async function updateGrafico(transacoes?: Transacao[]): Promise<void> {
+  const txs = transacoes ?? appStore.getTransacoes()
+  const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
+  const showOnlyDividido = filterEl?.checked || false
+  const filtradas = showOnlyDividido ? txs.filter(t => t.dividido) : txs
+
+  // Busca transações fixas de TODOS os meses para aparecerem no gráfico pizza
+  const fixosTodos = await carregarFixosTodos()
+
+  // Combina transações do ciclo com fixas de todos os meses, evitando duplicatas
+  const idsDoCiclo = new Set(filtradas.map(t => t.id))
+  const fixosForaDoCiclo = fixosTodos.filter(t => !idsDoCiclo.has(t.id))
+  const todasParaGrafico = [...filtradas, ...fixosForaDoCiclo]
+
+  // Transações fixas aparecem na distribuição de gastos do gráfico
+  const saidas = todasParaGrafico.filter(t => t.tipo === 'saida')
+  atualizarGrafico(saidas)
+}
+
 async function updateHeader(): Promise<void> {
   const ciclo = appStore.getCicloAtual()
   const transacoes = appStore.getTransacoes()
+  const state = getAuthState()
   const config = appStore.getState()
 
+  // Saldo Final inclui transações do ciclo atual + transações fixas de TODOS os meses
   let totais = calcularTotais(transacoes)
-  const { getAuthState } = await import('@/hooks/useAuth')
-  const state = getAuthState()
   try {
+    // Reusa transações fixas já carregadas pelo gráfico (evita busca duplicada)
     const fixosTodos = await carregarFixosTodos()
 
-    const idsCiclo = new Set(transacoes.map((t) => t.id))
-    const fixosForaDoCiclo = fixosTodos.filter((t) => !idsCiclo.has(t.id))
+    // Fixas que já estão no ciclo não precisam ser somadas novamente
+    const idsCiclo = new Set(transacoes.map(t => t.id))
+    const fixosForaDoCiclo = fixosTodos.filter(t => !idsCiclo.has(t.id))
 
-    const entradasExtras = fixosForaDoCiclo
-      .filter((t) => t.tipo === 'entrada')
-      .reduce((acc, t) => acc + Number(t.valor), 0)
-    const saidasExtras = fixosForaDoCiclo
-      .filter((t) => t.tipo === 'saida')
-      .reduce((acc, t) => acc + Number(t.valor), 0)
+    const entradasExtras = fixosForaDoCiclo.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
+    const saidasExtras = fixosForaDoCiclo.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
 
+    // Ajustes manuais de saldo final (invisíveis na UI): apenas os ajustes cuja
+    // data cai dentro do ciclo selecionado afetam o saldo final.
     let ajustesEntradas = 0
     let ajustesSaidas = 0
     try {
+      const state = getAuthState()
       const userId = state.user?.id
       if (userId) {
         const dataInicio = formatDateLocalISO(ciclo.inicio)
         const dataFim = formatDateLocalISO(ciclo.fim)
-        const somas = await somarAjustesSaldo({
-          userId,
-          dataInicio,
-          dataFim,
-        })
+        const somas = await somarAjustesSaldo({ userId, dataInicio, dataFim })
         ajustesEntradas = somas.entradas
         ajustesSaidas = somas.saidas
       }
@@ -245,15 +439,10 @@ async function updateHeader(): Promise<void> {
     totais = {
       entradas: totais.entradas + entradasExtras + ajustesEntradas,
       saidas: totais.saidas + saidasExtras + ajustesSaidas,
-      saldo:
-        (totais.entradas + entradasExtras + ajustesEntradas) -
-        (totais.saidas + saidasExtras + ajustesSaidas),
+      saldo: (totais.entradas + entradasExtras + ajustesEntradas) - (totais.saidas + saidasExtras + ajustesSaidas),
     }
   } catch (err) {
-    logger.error(
-      'Erro ao buscar todas as transações para saldo final',
-      err as any
-    )
+    logger.error('Erro ao buscar todas as transações para saldo final', err as any)
   }
 
   atualizarHeader({
@@ -275,38 +464,29 @@ async function updateHeader(): Promise<void> {
       debouncedUpdateDashboard()
     },
     onFixosClick: handleAbrirFixos,
-    user: state?.user?.email || 'Usuario',
+    user: state.user?.email || 'Usuario',
     diaInicioCiclo: config.diaInicioCiclo,
     diaFimCiclo: config.diaFimCiclo,
   })
 }
 
-async function updateDashboard(): Promise<void> {
-  try {
-    logger.debug('Atualizando dashboard')
-
-    await transacoesHook.carregarTransacoes()
-
-    await updateLista()
-
-    await updateHeader()
-  } catch (err) {
-    logger.error('Erro ao atualizar dashboard', err as any)
-    appStore.setError('Erro ao atualizar o dashboard')
-    toast.error('Erro ao atualizar o dashboard')
-    // Mesmo com erro, renderiza algo para não ficar tela branca
-    try {
-      await updateLista()
-      await updateHeader()
-    } catch {
-      // Ignora erros na renderização de fallback
-    }
+function updateLoadingStates(): void {
+  // Atualiza botão de salvar do formulário
+  const btnSalvar = document.querySelector('#transaction-form button[type="submit"]') as HTMLButtonElement
+  if (btnSalvar) {
+    const loading = appStore.isLoading('salvando')
+    btnSalvar.disabled = loading
+    btnSalvar.textContent = loading ? 'Salvando...' : 'Guardar'
   }
 }
 
-export async function handleSalvar(
-  data: Parameters<typeof transacoesHook.salvarTransacao>[0]
-): Promise<void> {
+function calcularTotais(txs: Transacao[]): TotaisCiclo {
+  const entradas = txs.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
+  const saidas = txs.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
+  return { entradas, saidas, saldo: entradas - saidas }
+}
+
+async function handleSalvar(data: Parameters<typeof transacoesHook.salvarTransacao>[0]): Promise<void> {
   logger.debug('Salvando transação', { data })
   const success = await transacoesHook.salvarTransacao(data)
 
@@ -323,21 +503,21 @@ export async function handleSalvar(
   }
 }
 
-export function handleCancelarEdicao(): void {
+function handleCancelarEdicao(): void {
   logger.debug('Cancelando edição')
   transacoesHook.cancelarEdicao()
 }
 
 function handleEditar(id: string): void {
   const transacoes = appStore.getTransacoes()
-  const t = transacoes.find((tx) => tx.id === id)
+  const t = transacoes.find(tx => tx.id === id)
   if (!t) return
 
   logger.debug('Editando transação', { id })
   transacoesHook.iniciarEdicao(t)
 
   const formContainer = document.getElementById('form-container')!
-  preencherFormEdicaoForm(formContainer, t)
+  preencherFormEdicao(formContainer, t)
 }
 
 async function handleExcluir(id: string): Promise<boolean> {
@@ -345,10 +525,10 @@ async function handleExcluir(id: string): Promise<boolean> {
   const success = await transacoesHook.excluir(id)
 
   if (success) {
+    // Se a transação excluída está em edição, fecha/limpa o formulário de edição
     const inputId = document.getElementById('input-id') as HTMLInputElement | null
     if (inputId && inputId.value === id) {
-      const formContainer = document.getElementById('form-container')!
-      formContainer.innerHTML = ''
+      limparFormEdicao()
       transacoesHook.cancelarEdicao()
     }
 
@@ -361,9 +541,7 @@ async function handleExcluir(id: string): Promise<boolean> {
 }
 
 async function handleAbrirFixos(): Promise<void> {
-  const btnFixos = document.getElementById(
-    'fixos-btn'
-  ) as HTMLButtonElement | null
+  const btnFixos = document.getElementById('fixos-btn') as HTMLButtonElement | null
   const textoOriginal = btnFixos?.textContent ?? 'FIXOS'
   if (btnFixos) {
     btnFixos.disabled = true
@@ -383,10 +561,8 @@ async function handleAbrirFixos(): Promise<void> {
   }
 }
 
-export async function handleExportar(): Promise<void> {
-  const formatEl = document.getElementById(
-    'export-format'
-  ) as HTMLSelectElement | null
+function handleExportar(): void {
+  const formatEl = document.getElementById('export-format') as HTMLSelectElement | null
   const format = formatEl?.value || 'csv'
   const transacoes = appStore.getTransacoes()
 
@@ -395,15 +571,7 @@ export async function handleExportar(): Promise<void> {
     return
   }
 
-  const headers = [
-    'id',
-    'data',
-    'tipo',
-    'categoria',
-    'valor',
-    'fixo',
-    'descricao',
-  ]
+  const headers = ['id', 'data', 'tipo', 'categoria', 'valor', 'fixo', 'descricao']
   const rows = transacoes.map((t) => [
     t.id,
     t.data,
@@ -418,9 +586,7 @@ export async function handleExportar(): Promise<void> {
   if (format === 'csv') {
     const csvContent = [
       headers.join(','),
-      ...rows.map((r) =>
-        r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')
-      ),
+      ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')),
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -433,22 +599,26 @@ export async function handleExportar(): Promise<void> {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    toast.success(
-      `${transacoes.length} transação(ões) exportada(s) para CSV`
-    )
+    toast.success(`${transacoes.length} transação(ões) exportada(s) para CSV`)
   } else if (format === 'pdf') {
-    const jsPDF = (await import('jspdf')).default
+    const pdfHeaders = ['data', 'tipo', 'categoria', 'valor', 'fixo', 'descricao']
+    const pdfRows = transacoes.map((t) => [
+      t.data,
+      t.tipo,
+      t.categoria,
+      Number(t.valor),
+      t.fixo ? 'Sim' : 'Não',
+      t.descricao || '',
+    ])
     const doc = new jsPDF()
     doc.setFontSize(14)
     doc.text('Relatório de Transações', 14, 14)
     doc.setFontSize(10)
     let y = 28
-    transacoes.forEach((t) => {
-      doc.text(
-        `${t.data} | ${t.tipo} | ${t.categoria} | R$ ${t.valor.toFixed(2)} | ${t.fixo ? 'Sim' : 'Não'} | ${t.descricao || ''}`,
-        14,
-        y
-      )
+    pdfHeaders.forEach((h, i) => doc.text(h, 14 + i * 28, y))
+    y += 8
+    pdfRows.forEach((row) => {
+      row.forEach((v, i) => doc.text(String(v), 14 + i * 28, y))
       y += 7
     })
     const blob = doc.output('blob')
@@ -461,18 +631,14 @@ export async function handleExportar(): Promise<void> {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    toast.success(
-      `${transacoes.length} transação(ões) exportada(s) para PDF`
-    )
+    toast.success(`${transacoes.length} transação(ões) exportada(s) para PDF`)
   } else if (format === 'xlsx') {
-    const XLSX = await import('xlsx')
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Transações')
     const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
     const blob = new Blob([buffer], {
-      type:
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -483,111 +649,40 @@ export async function handleExportar(): Promise<void> {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    toast.success(
-      `${transacoes.length} transação(ões) exportada(s) para Excel`
-    )
+    toast.success(`${transacoes.length} transação(ões) exportada(s) para Excel`)
   } else {
-    toast.warning(
-      `Exportação para ${format.toUpperCase()} não disponível. Use CSV.`
-    )
+    toast.warning(`Exportação para ${format.toUpperCase()} não disponível. Use CSV.`)
   }
 }
 
-export function handleGerenciarCategorias(): void {
+function handleGerenciarCategorias(): void {
   logger.debug('Abrindo modal de categorias')
   criarModalCategorias(
-    async (nome: string, icone?: string, cor?: string) => {
+    async (nome, icone, cor) => {
       const success = await categoriasHook.criarCategoria(nome, icone, cor)
       if (success) {
-        atualizarSelectCategoriasForm()
+        atualizarSelectCategorias()
         await updateGrafico()
       }
       return success
     },
-    async (id: string, nome: string, icone?: string, cor?: string) => {
-      const success = await categoriasHook.atualizarCategoria(
-        id,
-        nome,
-        icone,
-        cor
-      )
+    async (id, nome, icone, cor) => {
+      const success = await categoriasHook.atualizarCategoria(id, nome, icone, cor)
       if (success) {
-        atualizarSelectCategoriasForm()
+        atualizarSelectCategorias()
         await updateGrafico()
       }
       return success
     },
-    async (id: string) => {
+    async (id) => {
       const success = await categoriasHook.excluirCategoria(id)
       if (success) {
-        atualizarSelectCategoriasForm()
+        atualizarSelectCategorias()
         await updateGrafico()
       }
       return success
     }
   )
-}
-
-// Inicialização
-function init(): void {
-  // Restaura tema
-  const temaSalvo = localStorage.getItem('theme')
-  if (temaSalvo === 'dark') {
-    document.documentElement.classList.add('dark')
-  }
-
-  // Cria containers
-  authContainer = document.createElement('div')
-  mainContainer = document.createElement('div')
-  mainContainer.id = 'main-app'
-  mainContainer.className = 'hidden'
-
-  app.appendChild(authContainer)
-  app.appendChild(mainContainer)
-
-  criarTelaCarregamento()
-
-  // Inicializa auth
-  initAuth()
-
-  onAuthChange(async (user) => {
-    if (user) {
-      authContainer.classList.add('hidden')
-      mainContainer.classList.remove('hidden')
-
-      // Busca configuração de ciclo salvo
-      try {
-        const salvo = await buscarConfiguracaoCiclo(user.user?.id ?? '')
-        if (salvo) {
-          appStore.setConfiguracaoCiclo(
-            salvo.dia_inicio_ciclo,
-            salvo.dia_fim_ciclo
-          )
-        }
-      } catch (err) {
-        logger.error('Erro ao buscar configuração de ciclo no Supabase', err as any)
-      }
-
-      const salvoLocal = localStorage.getItem(`configuracao_ciclo_${user.user?.id}`)
-      if (salvoLocal) {
-        try {
-          const { diaInicio, diaFim } = JSON.parse(salvoLocal)
-          appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-        } catch {
-          // Ignora erro de parse, usa padrão
-        }
-      }
-
-      try {
-        await updateDashboard()
-      } finally {
-        removerTelaCarregamento()
-      }
-    } else {
-      authContainer.classList.remove('hidden')
-      mainContainer.classList.add('hidden')
-    }
-  })
 }
 
 init()
