@@ -377,7 +377,9 @@ async function updateLista(): Promise<void> {
       return t.categoria?.toLowerCase().includes(search)
     }
     if (campo === 'data') {
-      return t.data?.toLowerCase().includes(search)
+      const [ano, mes, dia] = String(t.data).split('-')
+      const dataBr = `${dia}/${mes}/${ano}`
+      return dataBr.includes(search)
     }
     return t.descricao?.toLowerCase().includes(search)
   })
