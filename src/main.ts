@@ -294,6 +294,13 @@ async function updateDashboard(): Promise<void> {
     logger.error('Erro ao atualizar dashboard', err as any)
     appStore.setError('Erro ao atualizar o dashboard')
     toast.error('Erro ao atualizar o dashboard')
+    // Mesmo com erro, renderiza algo para não ficar tela branca
+    try {
+      await updateLista()
+      await updateHeader()
+    } catch {
+      // Ignora erros na renderização de fallback
+    }
   }
 }
 
