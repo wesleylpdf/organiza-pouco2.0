@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { logger } from '@/utils/logger'
 
 export interface CategoriaPersonalizada {
   id: string
@@ -128,7 +129,7 @@ export async function atualizarCategoria(
       .eq('categoria', nomeAntigo)
 
     if (errorUpdateTransacoes) {
-      console.error('Erro ao atualizar transações:', errorUpdateTransacoes)
+      logger.error('Erro ao atualizar transações:', errorUpdateTransacoes)
       // Não lança erro para não falhar toda a operação
     }
   }

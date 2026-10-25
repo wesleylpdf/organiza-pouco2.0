@@ -522,22 +522,28 @@ function handleEditar(id: string): void {
 
 async function handleExcluir(id: string): Promise<boolean> {
   logger.debug('Excluindo transação', { id })
-  const success = await transacoesHook.excluir(id)
+  try {
+    const success = await transacoesHook.excluir(id)
 
-  if (success) {
-    // Se a transação excluída está em edição, fecha/limpa o formulário de edição
-    const inputId = document.getElementById('input-id') as HTMLInputElement | null
-    if (inputId && inputId.value === id) {
-      limparFormEdicao()
-      transacoesHook.cancelarEdicao()
+    if (success) {
+      // Se a transação excluída está em edição, fecha/limpa o formulário de edição
+      const inputId = document.getElementById('input-id') as HTMLInputElement | null
+      if (inputId && inputId.value === id) {
+        limparFormEdicao()
+        transacoesHook.cancelarEdicao()
+      }
+
+      toast.success('Transação excluída!')
+      limparCacheFixos()
+      await updateLista()
+      await updateHeader()
     }
-
-    toast.success('Transação excluída!')
-    limparCacheFixos()
-    await updateLista()
-    await updateHeader()
+    return success
+  } catch (err) {
+    logger.error('Erro ao excluir transação', err as any)
+    toast.error('Erro ao excluir transação')
+    return false
   }
-  return success
 }
 
 async function handleAbrirFixos(): Promise<void> {
@@ -553,6 +559,9 @@ async function handleAbrirFixos(): Promise<void> {
       const sucesso = await handleExcluir(id)
       return sucesso
     })
+  } catch (err) {
+    logger.error('Erro ao abrir transações fixas', err as any)
+    toast.error('Erro ao abrir transações fixas')
   } finally {
     if (btnFixos) {
       btnFixos.disabled = false
@@ -659,28 +668,46 @@ function handleGerenciarCategorias(): void {
   logger.debug('Abrindo modal de categorias')
   criarModalCategorias(
     async (nome, icone, cor) => {
-      const success = await categoriasHook.criarCategoria(nome, icone, cor)
-      if (success) {
-        atualizarSelectCategorias()
-        await updateGrafico()
+      try {
+        const success = await categoriasHook.criarCategoria(nome, icone, cor)
+        if (success) {
+          atualizarSelectCategorias()
+          await updateGrafico()
+        }
+        return success
+      } catch (err) {
+        logger.error('Erro ao criar categoria', err as any)
+        toast.error('Erro ao criar categoria')
+        return false
       }
-      return success
     },
     async (id, nome, icone, cor) => {
-      const success = await categoriasHook.atualizarCategoria(id, nome, icone, cor)
-      if (success) {
-        atualizarSelectCategorias()
-        await updateGrafico()
+      try {
+        const success = await categoriasHook.atualizarCategoria(id, nome, icone, cor)
+        if (success) {
+          atualizarSelectCategorias()
+          await updateGrafico()
+        }
+        return success
+      } catch (err) {
+        logger.error('Erro ao atualizar categoria', err as any)
+        toast.error('Erro ao atualizar categoria')
+        return false
       }
-      return success
     },
     async (id) => {
-      const success = await categoriasHook.excluirCategoria(id)
-      if (success) {
-        atualizarSelectCategorias()
-        await updateGrafico()
+      try {
+        const success = await categoriasHook.excluirCategoria(id)
+        if (success) {
+          atualizarSelectCategorias()
+          await updateGrafico()
+        }
+        return success
+      } catch (err) {
+        logger.error('Erro ao excluir categoria', err as any)
+        toast.error('Erro ao excluir categoria')
+        return false
       }
-      return success
     }
   )
 }
