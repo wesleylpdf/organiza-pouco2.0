@@ -15,13 +15,13 @@ export function setOrdem(ordem: string): void {
 export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
     <div class="mb-6 grid grid-cols-1 gap-4">
-      <div class="flex items-center justify-center gap-3 w-full">
-        <label class="flex items-center justify-center gap-2 cursor-pointer text-sm font-bold text-slate-600 bg-slate-50 px-4 py-2 py-3 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+      <div class="flex items-center justify-center gap-2 w-full flex-wrap">
+        <label class="flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
           <input type="checkbox" id="filter-dividido" class="w-4 h-4"> <span>Parcelados</span>
         </label>
         <input type="text" id="filter-descricao" placeholder="Buscar"
-          class="w-full p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-        <select id="filter-ordem" class="p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          class="flex-1 min-w-0 p-1.5 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        <select id="filter-ordem" class="p-1.5 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           <option value="data-desc">Data (mais recente)</option>
           <option value="data-asc">Data (mais antiga)</option>
           <option value="valor-desc">Valor (maior primeiro)</option>
