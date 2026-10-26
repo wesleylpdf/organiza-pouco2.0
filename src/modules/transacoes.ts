@@ -4,7 +4,7 @@ import { preencherFormEdicao } from '@/components/TransacaoForm'
 import { limparFormEdicaoAtual } from '@/modules/appInit'
 import { listarTransacoes } from '@/services/transacoes'
 import { criarModalFixos } from '@/components/ModalFixos'
-import { formatDateLocalISO } from '@/utils/ciclo'
+import { formatDateLocalISO, formatarIntervaloCiclo } from '@/utils/ciclo'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
 import jsPDF from 'jspdf'
@@ -183,21 +183,48 @@ export async function handleExportar(): Promise<void> {
     pdfHeaders.forEach((h, i) => doc.text(h, 14 + i * 28, y))
     y += 8
 
-    const DESCRICAO_MAX_WIDTH = 70 // mm (x=126 ate margem direita ~14mm na pagina A4)
+    const DESCRICAO_MAX_WIDTH = 60 // mm (x=126 ate margem direita ~14mm na pagina A4)
 
     pdfRows.forEach((row) => {
       const linhasDescricao = doc.splitTextToSize(String(row[4]), DESCRICAO_MAX_WIDTH) || ['']
       row.forEach((v, i) => {
         if (i === 4) {
           linhasDescricao.forEach((linha: string, j: number) => {
-            doc.text(linha, 14 + i * 28, y + j * 7)
+            doc.text(linha, 14 + i * 28, y + j * 5)
           })
         } else {
           doc.text(String(v), 14 + i * 28, y)
         }
       })
-      y += Math.max(linhasDescricao.length, 1) * 7
+      y += Math.max(linhasDescricao.length, 1) * 5
     })
+
+    // Rodapé: referência do ciclo e saldo final
+    const ciclo = appStore.getCicloAtual()
+    const ciclosTexto = ciclo ? formatarIntervaloCiclo(ciclo.inicio, ciclo.fim) : '—'
+    let entradas = 0
+    let saidas = 0
+    transacoes.forEach((t) => {
+      if (t.tipo === 'entrada') entradas += Number(t.valor)
+      else if (t.tipo === 'saida') saidas += Number(t.valor)
+    })
+    const saldo = entradas - saidas
+
+    const PAGE_MARGIN_BOTTOM = 15
+    const PAGE_HEIGHT = doc.internal.pageSize.height || 297
+    if (y + 40 > PAGE_HEIGHT - PAGE_MARGIN_BOTTOM) {
+      doc.addPage()
+      y = 20
+    }
+
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Ciclo: ${ciclosTexto}`, 14, y)
+    doc.text(`Entradas: R$ ${entradas.toFixed(2).replace('.', ',')}`, 14, y + 8)
+    doc.text(`Saídas: R$ ${saidas.toFixed(2).replace('.', ',')}`, 14, y + 16)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Saldo final: R$ ${saldo.toFixed(2).replace('.', ',')}`, 14, y + 26)
+
     const blob = doc.output('blob')
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
