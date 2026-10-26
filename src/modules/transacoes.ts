@@ -6,6 +6,8 @@ import { listarTransacoes } from '@/services/transacoes'
 import { criarModalFixos } from '@/components/ModalFixos'
 import { formatDateLocalISO, formatarIntervaloCiclo } from '@/utils/ciclo'
 import { logger } from '@/utils/logger'
+import { getAuthState } from '@/hooks/useAuth'
+import { somarAjustesSaldo } from '@/services/ajustes'
 import { toast } from '@/utils/toast'
 import jsPDF from 'jspdf'
 import * as XLSX from 'xlsx'
@@ -208,7 +210,26 @@ export async function handleExportar(): Promise<void> {
       if (t.tipo === 'entrada') entradas += Number(t.valor)
       else if (t.tipo === 'saida') saidas += Number(t.valor)
     })
-    const saldo = entradas - saidas
+
+    // Ajustes manuais de saldo final (invisíveis na UI): apenas os ajustes cuja
+    // data cai dentro do ciclo selecionado afetam o saldo final.
+    let ajustesEntradas = 0
+    let ajustesSaidas = 0
+    try {
+      const state = getAuthState()
+      const userId = state.user?.id
+      if (userId && ciclo) {
+        const dataInicio = formatDateLocalISO(ciclo.inicio)
+        const dataFim = formatDateLocalISO(ciclo.fim)
+        const somas = await somarAjustesSaldo({ userId, dataInicio, dataFim })
+        ajustesEntradas = somas.entradas
+        ajustesSaidas = somas.saidas
+      }
+    } catch (err) {
+      logger.error('Erro ao buscar ajustes de saldo para rodape do PDF', err as any)
+    }
+
+    const saldo = (entradas + ajustesEntradas) - (saidas + ajustesSaidas)
 
     const PAGE_MARGIN_BOTTOM = 15
     const PAGE_HEIGHT = doc.internal.pageSize.height || 297

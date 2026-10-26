@@ -221,6 +221,7 @@ async function setupApp(
   `
 
   // Inicializa componentes
+  atualizarCarregamento(20, 'Criando interface...')
   criarHeader(headerContainer, handlers.handleAbrirFixos)
   ;({ limparFormEdicao } = criarTransacaoForm(
     formContainer,
@@ -230,6 +231,9 @@ async function setupApp(
   ))
   criarGrafico(chartContainer)
   criarTransacaoList(listContainer)
+
+  // Primeira carga (depois dos componentes existirem no DOM)
+  atualizarCarregamento(40, 'Carregando dados...')
 
   // Eventos de ciclo com feedback de carregamento
   document.getElementById('ciclo-anterior')!.addEventListener('click', () => {
@@ -271,6 +275,8 @@ async function setupApp(
 
   // Primeira carga (depois dos componentes existirem no DOM)
   await handlers.updateDashboard()
+
+  atualizarCarregamento(100, 'Pronto!')
 }
 
 function init(handlers: AppInitHandlers): void {
