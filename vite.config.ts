@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
-import { copyFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, writeFileSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
 const raizProjeto = dirname(fileURLToPath(import.meta.url))
 
-// Identificador único por build: embutido no bundle e publicado em version.json.
-const BUILD_VERSION = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+// Versão semântica (2.X.X) lida do package.json: exibe Versão: 2.2.20 no Header.
+const pkg = JSON.parse(readFileSync(resolve(raizProjeto, 'package.json'), 'utf-8'))
+const BUILD_VERSION = pkg.version
 
 /**
  * - Injeta a versão no index.html (guarda de atualização que roda antes do JS).
