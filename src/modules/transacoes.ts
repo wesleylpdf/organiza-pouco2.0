@@ -2,7 +2,7 @@ import { appStore } from '@/stores/AppState'
 import { useTransacoes } from '@/hooks/useTransacoes'
 import { preencherFormEdicao } from '@/components/TransacaoForm'
 import { limparFormEdicaoAtual } from '@/modules/appInit'
-import { listarTransacoes } from '@/services/transacoes'
+import { listarTransacoes, atualizarTransacao } from '@/services/transacoes'
 import { criarModalFixos } from '@/components/ModalFixos'
 import { formatDateLocalISO } from '@/utils/ciclo'
 import { logger } from '@/utils/logger'
@@ -88,6 +88,20 @@ export async function handleExcluir(id: string): Promise<boolean> {
     logger.error('Erro ao excluir transação', err as any)
     toast.error('Erro ao excluir transação')
     return false
+  }
+}
+
+export async function handleQuickEdit(id: string, campo: string, valor: string | number): Promise<void> {
+  logger.debug('Edição rápida', { id, campo, valor })
+  try {
+    await atualizarTransacao(id, { [campo]: valor } as any)
+    transacoesHandlers!.limparCacheFixos()
+    await transacoesHandlers!.updateLista()
+    await transacoesHandlers!.updateHeader()
+  } catch (err) {
+    logger.error('Erro na edição rápida', err as any)
+    toast.error('Erro ao salvar alteração')
+    throw err
   }
 }
 

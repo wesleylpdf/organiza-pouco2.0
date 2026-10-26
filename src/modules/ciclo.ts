@@ -3,7 +3,7 @@ import { getAuthState } from '@/hooks/useAuth'
 import { useTransacoes } from '@/hooks/useTransacoes'
 import { atualizarHeader } from '@/components/Header'
 import { atualizarGrafico } from '@/components/GraficoPizza'
-import { renderLista } from '@/components/TransacaoList'
+import { renderLista, setOrdem } from '@/components/TransacaoList'
 import { listarTransacoes } from '@/services/transacoes'
 import { somarAjustesSaldo } from '@/services/ajustes'
 import { formatarIntervaloCiclo, formatDateLocalISO } from '@/utils/ciclo'
@@ -28,6 +28,7 @@ export function limparCacheFixos(): void {
 interface CicloHandlers {
   handleEditar: (id: string) => void
   handleExcluir: (id: string) => Promise<boolean>
+  handleQuickEdit: (id: string, campo: string, valor: string | number) => Promise<void>
 }
 
 let cicloHandlers: CicloHandlers | null = null
@@ -82,10 +83,14 @@ export async function updateLista(): Promise<void> {
   const transacoes = appStore.getTransacoes()
   const filtradas = filtrarTransacoes(transacoes, search, showOnlyDividido)
 
+  const ordemEl = document.getElementById('filter-ordem') as HTMLSelectElement | null
+  if (ordemEl) setOrdem(ordemEl.value)
+
   renderLista(
     filtradas,
     (id) => cicloHandlers!.handleEditar(id),
-    (id) => cicloHandlers!.handleExcluir(id)
+    (id) => cicloHandlers!.handleExcluir(id),
+    (id, campo, valor) => cicloHandlers!.handleQuickEdit(id, campo, valor)
   )
 
   await updateGrafico(filtradas)
