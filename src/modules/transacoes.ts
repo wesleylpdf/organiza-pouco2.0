@@ -186,11 +186,18 @@ export async function handleExportar(): Promise<void> {
     y += 8
 
     const DESCRICAO_MAX_WIDTH = 60 // mm (x=126 ate margem direita ~14mm na pagina A4)
+    const CATEGORIA_MAX_WIDTH = 24 // mm (x=70 ate ~94, antes da coluna valor em x=98)
 
     pdfRows.forEach((row) => {
+      const linhasCategoria = doc.splitTextToSize(String(row[2]), CATEGORIA_MAX_WIDTH) || ['']
       const linhasDescricao = doc.splitTextToSize(String(row[4]), DESCRICAO_MAX_WIDTH) || ['']
+      const numLinhas = Math.max(linhasCategoria.length, linhasDescricao.length, 1)
       row.forEach((v, i) => {
-        if (i === 4) {
+        if (i === 2) {
+          linhasCategoria.forEach((linha: string, j: number) => {
+            doc.text(linha, 14 + i * 28, y + j * 5)
+          })
+        } else if (i === 4) {
           linhasDescricao.forEach((linha: string, j: number) => {
             doc.text(linha, 14 + i * 28, y + j * 5)
           })
@@ -198,7 +205,7 @@ export async function handleExportar(): Promise<void> {
           doc.text(String(v), 14 + i * 28, y)
         }
       })
-      y += Math.max(linhasDescricao.length, 1) * 5
+      y += numLinhas * 5
     })
 
     // Rodapé: referência do ciclo e saldo final
