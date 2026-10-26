@@ -182,9 +182,21 @@ export async function handleExportar(): Promise<void> {
     let y = 28
     pdfHeaders.forEach((h, i) => doc.text(h, 14 + i * 28, y))
     y += 8
+
+    const DESCRICAO_MAX_WIDTH = 70 // mm (x=126 ate margem direita ~14mm na pagina A4)
+
     pdfRows.forEach((row) => {
-      row.forEach((v, i) => doc.text(String(v), 14 + i * 28, y))
-      y += 7
+      const linhasDescricao = doc.splitTextToSize(String(row[4]), DESCRICAO_MAX_WIDTH) || ['']
+      row.forEach((v, i) => {
+        if (i === 4) {
+          linhasDescricao.forEach((linha: string, j: number) => {
+            doc.text(linha, 14 + i * 28, y + j * 7)
+          })
+        } else {
+          doc.text(String(v), 14 + i * 28, y)
+        }
+      })
+      y += Math.max(linhasDescricao.length, 1) * 7
     })
     const blob = doc.output('blob')
     const url = URL.createObjectURL(blob)
