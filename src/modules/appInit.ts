@@ -159,6 +159,8 @@ interface AppInitHandlers {
   handleGerenciarCategorias: () => void
   handleAbrirFixos: () => Promise<void>
   handleExportar: () => void
+  handleBackup: () => void
+  handleRestauracao: () => void
   updateDashboard: () => Promise<void>
   updateLista: () => Promise<void>
 }
@@ -218,6 +220,8 @@ async function setupApp(
       <option value="xlsx">Exportar como Excel</option>
     </select>
     <button id="export-btn" class="bg-blue-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-blue-700 transition">Exportar</button>
+    <button id="backup-btn" class="bg-emerald-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-emerald-700 transition">Backup</button>
+    <button id="restauracao-btn" class="bg-purple-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-purple-700 transition">Restaurar</button>
   `
 
   // Inicializa componentes
@@ -261,6 +265,12 @@ async function setupApp(
 
   // Evento de exportação
   document.getElementById('export-btn')!.addEventListener('click', handlers.handleExportar)
+
+  // Evento de backup
+  document.getElementById('backup-btn')!.addEventListener('click', handlers.handleBackup)
+
+  // Evento de restauração
+  document.getElementById('restauracao-btn')!.addEventListener('click', handlers.handleRestauracao)
 
   // Outros eventos
   document.getElementById('filter-dividido')!.addEventListener('change', async () => await handlers.updateLista())
