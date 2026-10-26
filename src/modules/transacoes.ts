@@ -113,10 +113,16 @@ export async function handleAbrirFixos(): Promise<void> {
   }
 }
 
-export function handleExportar(): void {
+export async function handleExportar(): Promise<void> {
   const formatEl = document.getElementById('export-format') as HTMLSelectElement | null
   const format = formatEl?.value || 'csv'
-  const transacoes = appStore.getTransacoes()
+  const transacoesDoCiclo = appStore.getTransacoes()
+
+  // Busca TODAS as transações (inclui fixas de outros meses/ciclos)
+  const todasTransacoes = await listarTransacoes({})
+  const nomesCiclo = new Set(transacoesDoCiclo.map(t => t.id))
+  const fixosForaDoCiclo = todasTransacoes.filter(t => t.fixo && !nomesCiclo.has(t.id))
+  const transacoes = [...transacoesDoCiclo, ...fixosForaDoCiclo]
 
   if (transacoes.length === 0) {
     toast.warning('Nenhuma transação para exportar')
@@ -157,9 +163,9 @@ export function handleExportar(): void {
     const pdfRows = transacoes.map((t) => {
       let descricao = t.descricao || ''
       if (t.dividido && t.parcelaAtual != null && t.totalParcelas != null) {
-        descricao = `🔄 ${t.parcelaAtual}/${t.totalParcelas} ${descricao}`
+        descricao = `[${t.parcelaAtual}/${t.totalParcelas}] ${descricao}`
       } else if (t.fixo) {
-        descricao = `📌 ${descricao}`
+        descricao = `[FIXO] ${descricao}`
       }
       return [
         t.data,
