@@ -273,8 +273,12 @@ async function setupApp(
     // updateLoadingStates será movido para ciclo.ts
   })
 
+  atualizarCarregamento(60, 'Processando transações...')
+
   // Primeira carga (depois dos componentes existirem no DOM)
   await handlers.updateDashboard()
+
+  atualizarCarregamento(80, 'Atualizando interface...')
 
   atualizarCarregamento(100, 'Pronto!')
 }

@@ -4,7 +4,7 @@ import { preencherFormEdicao } from '@/components/TransacaoForm'
 import { limparFormEdicaoAtual } from '@/modules/appInit'
 import { listarTransacoes } from '@/services/transacoes'
 import { criarModalFixos } from '@/components/ModalFixos'
-import { formatDateLocalISO, formatarIntervaloCiclo } from '@/utils/ciclo'
+import { formatDateLocalISO } from '@/utils/ciclo'
 import { logger } from '@/utils/logger'
 import { getAuthState } from '@/hooks/useAuth'
 import { somarAjustesSaldo } from '@/services/ajustes'
@@ -203,7 +203,6 @@ export async function handleExportar(): Promise<void> {
 
     // Rodapé: referência do ciclo e saldo final
     const ciclo = appStore.getCicloAtual()
-    const ciclosTexto = ciclo ? formatarIntervaloCiclo(ciclo.inicio, ciclo.fim) : '—'
     let entradas = 0
     let saidas = 0
     transacoes.forEach((t) => {
@@ -233,18 +232,14 @@ export async function handleExportar(): Promise<void> {
 
     const PAGE_MARGIN_BOTTOM = 15
     const PAGE_HEIGHT = doc.internal.pageSize.height || 297
-    if (y + 40 > PAGE_HEIGHT - PAGE_MARGIN_BOTTOM) {
+    if (y + 30 > PAGE_HEIGHT - PAGE_MARGIN_BOTTOM) {
       doc.addPage()
       y = 20
     }
 
     doc.setFontSize(11)
-    doc.setFont('helvetica', 'bold')
-    doc.text(`Ciclo: ${ciclosTexto}`, 14, y)
-    doc.text(`Entradas: R$ ${entradas.toFixed(2).replace('.', ',')}`, 14, y + 8)
-    doc.text(`Saídas: R$ ${saidas.toFixed(2).replace('.', ',')}`, 14, y + 16)
     doc.setFont('helvetica', 'normal')
-    doc.text(`Saldo final: R$ ${saldo.toFixed(2).replace('.', ',')}`, 14, y + 26)
+    doc.text(`Saldo final: R$ ${saldo.toFixed(2).replace('.', ',')}`, 14, y)
 
     const blob = doc.output('blob')
     const url = URL.createObjectURL(blob)

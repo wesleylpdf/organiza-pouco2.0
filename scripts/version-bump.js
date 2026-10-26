@@ -5,7 +5,8 @@
  *   - grande (major): incrementa o primeiro X (2.2.0 → 2.3.0) e zera o segundo X.
  *   - pequena (minor): incrementa o segundo X (2.2.0 → 2.2.1).
  *
- * Atualiza package.json e src/components/Header.ts (Versão: 2.X.X).
+ * Atualiza package.json. A versão exibida no Header é injetada dinamicamente
+ * pelo vite.config.ts via __BUILD_VERSION__ a cada build.
  */
 
 import { readFile, writeFile } from 'node:fs/promises'
@@ -13,8 +14,6 @@ import { resolve } from 'node:path'
 
 const ROOT = resolve(process.cwd())
 const PKG_PATH = resolve(ROOT, 'package.json')
-const HEADER_PATH = resolve(ROOT, 'src/components/Header.ts')
-const HEADER_PATTERN = /Versão:\s*2\.\d+\.\d+/
 
 function parseVersion(versao) {
   const [major, minor, patch] = String(versao).split('.').map(Number)
@@ -42,16 +41,8 @@ export async function bump(tipo) {
   pkg.version = novaVersao
   await writeFile(PKG_PATH, `${JSON.stringify(pkg, null, 2)}\n`, 'utf-8')
 
-  let header = await readFile(HEADER_PATH, 'utf-8')
-  if (!HEADER_PATTERN.test(header)) {
-    throw new Error(`Não foi possível encontrar o padrão "Versão: 2.X.X" em ${HEADER_PATH}`)
-  }
-  header = header.replace(HEADER_PATTERN, `Versão: ${novaVersao}`)
-  await writeFile(HEADER_PATH, header, 'utf-8')
-
   console.log(`Versão atualizada para ${novaVersao}`)
   console.log(`  - package.json: version = ${novaVersao}`)
-  console.log(`  - src/components/Header.ts: Versão: ${novaVersao}`)
 }
 
 const tipo = process.argv[2]
