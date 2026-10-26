@@ -51,6 +51,11 @@ function limparCacheFixos(): void {
   fixosTodosCache = null
 }
 
+function limparCampoBusca(): void {
+  const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
+  if (searchEl) searchEl.value = ''
+}
+
 // Controle da tela de carregamento com porcentagem
 let carregamentoEl: HTMLElement | null = null
 let carregamentoPercentual = 0
@@ -492,6 +497,7 @@ async function handleSalvar(data: Parameters<typeof transacoesHook.salvarTransac
 
   if (success) {
     toast.success('Transação salva com sucesso!')
+    limparCampoBusca()
     limparCacheFixos()
     await updateLista()
     await updateHeader()
@@ -534,6 +540,7 @@ async function handleExcluir(id: string): Promise<boolean> {
       }
 
       toast.success('Transação excluída!')
+      limparCampoBusca()
       limparCacheFixos()
       await updateLista()
       await updateHeader()
