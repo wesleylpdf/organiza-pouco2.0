@@ -4,7 +4,6 @@ import {
   handleCancelarEdicao,
   handleEditar,
   handleExcluir,
-  handleQuickEdit,
   handleAbrirFixos,
   handleExportar,
   initTransacoes,
@@ -41,7 +40,6 @@ initCategorias({
 initCiclo({
   handleEditar,
   handleExcluir,
-  handleQuickEdit,
 })
 
 // Inicializa a aplicação passando os handlers para o appInit

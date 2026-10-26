@@ -28,13 +28,17 @@ export function limparCacheFixos(): void {
 interface CicloHandlers {
   handleEditar: (id: string) => void
   handleExcluir: (id: string) => Promise<boolean>
-  handleQuickEdit: (id: string, campo: string, valor: string | number) => Promise<void>
 }
 
 let cicloHandlers: CicloHandlers | null = null
 
 export function initCiclo(handlers: CicloHandlers): void {
   cicloHandlers = handlers
+
+  // Re-renderiza a lista quando a ordenação muda no select
+  window.addEventListener('ordemChange', async () => {
+    await updateLista()
+  })
 }
 
 function limparCampoBusca(): void {
@@ -89,8 +93,7 @@ export async function updateLista(): Promise<void> {
   renderLista(
     filtradas,
     (id) => cicloHandlers!.handleEditar(id),
-    (id) => cicloHandlers!.handleExcluir(id),
-    (id, campo, valor) => cicloHandlers!.handleQuickEdit(id, campo, valor)
+    (id) => cicloHandlers!.handleExcluir(id)
   )
 
   await updateGrafico(filtradas)
