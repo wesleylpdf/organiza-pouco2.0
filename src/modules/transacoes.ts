@@ -153,15 +153,22 @@ export function handleExportar(): void {
     URL.revokeObjectURL(url)
     toast.success(`${transacoes.length} transação(ões) exportada(s) para CSV`)
   } else if (format === 'pdf') {
-    const pdfHeaders = ['data', 'tipo', 'categoria', 'valor', 'fixo', 'descricao']
-    const pdfRows = transacoes.map((t) => [
-      t.data,
-      t.tipo,
-      t.categoria,
-      Number(t.valor),
-      t.fixo ? 'Sim' : 'Não',
-      t.descricao || '',
-    ])
+    const pdfHeaders = ['data', 'tipo', 'categoria', 'valor', 'descricao']
+    const pdfRows = transacoes.map((t) => {
+      let descricao = t.descricao || ''
+      if (t.dividido && t.parcelaAtual != null && t.totalParcelas != null) {
+        descricao = `🔄 ${t.parcelaAtual}/${t.totalParcelas} ${descricao}`
+      } else if (t.fixo) {
+        descricao = `📌 ${descricao}`
+      }
+      return [
+        t.data,
+        t.tipo,
+        t.categoria,
+        Number(t.valor),
+        descricao,
+      ]
+    })
     const doc = new jsPDF()
     doc.setFontSize(14)
     doc.text('Relatório de Transações', 14, 14)
