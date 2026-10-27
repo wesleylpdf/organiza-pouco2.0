@@ -86,7 +86,7 @@ export async function handleExcluir(id: string): Promise<boolean> {
     }
     return success
   } catch (err) {
-    logger.error('Erro ao excluir transação', err as any)
+    logger.error('Erro ao excluir transação', err as Error)
     toast.error('Erro ao excluir transação')
     return false
   }
@@ -106,7 +106,7 @@ export async function handleAbrirFixos(): Promise<void> {
       return sucesso
     })
   } catch (err) {
-    logger.error('Erro ao abrir transações fixas', err as any)
+    logger.error('Erro ao abrir transações fixas', err as Error)
     toast.error('Erro ao abrir transações fixas')
   } finally {
     if (btnFixos) {
@@ -260,7 +260,7 @@ export async function handleExportar(): Promise<void> {
         ajustesSaidas = somas.saidas
       }
     } catch (err) {
-      logger.error('Erro ao buscar ajustes de saldo para rodape do PDF', err as any)
+      logger.error('Erro ao buscar ajustes de saldo para rodape do PDF', err as Error)
     }
 
     const saldo = (entradas + ajustesEntradas) - (saidas + ajustesSaidas)

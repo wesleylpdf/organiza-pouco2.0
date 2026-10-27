@@ -10,7 +10,6 @@ import { formatarIntervaloCiclo, formatDateLocalISO } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { filtrarTransacoes } from '@/utils/filtroTransacoes'
 import { logger } from '@/utils/logger'
-import { toast } from '@/utils/toast'
 import { salvarConfiguracaoCiclo } from '@/modules/appInit'
 import type { Transacao, TotaisCiclo } from '@/types'
 
@@ -71,9 +70,7 @@ export async function updateDashboard(): Promise<void> {
     const tela = document.getElementById('tela-carregamento')
     if (tela) tela.remove()
   } catch (err) {
-    logger.error('Erro ao atualizar dashboard', err as any)
-    appStore.setError('Erro ao atualizar o dashboard')
-    toast.error('Erro ao atualizar o dashboard')
+    logger.error('Erro ao atualizar dashboard', err as Error)
     const tela = document.getElementById('tela-carregamento')
     if (tela) tela.remove()
   }
@@ -152,7 +149,7 @@ export async function updateHeader(): Promise<void> {
         ajustesSaidas = somas.saidas
       }
     } catch (err) {
-      logger.error('Erro ao buscar ajustes de saldo', err as any)
+      logger.error('Erro ao buscar ajustes de saldo', err as Error)
     }
 
     totais = {
@@ -161,7 +158,7 @@ export async function updateHeader(): Promise<void> {
       saldo: (totais.entradas + entradasExtras + ajustesEntradas) - (totais.saidas + saidasExtras + ajustesSaidas),
     }
   } catch (err) {
-    logger.error('Erro ao buscar todas as transações para saldo final', err as any)
+    logger.error('Erro ao buscar todas as transações para saldo final', err as Error)
   }
 
   atualizarHeader({

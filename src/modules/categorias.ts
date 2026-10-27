@@ -34,7 +34,7 @@ export async function handleGerenciarCategorias(): Promise<void> {
         }
         return success
       } catch (err) {
-        logger.error('Erro ao criar categoria', err as any)
+        logger.error('Erro ao criar categoria', err as Error)
         toast.error('Erro ao criar categoria')
         return false
       }
@@ -48,7 +48,7 @@ export async function handleGerenciarCategorias(): Promise<void> {
         }
         return success
       } catch (err) {
-        logger.error('Erro ao atualizar categoria', err as any)
+        logger.error('Erro ao atualizar categoria', err as Error)
         toast.error('Erro ao atualizar categoria')
         return false
       }
@@ -62,7 +62,7 @@ export async function handleGerenciarCategorias(): Promise<void> {
         }
         return success
       } catch (err) {
-        logger.error('Erro ao excluir categoria', err as any)
+        logger.error('Erro ao excluir categoria', err as Error)
         toast.error('Erro ao excluir categoria')
         return false
       }

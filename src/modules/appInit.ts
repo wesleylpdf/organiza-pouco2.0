@@ -98,8 +98,7 @@ async function carregarCicloComFeedback(updateDashboard: () => Promise<void>): P
     atualizarCarregamentoCicloBtns(100)
     await new Promise((r) => setTimeout(r, 150))
   } catch (err) {
-    logger.error('Erro ao carregar ciclo', err as any)
-    appStore.setError('Erro ao carregar ciclo')
+    logger.error('Erro ao carregar ciclo', err as Error)
   } finally {
     btnCicloAnterior!.textContent = textoAnteriorOriginal
     btnCicloProximo!.textContent = textoProximoOriginal
@@ -117,7 +116,7 @@ async function carregarConfiguracaoCiclo(userId: string | null): Promise<void> {
         return
       }
     } catch (err) {
-      logger.error('Erro ao buscar configuração de ciclo no Supabase', err as any)
+      logger.error('Erro ao buscar configuração de ciclo no Supabase', err as Error)
     }
   }
 
@@ -146,7 +145,7 @@ async function salvarConfiguracaoCiclo(
     await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId)
     toast.success('Configuração de ciclo salva!')
   } catch (err) {
-    logger.error('Erro ao salvar configuração de ciclo no Supabase', err as any)
+    logger.error('Erro ao salvar configuração de ciclo no Supabase', err as Error)
     localStorage.setItem(`configuracao_ciclo_${userId}`, JSON.stringify({ diaInicio, diaFim }))
     toast.error('Erro ao salvar configuração de ciclo')
   }
