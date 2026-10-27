@@ -1,6 +1,6 @@
 {
   "name": "organiza-pouco",
-  "version": "2.2.34",
+  "version": "2.2.35",
   "description": "Aplicação de controle financeiro pessoal com Supabase",
   "type": "module",
   "scripts": {
