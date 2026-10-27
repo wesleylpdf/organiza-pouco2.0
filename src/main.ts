@@ -6,8 +6,6 @@ import {
   handleExcluir,
   handleAbrirFixos,
   handleExportar,
-  handleBackup,
-  handleRestauracao,
   initTransacoes,
 } from '@/modules/transacoes'
 import {
@@ -51,8 +49,6 @@ init({
   handleGerenciarCategorias,
   handleAbrirFixos,
   handleExportar,
-  handleBackup,
-  handleRestauracao,
   updateDashboard,
   updateLista,
 })
