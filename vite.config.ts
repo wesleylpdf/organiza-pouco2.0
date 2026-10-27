@@ -39,6 +39,13 @@ function versionamentoPlugin() {
       )
 
       copyFileSync(resolve(distDir, 'index.html'), resolve(distDir, `index-${BUILD_VERSION}.html`))
+
+      // Garante que os cabeçalhos de cache (ex: no-cache em version.json) sejam publicados no GitHub Pages
+      try {
+        copyFileSync(resolve(raizProjeto, '_headers'), resolve(distDir, '_headers'))
+      } catch {
+        // _headers opcional
+      }
     },
   }
 }
