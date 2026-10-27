@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
-import { copyFileSync, writeFileSync, readFileSync } from 'node:fs'
+import { copyFileSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
 
 const raizProjeto = dirname(fileURLToPath(import.meta.url))
 
@@ -45,6 +45,37 @@ function versionamentoPlugin() {
         copyFileSync(resolve(raizProjeto, '_headers'), resolve(distDir, '_headers'))
       } catch {
         // _headers opcional
+      }
+
+      // Publica o manifest PWA para o GitHub Pages servir (obrigatório para instalação)
+      try {
+        copyFileSync(resolve(raizProjeto, 'manifest.json'), resolve(distDir, 'manifest.json'))
+      } catch {
+        // manifest opcional
+      }
+
+      // Publica os ícones do PWA
+      const iconsDir = resolve(raizProjeto, 'icons')
+      if (existsSync(iconsDir)) {
+        const distIconsDir = resolve(distDir, 'icons')
+        try {
+          mkdirSync(distIconsDir, { recursive: true })
+          for (const arquivo of readdirSync(iconsDir)) {
+            const origem = resolve(iconsDir, arquivo)
+            if (statSync(origem).isFile()) {
+              copyFileSync(origem, resolve(distIconsDir, arquivo))
+            }
+          }
+        } catch {
+          // ícones opcionais
+        }
+      }
+
+      // Publica o service worker (obrigatório para instalação PWA)
+      try {
+        copyFileSync(resolve(raizProjeto, 'src', 'sw.js'), resolve(distDir, 'sw.js'))
+      } catch {
+        // service worker opcional
       }
     },
   }

@@ -36,5 +36,10 @@
 <body class="bg-slate-50 p-3 transition-colors duration-300 dark:bg-slate-900">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/organiza-pouco2.0/sw.js')
+      }
+    </script>
 </body>
 </html>
