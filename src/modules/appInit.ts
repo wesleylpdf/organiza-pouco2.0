@@ -100,7 +100,6 @@ async function carregarCicloComFeedback(updateDashboard: () => Promise<void>): P
   } catch (err) {
     logger.error('Erro ao carregar ciclo', err as any)
     appStore.setError('Erro ao carregar ciclo')
-    toast.error('Erro ao carregar ciclo')
   } finally {
     btnCicloAnterior!.textContent = textoAnteriorOriginal
     btnCicloProximo!.textContent = textoProximoOriginal

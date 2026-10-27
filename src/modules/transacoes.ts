@@ -43,7 +43,7 @@ export async function handleSalvar(data: Parameters<typeof transacoesHook.salvar
   } else {
     const error = appStore.getError()
     if (error) {
-      toast.error(error)
+      appStore.setError(error)
     }
   }
 }
