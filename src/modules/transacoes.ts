@@ -5,6 +5,7 @@ import { limparFormEdicaoAtual } from '@/modules/appInit'
 import { listarTransacoes } from '@/services/transacoes'
 import { criarModalFixos } from '@/components/ModalFixos'
 import { formatDateLocalISO } from '@/utils/ciclo'
+import { filtrarTransacoes } from '@/utils/filtroTransacoes'
 import { logger } from '@/utils/logger'
 import { getAuthState } from '@/hooks/useAuth'
 import { somarAjustesSaldo } from '@/services/ajustes'
@@ -124,7 +125,14 @@ export async function handleExportar(): Promise<void> {
   const todasTransacoes = await listarTransacoes({})
   const nomesCiclo = new Set(transacoesDoCiclo.map(t => t.id))
   const fixosForaDoCiclo = todasTransacoes.filter(t => t.fixo && !nomesCiclo.has(t.id))
-  const transacoes = [...transacoesDoCiclo, ...fixosForaDoCiclo]
+  const todas = [...transacoesDoCiclo, ...fixosForaDoCiclo]
+
+  // Aplica os mesmos filtros da lista (busca e parcelados) para exportar apenas o visível
+  const filtroDivididoEl = document.getElementById('filter-dividido') as HTMLInputElement | null
+  const showOnlyDividido = filtroDivididoEl?.checked || false
+  const filtroBuscaEl = document.getElementById('filter-descricao') as HTMLInputElement | null
+  const busca = filtroBuscaEl?.value.trim().toLowerCase() || ''
+  const transacoes = filtrarTransacoes(todas, busca, showOnlyDividido)
 
   if (transacoes.length === 0) {
     toast.warning('Nenhuma transação para exportar')
@@ -177,32 +185,52 @@ export async function handleExportar(): Promise<void> {
         descricao,
       ]
     })
+
     const doc = new jsPDF()
     doc.setFontSize(14)
     doc.text('Relatório de Transações', 14, 14)
     doc.setFontSize(10)
-    let y = 28
-    pdfHeaders.forEach((h, i) => doc.text(h, 14 + i * 28, y))
-    y += 8
 
+    const COLUMNA_X = [14, 42, 70, 98, 126] // data, tipo, categoria, valor, descricao
     const DESCRICAO_MAX_WIDTH = 60 // mm (x=126 ate margem direita ~14mm na pagina A4)
     const CATEGORIA_MAX_WIDTH = 24 // mm (x=70 ate ~94, antes da coluna valor em x=98)
+    const PAGE_MARGIN_TOP = 14
+    const PAGE_MARGIN_BOTTOM = 15
+    const PAGE_HEIGHT = doc.internal.pageSize.height || 297
+    const HEADER_Y = 28
+
+    const desenharCabecalho = (y: number): void => {
+      pdfHeaders.forEach((h, i) => doc.text(h, COLUMNA_X[i], y))
+    }
+
+    let y = HEADER_Y
+    desenharCabecalho(y)
+    y += 8
 
     pdfRows.forEach((row) => {
       const linhasCategoria = doc.splitTextToSize(String(row[2]), CATEGORIA_MAX_WIDTH) || ['']
       const linhasDescricao = doc.splitTextToSize(String(row[4]), DESCRICAO_MAX_WIDTH) || ['']
       const numLinhas = Math.max(linhasCategoria.length, linhasDescricao.length, 1)
+
+      // Se a linha nao cabe na pagina atual, quebra e repete o cabecalho
+      if (y + numLinhas * 5 + PAGE_MARGIN_BOTTOM > PAGE_HEIGHT) {
+        doc.addPage()
+        y = PAGE_MARGIN_TOP + 6
+        desenharCabecalho(y)
+        y += 8
+      }
+
       row.forEach((v, i) => {
         if (i === 2) {
           linhasCategoria.forEach((linha: string, j: number) => {
-            doc.text(linha, 14 + i * 28, y + j * 5)
+            doc.text(linha, COLUMNA_X[i], y + j * 5)
           })
         } else if (i === 4) {
           linhasDescricao.forEach((linha: string, j: number) => {
-            doc.text(linha, 14 + i * 28, y + j * 5)
+            doc.text(linha, COLUMNA_X[i], y + j * 5)
           })
         } else {
-          doc.text(String(v), 14 + i * 28, y)
+          doc.text(String(v), COLUMNA_X[i], y)
         }
       })
       y += numLinhas * 5
@@ -237,16 +265,17 @@ export async function handleExportar(): Promise<void> {
 
     const saldo = (entradas + ajustesEntradas) - (saidas + ajustesSaidas)
 
-    const PAGE_MARGIN_BOTTOM = 15
-    const PAGE_HEIGHT = doc.internal.pageSize.height || 297
+    // Se o rodape nao cabe, quebra pagina e repete o cabecalho antes do rodape
     if (y + 30 > PAGE_HEIGHT - PAGE_MARGIN_BOTTOM) {
       doc.addPage()
-      y = 20
+      y = PAGE_MARGIN_TOP + 6
+      desenharCabecalho(y)
+      y += 8
     }
 
     doc.setFontSize(11)
     doc.setFont('helvetica', 'normal')
-    doc.text(`Saldo final: R$ ${saldo.toFixed(2).replace('.', ',')}`, 14, y)
+    doc.text(`Saldo final: R$ ${saldo.toFixed(2).replace('.', ',')}`, COLUMNA_X[0], y)
 
     const blob = doc.output('blob')
     const url = URL.createObjectURL(blob)
