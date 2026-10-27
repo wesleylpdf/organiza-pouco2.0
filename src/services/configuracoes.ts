@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { comRetry } from '@/utils/retry'
 
 export interface ConfiguracaoCiclo {
   dia_inicio_ciclo: number
@@ -11,11 +12,11 @@ export interface ConfiguracaoCiclo {
 export async function buscarConfiguracaoCiclo(
   userId: string
 ): Promise<ConfiguracaoCiclo | null> {
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('configuracoes_usuario')
     .select('dia_inicio_ciclo, dia_fim_ciclo')
     .eq('user_id', userId)
-    .maybeSingle()
+    .maybeSingle())
 
   if (error) throw error
   return data
@@ -29,11 +30,11 @@ export async function salvarConfiguracaoCiclo(
   diaFim: number,
   userId: string
 ): Promise<void> {
-  const { error } = await supabase.from('configuracoes_usuario').upsert({
+  const { error } = await comRetry(() => supabase.from('configuracoes_usuario').upsert({
     user_id: userId,
     dia_inicio_ciclo: diaInicio,
     dia_fim_ciclo: diaFim,
-  })
+  }))
 
   if (error) throw error
 }

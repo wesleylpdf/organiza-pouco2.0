@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { AjusteSaldo } from '@/types'
+import { comRetry } from '@/utils/retry'
 
 /**
  * Mapeia uma linha do Supabase (snake_case) para o tipo AjusteSaldo (camelCase).
@@ -37,16 +38,16 @@ export async function buscarAjustesSaldo(params: {
   dataInicio: string
   dataFim: string
 }): Promise<AjusteSaldo[]> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('ajustes_saldo')
     .select('*')
     .eq('user_id', params.userId)
     .gte('data', params.dataInicio)
     .lte('data', params.dataFim)
-    .order('data', { ascending: true })
+    .order('data', { ascending: true }))
 
   if (error) throw error
   return (data || []).map(paraAjusteSaldo)
@@ -81,10 +82,10 @@ export async function criarAjusteSaldo(params: {
   descricao?: string | null
   data: string
 }): Promise<AjusteSaldo> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('ajustes_saldo')
     .insert(paraSnakeCase({
       user_id: user.id,
@@ -94,8 +95,7 @@ export async function criarAjusteSaldo(params: {
       data: params.data,
     }))
     .select()
-    .single()
-
+    .single())
   if (error) throw error
   return paraAjusteSaldo(data)
 }

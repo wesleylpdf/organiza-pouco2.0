@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient'
 import { logger } from '@/utils/logger'
+import { comRetry } from '@/utils/retry'
 
 export interface CategoriaPersonalizada {
   id: string
@@ -20,14 +21,14 @@ export interface CriarCategoriaParams {
  * Lista todas as categorias do usuário
  */
 export async function listarCategorias(): Promise<CategoriaPersonalizada[]> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('categorias')
     .select('*')
     .eq('user_id', user.id)
-    .order('nome')
+    .order('nome'))
 
   if (error) throw error
   return data || []
@@ -37,10 +38,10 @@ export async function listarCategorias(): Promise<CategoriaPersonalizada[]> {
  * Cria nova categoria
  */
 export async function criarCategoria(params: CriarCategoriaParams): Promise<CategoriaPersonalizada> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('categorias')
     .insert({
       user_id: user.id,
@@ -49,7 +50,7 @@ export async function criarCategoria(params: CriarCategoriaParams): Promise<Cate
       cor: params.cor || null,
     })
     .select()
-    .single()
+    .single())
 
   if (error) {
     if (error.code === '23505') {
@@ -84,17 +85,17 @@ export async function atualizarCategoria(
   id: string,
   params: Partial<CriarCategoriaParams>
 ): Promise<CategoriaPersonalizada> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
   // Busca nome antigo para atualizar transações se necessário
   let nomeAntigo: string | null = null
   if (params.nome !== undefined) {
-    const { data: categoriaAtual } = await supabase
+    const { data: categoriaAtual } = await comRetry(() => supabase
       .from('categorias')
       .select('nome')
       .eq('id', id)
-      .single()
+      .single())
     if (categoriaAtual) {
       nomeAntigo = categoriaAtual.nome
     }
@@ -106,12 +107,12 @@ export async function atualizarCategoria(
   if (params.icone !== undefined) updateParams.icone = params.icone || null
   if (params.cor !== undefined) updateParams.cor = params.cor || null
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('categorias')
     .update(updateParams)
     .eq('id', id)
     .select()
-    .single()
+    .single())
 
   if (error) {
     if (error.code === '23505') {
@@ -122,11 +123,11 @@ export async function atualizarCategoria(
 
   // Se o nome mudou, atualiza todas as transações relacionadas
   if (nomeAntigo && params.nome && nomeAntigo !== params.nome) {
-    const { error: errorUpdateTransacoes } = await supabase
+    const { error: errorUpdateTransacoes } = await comRetry(() => supabase
       .from('transacoes')
       .update({ categoria: params.nome })
       .eq('user_id', user.id)
-      .eq('categoria', nomeAntigo)
+      .eq('categoria', nomeAntigo))
 
     if (errorUpdateTransacoes) {
       logger.error('Erro ao atualizar transações:', errorUpdateTransacoes)
@@ -136,11 +137,11 @@ export async function atualizarCategoria(
 
   if (!data) {
     // Fallback: busca manualmente se o select retornar null (problema de RLS/timing)
-    const { data: categoriaAtualizada } = await supabase
+    const { data: categoriaAtualizada } = await comRetry(() => supabase
       .from('categorias')
       .select('*')
       .eq('id', id)
-      .single()
+      .single())
 
     if (categoriaAtualizada) return categoriaAtualizada
     throw new Error('Categoria atualizada mas não foi possível recuperá-la')
@@ -153,25 +154,25 @@ export async function atualizarCategoria(
  * Exclui categoria (só funciona se não houver transações relacionadas)
  */
 export async function excluirCategoria(id: string): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
   // Busca o nome da categoria antes de excluir
-  const { data: categoria, error: errorCategoria } = await supabase
+  const { data: categoria, error: errorCategoria } = await comRetry(() => supabase
     .from('categorias')
     .select('nome')
     .eq('id', id)
-    .single()
+    .single())
 
   if (errorCategoria || !categoria) throw new Error('Categoria não encontrada')
 
   // Verifica se há transações usando esta categoria (por nome)
-  const { data: transacoes, error: errorCheck } = await supabase
+  const { data: transacoes, error: errorCheck } = await comRetry(() => supabase
     .from('transacoes')
     .select('id')
     .eq('user_id', user.id)
     .eq('categoria', categoria.nome)
-    .limit(1)
+    .limit(1))
 
   if (errorCheck) throw errorCheck
 
@@ -179,10 +180,10 @@ export async function excluirCategoria(id: string): Promise<void> {
     throw new Error('Não é possível excluir: existem transações usando esta categoria')
   }
 
-  const { error } = await supabase
+  const { error } = await comRetry(() => supabase
     .from('categorias')
     .delete()
-    .eq('id', id)
+    .eq('id', id))
 
   if (error) throw error
 }

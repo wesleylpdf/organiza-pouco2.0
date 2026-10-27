@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { appStore } from '@/stores/AppState'
 import type { Transacao, TipoTransacao } from '@/types'
 import { getCicloInicioParaData } from '@/utils/ciclo'
+import { comRetry } from '@/utils/retry'
 
 /**
  * Converte chaves camelCase (TypeScript) para snake_case (Supabase/DB).
@@ -48,7 +49,7 @@ export async function listarTransacoes(params: {
   dataInicio?: string
   dataFim?: string
 }): Promise<Transacao[]> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
   let query = supabase
@@ -63,7 +64,7 @@ export async function listarTransacoes(params: {
     query = query.eq('ciclo_inicio', params.cicloInicio)
   }
 
-  const { data, error } = await query
+  const { data, error } = await comRetry(() => query)
 
   if (error) throw error
   return (data || []).map(paraTransacao)
@@ -84,7 +85,7 @@ export async function criarTransacao(params: {
   valorOriginal?: number | null
   fixo?: boolean
 }): Promise<Transacao> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
   const cicloInicio = getCicloInicioParaData(
@@ -95,7 +96,7 @@ export async function criarTransacao(params: {
   // Remove sufixo de parcelamento ( N/M) da descrição antes de salvar
   const descricaoLimpa = (params.descricao || '').replace(/\s+\d+\/\d+$/, '')
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('transacoes')
     .insert(paraSnakeCase({
       user_id: user.id,
@@ -112,7 +113,7 @@ export async function criarTransacao(params: {
       fixo: params.fixo ?? false,
     }))
     .select()
-    .single()
+    .single())
 
   if (error) throw error
   return paraTransacao(data)
@@ -132,12 +133,12 @@ export async function atualizarTransacao(
     )
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('transacoes')
     .update(paraSnakeCase(params))
     .eq('id', id)
     .select()
-    .single()
+    .single())
 
   if (error) throw error
   return paraTransacao(data)
@@ -147,10 +148,10 @@ export async function atualizarTransacao(
  * Exclui transação
  */
 export async function excluirTransacao(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await comRetry(() => supabase
     .from('transacoes')
     .delete()
-    .eq('id', id)
+    .eq('id', id))
 
   if (error) throw error
 }
@@ -163,16 +164,16 @@ export async function listarParcelasRelacionadas(params: {
   totalParcelas: number
   descricaoBase: string
 }): Promise<Transacao[]> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
 
-  const { data, error } = await supabase
+  const { data, error } = await comRetry(() => supabase
     .from('transacoes')
     .select('*')
     .eq('user_id', params.userId)
     .eq('dividido', true)
     .eq('total_parcelas', params.totalParcelas)
-    .order('data', { ascending: true })
+    .order('data', { ascending: true }))
 
   if (error) throw error
 
@@ -190,10 +191,10 @@ export async function atualizarParcelasRelacionadas(
 ): Promise<void> {
   if (ids.length === 0) return
 
-  const { error } = await supabase
+  const { error } = await comRetry(() => supabase
     .from('transacoes')
     .update(paraSnakeCase(params))
-    .in('id', ids)
+    .in('id', ids))
 
   if (error) throw error
 }
@@ -204,10 +205,10 @@ export async function atualizarParcelasRelacionadas(
 export async function excluirParcelasRelacionadas(ids: string[]): Promise<void> {
   if (ids.length === 0) return
 
-  const { error } = await supabase
+  const { error } = await comRetry(() => supabase
     .from('transacoes')
     .delete()
-    .in('id', ids)
+    .in('id', ids))
 
   if (error) throw error
 }
