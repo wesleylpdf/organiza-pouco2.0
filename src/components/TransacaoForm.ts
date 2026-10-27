@@ -1,6 +1,7 @@
 import type { TipoTransacao, Transacao } from '@/types'
 import { appStore } from '@/stores/AppState'
 import { formatDateLocalISO } from '@/utils/ciclo'
+import { sanitizarHTML } from '@/utils/format'
 
 type SaveCallback = (data: {
   valor: number
@@ -245,7 +246,7 @@ function atualizarSelectCategorias(): void {
   if (!select) return
   const categorias = appStore.getCategorias()
   select.innerHTML = categorias.map(c =>
-    `<option value="${c.nome}">${c.icone ? c.icone + ' ' : ''}${c.nome}</option>`
+    `<option value="${sanitizarHTML(c.nome)}">${sanitizarHTML(c.icone ? c.icone + ' ' : '')}${sanitizarHTML(c.nome)}</option>`
   ).join('')
 }
 

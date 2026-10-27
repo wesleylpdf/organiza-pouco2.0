@@ -1,4 +1,5 @@
 import { appStore } from '@/stores/AppState'
+import { sanitizarHTML } from '@/utils/format'
 
 type CriarCallback = (nome: string, icone?: string, cor?: string) => Promise<boolean>
 type AtualizarCallback = (id: string, nome: string, icone?: string, cor?: string) => Promise<boolean>
@@ -125,8 +126,8 @@ function renderizarListaCategorias(
   lista.innerHTML = categorias.map(c => `
     <div class="flex items-center gap-2 p-3 bg-slate-50 rounded-lg dark:bg-slate-700" data-id="${c.id}">
       <div class="flex-1 flex items-center gap-2 flex-wrap">
-        ${c.icone ? `<span class="text-lg">${c.icone}</span>` : ''}
-        <input type="text" value="${c.nome}" class="flex-1 min-w-[100px] p-1 rounded border bg-white dark:bg-slate-900 dark:border-slate-600 dark:text-white text-sm" data-field="nome">
+        ${c.icone ? `<span class="text-lg">${sanitizarHTML(c.icone)}</span>` : ''}
+        <input type="text" value="${sanitizarHTML(c.nome)}" class="flex-1 min-w-[100px] p-1 rounded border bg-white dark:bg-slate-900 dark:border-slate-600 dark:text-white text-sm" data-field="nome">
         <input type="color" value="${c.cor || '#6366f1'}" class="w-8 h-8 rounded border cursor-pointer bg-white dark:bg-slate-900 dark:border-slate-600" data-field="cor">
       </div>
       <button data-action="salvar" data-id="${c.id}" class="text-emerald-500 text-xs font-bold hover:underline">Salvar</button>

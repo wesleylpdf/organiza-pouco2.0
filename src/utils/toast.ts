@@ -69,10 +69,16 @@ class ToastManager {
       cursor-pointer transition-all
     `
 
-    element.innerHTML = `
-      <span class="text-lg font-bold">${this.getIcon(type)}</span>
-      <span class="flex-1 text-sm font-medium">${message}</span>
-    `
+    const iconSpan = document.createElement('span')
+    iconSpan.className = 'text-lg font-bold'
+    iconSpan.textContent = this.getIcon(type)
+
+    const messageSpan = document.createElement('span')
+    messageSpan.className = 'flex-1 text-sm font-medium'
+    messageSpan.textContent = message
+
+    element.appendChild(iconSpan)
+    element.appendChild(messageSpan)
 
     element.addEventListener('click', () => this.dismiss(id))
     container.appendChild(element)
