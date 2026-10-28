@@ -35,7 +35,6 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
 
     <div id="resumo-ciclo" class="relative max-w-4xl mx-auto bg-white border border-slate-200 p-4 p-6 rounded-2xl rounded-3xl shadow-sm mb-4 mb-8 dark:bg-slate-800 dark:border-slate-700">
       <div class="flex justify-between items-center mb-3 mb-4 gap-2">
-        <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
         <button id="ciclo-anterior" class="bg-slate-100 px-2 px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">←</button>
         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center flex-1" id="cycle-dates">Resumo do Ciclo</span>
         <button id="ciclo-proximo" class="bg-slate-100 px-2 px-4 py-2 rounded-lg font-bold hover:bg-slate-200 text-xs text-sm dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">→</button>

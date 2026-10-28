@@ -23,7 +23,6 @@ export function criarModalCategorias(
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-lg text-slate-800 dark:text-white">Gerenciar Categorias</h3>
         <button id="fechar-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl">&times;</button>
-        <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
       </div>
 
       <!-- Formulário de nova categoria -->
