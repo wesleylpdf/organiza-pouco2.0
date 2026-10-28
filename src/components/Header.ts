@@ -22,7 +22,7 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
       <div class="flex items-center justify-between gap-2">
         <div class="flex flex-col items-center gap-0.5 gap-2 min-w-0">
           <h1 class="font-black text-base text-lg text-slate-800 dark:text-white shrink-0">Organiza Pouco</h1>
-          <span id="header-user" class="text-[11px] text-xs text-slate-500 dark:text-slate-400 truncate"></span>
+          <div class="text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
         </div>
         <div class="flex items-center gap-1 gap-2">
           <button id="theme-toggle" class="bg-white p-2 rounded-full shadow border dark:bg-slate-800 dark:border-slate-700">
@@ -71,7 +71,6 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
         </div>
         <div class="flex flex-col items-end gap-1 shrink-0">
           <button id="fixos-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs text-sm font-bold hover:bg-blue-700 transition dark:bg-blue-700">FIXOS</button>
-          <div class="text-[10px] text-slate-500 font-bold uppercase shrink-0">Versão: ${__BUILD_VERSION__}</div>
         </div>
       </div>
     </div>
