@@ -266,7 +266,21 @@ async function setupApp(
   })
 
   // Evento de exportação
-  document.getElementById('export-btn')!.addEventListener('click', handlers.handleExportar)
+  document.getElementById('export-btn')!.addEventListener('click', async () => {
+    const btn = document.getElementById('export-btn') as HTMLButtonElement
+    btn.disabled = true
+    btn.textContent = 'Exportando...'
+    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700')
+    btn.classList.add('bg-rose-500', 'hover:bg-rose-600')
+    try {
+      await handlers.handleExportar()
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Exportar'
+      btn.classList.remove('bg-rose-500', 'hover:bg-rose-600')
+      btn.classList.add('bg-blue-600', 'hover:bg-blue-700')
+    }
+  })
 
   // Outros eventos
   document.getElementById('filter-dividido')!.addEventListener('change', async () => await handlers.updateLista())
