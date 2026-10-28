@@ -53,7 +53,6 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
             .map(d => `<option value="${d}">${d}</option>`)
             .join('')}
         </select>
-        <button id="salvar-config-ciclo" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs text-sm font-bold hover:bg-emerald-700 transition dark:bg-emerald-700">Salvar</button>
       </div>
       <div class="grid grid-cols-2 gap-3 gap-4 mb-3 mb-4">
         <div>
@@ -102,13 +101,6 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
   })
 
   fimSelect.addEventListener('change', () => emitirConfigCiclo())
-
-  // Botão salvar configuração de ciclo
-  const btnSalvarConfig = container.querySelector('#salvar-config-ciclo') as HTMLButtonElement
-  btnSalvarConfig.addEventListener('click', () => {
-    emitirConfigCiclo()
-    toast.success('Configuração de ciclo salva!')
-  })
 
   // Botão FIXOS
   container.querySelector('#fixos-btn')!.addEventListener('click', onFixosClick)
