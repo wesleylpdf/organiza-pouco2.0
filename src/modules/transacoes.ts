@@ -6,9 +6,8 @@ import { listarTransacoes } from '@/services/transacoes'
 import { criarModalFixos } from '@/components/ModalFixos'
 import { formatDateLocalISO } from '@/utils/ciclo'
 import { filtrarTransacoes } from '@/utils/filtroTransacoes'
+import { getOrdem } from '@/components/TransacaoList'
 import { logger } from '@/utils/logger'
-import { getAuthState } from '@/hooks/useAuth'
-import { somarAjustesSaldo } from '@/services/ajustes'
 import { toast } from '@/utils/toast'
 import jsPDF from 'jspdf'
 import * as XLSX from 'xlsx'
@@ -134,6 +133,31 @@ export async function handleExportar(): Promise<void> {
   const busca = filtroBuscaEl?.value.trim().toLowerCase() || ''
   const transacoes = filtrarTransacoes(todas, busca, showOnlyDividido)
 
+  // Aplica a mesma ordem escolhida pelo usuário na lista antes de exportar
+  const ordem = getOrdem()
+  transacoes.sort((a, b) => {
+    switch (ordem) {
+      case 'data-desc':
+        return new Date(b.data).getTime() - new Date(a.data).getTime()
+      case 'data-asc':
+        return new Date(a.data).getTime() - new Date(b.data).getTime()
+      case 'valor-desc':
+        return Number(b.valor) - Number(a.valor)
+      case 'valor-asc':
+        return Number(a.valor) - Number(b.valor)
+      case 'categoria-asc':
+        return String(a.categoria).localeCompare(String(b.categoria))
+      case 'categoria-desc':
+        return String(b.categoria).localeCompare(String(a.categoria))
+      case 'criado-desc':
+        return new Date(b.created_at || b.data).getTime() - new Date(a.created_at || a.data).getTime()
+      case 'criado-asc':
+        return new Date(a.created_at || a.data).getTime() - new Date(b.created_at || b.data).getTime()
+      default:
+        return new Date(b.data).getTime() - new Date(a.data).getTime()
+    }
+  })
+
   if (transacoes.length === 0) {
     toast.warning('Nenhuma transação para exportar')
     return
@@ -235,47 +259,6 @@ export async function handleExportar(): Promise<void> {
       })
       y += numLinhas * 5
     })
-
-    // Rodapé: referência do ciclo e saldo final
-    const ciclo = appStore.getCicloAtual()
-    let entradas = 0
-    let saidas = 0
-    transacoes.forEach((t) => {
-      if (t.tipo === 'entrada') entradas += Number(t.valor)
-      else if (t.tipo === 'saida') saidas += Number(t.valor)
-    })
-
-    // Ajustes manuais de saldo final (invisíveis na UI): apenas os ajustes cuja
-    // data cai dentro do ciclo selecionado afetam o saldo final.
-    let ajustesEntradas = 0
-    let ajustesSaidas = 0
-    try {
-      const state = getAuthState()
-      const userId = state.user?.id
-      if (userId && ciclo) {
-        const dataInicio = formatDateLocalISO(ciclo.inicio)
-        const dataFim = formatDateLocalISO(ciclo.fim)
-        const somas = await somarAjustesSaldo({ userId, dataInicio, dataFim })
-        ajustesEntradas = somas.entradas
-        ajustesSaidas = somas.saidas
-      }
-    } catch (err) {
-      logger.error('Erro ao buscar ajustes de saldo para rodape do PDF', err as Error)
-    }
-
-    const saldo = (entradas + ajustesEntradas) - (saidas + ajustesSaidas)
-
-    // Se o rodape nao cabe, quebra pagina e repete o cabecalho antes do rodape
-    if (y + 30 > PAGE_HEIGHT - PAGE_MARGIN_BOTTOM) {
-      doc.addPage()
-      y = PAGE_MARGIN_TOP + 6
-      desenharCabecalho(y)
-      y += 8
-    }
-
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'normal')
-    doc.text(`Saldo final: R$ ${saldo.toFixed(2).replace('.', ',')}`, COLUMNA_X[0], y)
 
     const blob = doc.output('blob')
     const url = URL.createObjectURL(blob)

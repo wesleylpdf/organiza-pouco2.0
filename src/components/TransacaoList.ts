@@ -14,6 +14,10 @@ export function setOrdem(ordem: string): void {
   ordemAtual = ordem as any
 }
 
+export function getOrdem(): string {
+  return ordemAtual
+}
+
 /**
  * Aplica uma ordem salva ao select de ordenação e ao estado interno.
  * Chamado durante a inicialização da aplicação para restaurar a preferência do usuário.
