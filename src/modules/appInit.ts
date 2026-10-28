@@ -5,8 +5,8 @@ import { criarAuthForm } from '@/components/AuthForm'
 import { criarHeader } from '@/components/Header'
 import { criarTransacaoForm } from '@/components/TransacaoForm'
 import { criarGrafico } from '@/components/GraficoPizza'
-import { criarTransacaoList } from '@/components/TransacaoList'
-import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase } from '@/services/configuracoes'
+import { criarTransacaoList, aplicarOrdemSalva } from '@/components/TransacaoList'
+import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase, buscarFiltroOrdemPadrao } from '@/services/configuracoes'
 import { getOffsetInicial } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
@@ -232,6 +232,19 @@ async function setupApp(
 
   // Primeira carga (depois dos componentes existirem no DOM)
   atualizarCarregamento(40, 'Carregando dados...')
+
+  // Restaura preferência de ordem do usuário (do localStorage ou Supabase)
+  const userIdOrdem = getAuthState().user?.id ?? null
+  if (userIdOrdem) {
+    try {
+      const ordemSalva = await buscarFiltroOrdemPadrao(userIdOrdem)
+      if (ordemSalva) {
+        aplicarOrdemSalva(ordemSalva)
+      }
+    } catch {
+      // Ignora erro de busca, mantém ordem padrão
+    }
+  }
 
   // Eventos de ciclo com feedback de carregamento
   document.getElementById('ciclo-anterior')!.addEventListener('click', () => {

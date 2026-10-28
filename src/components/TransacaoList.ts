@@ -1,3 +1,5 @@
+import { salvarFiltroOrdemPadrao } from '@/services/configuracoes'
+import { getAuthState } from '@/hooks/useAuth'
 import type { Transacao } from '@/types'
 import { formatarMoeda, formatarData, sanitizarHTML } from '@/utils/format'
 
@@ -10,6 +12,16 @@ let ordemAtual: 'data-desc' | 'data-asc' | 'valor-desc' | 'valor-asc' | 'categor
 
 export function setOrdem(ordem: string): void {
   ordemAtual = ordem as any
+}
+
+/**
+ * Aplica uma ordem salva ao select de ordenação e ao estado interno.
+ * Chamado durante a inicialização da aplicação para restaurar a preferência do usuário.
+ */
+export function aplicarOrdemSalva(ordem: string): void {
+  ordemAtual = ordem as any
+  const selectEl = document.getElementById('filter-ordem') as HTMLSelectElement | null
+  if (selectEl) selectEl.value = ordem
 }
 
 export function criarTransacaoList(container: HTMLElement): void {
@@ -36,9 +48,19 @@ export function criarTransacaoList(container: HTMLElement): void {
     <p id="list-empty" class="text-center text-slate-400 py-8 hidden">Nenhuma transação neste ciclo</p>
   `
 
-  document.getElementById('filter-ordem')!.addEventListener('change', (e) => {
+  document.getElementById('filter-ordem')!.addEventListener('change', async (e) => {
     const sel = e.target as HTMLSelectElement
     ordemAtual = sel.value as any
+
+    // Persiste a escolha do usuário (sem botão salvar)
+    const state = getAuthState()
+    const userId = state.user?.id
+    const chave = `filtro_ordem_padrao_${userId ?? 'anonimo'}`
+    localStorage.setItem(chave, ordemAtual)
+    if (userId) {
+      salvarFiltroOrdemPadrao(ordemAtual, userId).catch(() => {})
+    }
+
     // Notifica que a ordenação mudou para que o ciclo re-renderize a lista
     window.dispatchEvent(new CustomEvent('ordemChange', { detail: { ordem: ordemAtual } }))
   })

@@ -216,6 +216,11 @@ COMMENT ON TABLE public.configuracoes_usuario IS 'Configurações de ciclo finan
 COMMENT ON COLUMN public.configuracoes_usuario.dia_inicio_ciclo IS 'Dia de início do ciclo financeiro';
 COMMENT ON COLUMN public.configuracoes_usuario.dia_fim_ciclo IS 'Dia de fim do ciclo financeiro';
 
+ALTER TABLE public.configuracoes_usuario
+  ADD COLUMN IF NOT EXISTS filtro_ordem_padrao TEXT;
+
+COMMENT ON COLUMN public.configuracoes_usuario.filtro_ordem_padrao IS 'Ordem padrão de ordenação da lista de transações';
+
 -- ============================================
 -- TABELA: categorias
 -- ============================================
