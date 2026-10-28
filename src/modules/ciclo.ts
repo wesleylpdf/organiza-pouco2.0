@@ -1,4 +1,5 @@
 import { appStore } from '@/stores/AppState'
+import type { OrdemTransacao } from '@/utils/ordenacao'
 import { getAuthState } from '@/hooks/useAuth'
 import { useTransacoes } from '@/hooks/useTransacoes'
 import { atualizarHeader } from '@/components/Header'
@@ -85,7 +86,7 @@ export async function updateLista(): Promise<void> {
   const filtradas = filtrarTransacoes(transacoes, search, showOnlyDividido)
 
   const ordemEl = document.getElementById('filter-ordem') as HTMLSelectElement | null
-  if (ordemEl) setOrdem(ordemEl.value)
+  if (ordemEl) setOrdem(ordemEl.value as OrdemTransacao)
 
   renderLista(
     filtradas,

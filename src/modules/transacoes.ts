@@ -5,6 +5,7 @@ import { limparFormEdicaoAtual } from '@/modules/appInit'
 import { listarTransacoes } from '@/services/transacoes'
 import { criarModalFixos } from '@/components/ModalFixos'
 import { formatDateLocalISO } from '@/utils/ciclo'
+import { ordenarTransacoes } from '@/utils/ordenacao'
 import { filtrarTransacoes } from '@/utils/filtroTransacoes'
 import { getOrdem } from '@/components/TransacaoList'
 import { logger } from '@/utils/logger'
@@ -131,32 +132,8 @@ export async function handleExportar(): Promise<void> {
   const showOnlyDividido = filtroDivididoEl?.checked || false
   const filtroBuscaEl = document.getElementById('filter-descricao') as HTMLInputElement | null
   const busca = filtroBuscaEl?.value.trim().toLowerCase() || ''
-  const transacoes = filtrarTransacoes(todas, busca, showOnlyDividido)
-
-  // Aplica a mesma ordem escolhida pelo usuário na lista antes de exportar
   const ordem = getOrdem()
-  transacoes.sort((a, b) => {
-    switch (ordem) {
-      case 'data-desc':
-        return new Date(b.data).getTime() - new Date(a.data).getTime()
-      case 'data-asc':
-        return new Date(a.data).getTime() - new Date(b.data).getTime()
-      case 'valor-desc':
-        return Number(b.valor) - Number(a.valor)
-      case 'valor-asc':
-        return Number(a.valor) - Number(b.valor)
-      case 'categoria-asc':
-        return String(a.categoria).localeCompare(String(b.categoria))
-      case 'categoria-desc':
-        return String(b.categoria).localeCompare(String(a.categoria))
-      case 'criado-desc':
-        return new Date(b.created_at || b.data).getTime() - new Date(a.created_at || a.data).getTime()
-      case 'criado-asc':
-        return new Date(a.created_at || a.data).getTime() - new Date(b.created_at || b.data).getTime()
-      default:
-        return new Date(b.data).getTime() - new Date(a.data).getTime()
-    }
-  })
+  const transacoes = ordenarTransacoes(filtrarTransacoes(todas, busca, showOnlyDividido), ordem)
 
   if (transacoes.length === 0) {
     toast.warning('Nenhuma transação para exportar')

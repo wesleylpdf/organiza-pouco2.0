@@ -2,19 +2,20 @@ import { salvarFiltroOrdemPadrao } from '@/services/configuracoes'
 import { getAuthState } from '@/hooks/useAuth'
 import type { Transacao } from '@/types'
 import { formatarMoeda, formatarData, sanitizarHTML } from '@/utils/format'
+import { ordenarTransacoes, type OrdemTransacao } from '@/utils/ordenacao'
 
 type EditCallback = (id: string) => void
 type DeleteCallback = (id: string) => void
 
 let editCallback: EditCallback
 let deleteCallback: DeleteCallback
-let ordemAtual: 'data-desc' | 'data-asc' | 'valor-desc' | 'valor-asc' | 'categoria-asc' | 'categoria-desc' | 'criado-desc' | 'criado-asc' = 'data-desc'
+let ordemAtual: OrdemTransacao = 'data-desc'
 
-export function setOrdem(ordem: string): void {
-  ordemAtual = ordem as any
+export function setOrdem(ordem: OrdemTransacao): void {
+  ordemAtual = ordem
 }
 
-export function getOrdem(): string {
+export function getOrdem(): OrdemTransacao {
   return ordemAtual
 }
 
@@ -22,8 +23,8 @@ export function getOrdem(): string {
  * Aplica uma ordem salva ao select de ordenação e ao estado interno.
  * Chamado durante a inicialização da aplicação para restaurar a preferência do usuário.
  */
-export function aplicarOrdemSalva(ordem: string): void {
-  ordemAtual = ordem as any
+export function aplicarOrdemSalva(ordem: OrdemTransacao): void {
+  ordemAtual = ordem
   const selectEl = document.getElementById('filter-ordem') as HTMLSelectElement | null
   if (selectEl) selectEl.value = ordem
 }
@@ -186,28 +187,7 @@ export function renderLista(
   emptyMsg.classList.add('hidden')
 
   // Aplica ordenação
-  const items = [...transactions].sort((a, b) => {
-    switch (ordemAtual) {
-      case 'data-desc':
-        return new Date(b.data).getTime() - new Date(a.data).getTime()
-      case 'data-asc':
-        return new Date(a.data).getTime() - new Date(b.data).getTime()
-      case 'valor-desc':
-        return Number(b.valor) - Number(a.valor)
-      case 'valor-asc':
-        return Number(a.valor) - Number(b.valor)
-      case 'categoria-asc':
-        return String(a.categoria).localeCompare(String(b.categoria))
-      case 'categoria-desc':
-        return String(b.categoria).localeCompare(String(a.categoria))
-      case 'criado-desc':
-        return new Date(b.created_at || b.data).getTime() - new Date(a.created_at || a.data).getTime()
-      case 'criado-asc':
-        return new Date(a.created_at || a.data).getTime() - new Date(b.created_at || b.data).getTime()
-      default:
-        return new Date(b.data).getTime() - new Date(a.data).getTime()
-    }
-  })
+  const items = ordenarTransacoes(transactions, ordemAtual)
 
   listContainer.innerHTML = items.map(t => {
     const sinal = t.tipo === 'entrada' ? '+' : '-'

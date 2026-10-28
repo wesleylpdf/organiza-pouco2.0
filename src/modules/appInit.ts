@@ -9,6 +9,7 @@ import { criarTransacaoList, aplicarOrdemSalva } from '@/components/TransacaoLis
 import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase, buscarFiltroOrdemPadrao } from '@/services/configuracoes'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
+import type { OrdemTransacao } from '@/utils/ordenacao'
 import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
 
 // Elementos DOM
@@ -234,7 +235,7 @@ async function setupApp(
     try {
       const ordemSalva = await buscarFiltroOrdemPadrao(userIdOrdem)
       if (ordemSalva) {
-        aplicarOrdemSalva(ordemSalva)
+        aplicarOrdemSalva(ordemSalva as OrdemTransacao)
       }
     } catch {
       // Ignora erro de busca, mantém ordem padrão
