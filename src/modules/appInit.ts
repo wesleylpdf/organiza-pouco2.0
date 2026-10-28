@@ -10,7 +10,6 @@ import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoC
 import { getOffsetInicial } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
-import { toast } from '@/utils/toast'
 import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
 
 // Elementos DOM
@@ -143,11 +142,9 @@ async function salvarConfiguracaoCiclo(
   }
   try {
     await salvarConfiguracaoCicloSupabase(diaInicio, diaFim, userId)
-    toast.success('Configuração de ciclo salva!')
   } catch (err) {
     logger.error('Erro ao salvar configuração de ciclo no Supabase', err as Error)
     localStorage.setItem(`configuracao_ciclo_${userId}`, JSON.stringify({ diaInicio, diaFim }))
-    toast.error('Erro ao salvar configuração de ciclo')
   }
 }
 

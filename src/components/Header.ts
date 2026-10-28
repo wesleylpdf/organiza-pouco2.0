@@ -105,7 +105,10 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
 
   // Botão salvar configuração de ciclo
   const btnSalvarConfig = container.querySelector('#salvar-config-ciclo') as HTMLButtonElement
-  btnSalvarConfig.addEventListener('click', () => emitirConfigCiclo())
+  btnSalvarConfig.addEventListener('click', () => {
+    emitirConfigCiclo()
+    toast.success('Configuração de ciclo salva!')
+  })
 
   // Botão FIXOS
   container.querySelector('#fixos-btn')!.addEventListener('click', onFixosClick)
