@@ -7,7 +7,6 @@ import { criarTransacaoForm } from '@/components/TransacaoForm'
 import { criarGrafico } from '@/components/GraficoPizza'
 import { criarTransacaoList, aplicarOrdemSalva } from '@/components/TransacaoList'
 import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase, buscarFiltroOrdemPadrao } from '@/services/configuracoes'
-import { getOffsetInicial } from '@/utils/ciclo'
 import { debounce } from '@/utils/debounce'
 import { logger } from '@/utils/logger'
 import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
@@ -170,9 +169,8 @@ async function setupApp(
 ): Promise<void> {
   logger.debug('Configurando aplicação')
 
-  // Inicializa offset do ciclo
-  const offsetInicial = getOffsetInicial()
-  appStore.setCycleOffset(offsetInicial)
+  // Inicializa offset do ciclo (sempre 0 — o getCicloAtual já ajusta internamente)
+  appStore.setCycleOffset(0)
 
   // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
   const userId = getAuthState().user?.id ?? null

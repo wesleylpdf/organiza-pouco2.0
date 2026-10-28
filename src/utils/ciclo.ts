@@ -124,14 +124,6 @@ export function getCicloInicioParaData(
 }
 
 /**
- * Retorna offset inicial baseado na data atual.
- * O getCicloAtual já faz o ajuste internamente, então offset é sempre 0.
- */
-export function getOffsetInicial(): number {
-  return 0
-}
-
-/**
  * Formata intervalo do ciclo para exibição
  */
 export function formatarIntervaloCiclo(inicio: Date, fim: Date): string {
