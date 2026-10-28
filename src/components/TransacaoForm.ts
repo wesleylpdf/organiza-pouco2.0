@@ -28,8 +28,9 @@ export function criarTransacaoForm(
   onGerenciarCategorias: () => void
 ): FormApi {
   container.innerHTML = `
-    <div class="rounded-3xl p-6 mb-8 border bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+    <div class="relative p-6 border bg-white border-slate-200 rounded-3xl shadow-sm mb-8 dark:bg-slate-800 dark:border-slate-700">
       <h3 id="form-title" class="font-bold text-lg mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
+      <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
       <form id="transaction-form" class="space-y-3 space-y-4">
         <input type="hidden" id="input-id">
         <div class="grid grid-cols-2 gap-2 gap-4">

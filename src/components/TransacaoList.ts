@@ -31,8 +31,9 @@ export function aplicarOrdemSalva(ordem: OrdemTransacao): void {
 
 export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="mb-6 grid grid-cols-1 gap-4">
+    <div class="relative mb-6 grid grid-cols-1 gap-4">
       <div class="flex items-center justify-center gap-2 w-full flex-wrap">
+        <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
         <label class="flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
           <input type="checkbox" id="filter-dividido" class="w-4 h-4"> <span>Parcelados</span>
         </label>

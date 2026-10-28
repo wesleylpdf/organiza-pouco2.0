@@ -9,8 +9,9 @@ let chartInstance: Chart | null = null
 
 export function criarGrafico(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="p-6 rounded-3xl shadow-sm mb-8 border border-slate-200 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800 dark:border-slate-700" style="height: 320px;">
+    <div class="relative p-6 rounded-3xl shadow-sm mb-8 border border-slate-200 flex flex-col items-center justify-center bg-white dark:bg-slate-800 dark:border-slate-700" style="height: 320px;">
       <h3 class="font-bold text-sm mb-2 text-slate-800 w-full text-left dark:text-white">Distribuição de Gastos</h3>
+      <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
       <div class="relative w-full h-full flex items-center justify-center">
         <canvas id="categoryChart" style="max-height: 220px;"></canvas>
       </div>

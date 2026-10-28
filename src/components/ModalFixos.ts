@@ -19,10 +19,11 @@ export function criarModalFixos(
   const totalFixos = fixos.reduce((acc, t) => acc + Number(t.valor), 0)
 
   modal.innerHTML = `
-    <div id="modal-content" class="bg-white rounded-3xl p-4 p-6 w-full max-w-md shadow-2xl dark:bg-slate-800 max-h-[85vh] flex flex-col">
+    <div id="modal-content" class="relative bg-white rounded-3xl p-4 p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:bg-slate-800 dark:border-slate-700 max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-lg text-slate-800 dark:text-white">Transações Fixas</h3>
         <button id="fechar-modal-fixos" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl">&times;</button>
+        <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
       </div>
 
       <div class="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700">

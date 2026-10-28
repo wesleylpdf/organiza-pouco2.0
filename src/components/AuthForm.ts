@@ -5,10 +5,11 @@ type Modo = 'login' | 'cadastro' | 'reset'
 export function criarAuthForm(container: HTMLElement): void {
   container.innerHTML = `
     <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[999] p-4">
-      <div class="bg-white p-4 p-6 p-8 rounded-2xl rounded-3xl text-center w-full max-w-sm mx-auto shadow-2xl dark:bg-slate-800">
+      <div class="relative bg-white p-4 p-6 p-8 rounded-2xl rounded-3xl text-center w-full max-w-sm mx-auto shadow-2xl dark:bg-slate-800">
         <img id="auth-logo" src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-3 mb-4 w-20 w-24 h-auto rounded-full object-cover border-2 border-emerald-500 dark:border-emerald-400">
         <h2 class="font-black text-lg text-xl mb-2 text-slate-800 dark:text-white">Organiza Pouco</h2>
         <p id="auth-subtitle" class="text-xs text-sm text-slate-500 mb-4 mb-6 dark:text-slate-400">Entre na sua conta</p>
+        <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
 
         <div id="auth-fields" class="space-y-2 space-y-3 mb-3 mb-4">
           <input type="email" id="auth-email" class="border p-3 rounded-xl w-full bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-base" placeholder="Email" autocomplete="email">
