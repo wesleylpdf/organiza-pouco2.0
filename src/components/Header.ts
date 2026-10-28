@@ -21,8 +21,11 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
     <header class="max-w-2xl mx-auto mb-3 mb-4">
       <div class="flex items-center justify-between gap-2">
         <div class="flex flex-col items-center gap-0.5 gap-2 min-w-0">
-          <h1 class="font-black text-base text-lg text-slate-800 dark:text-white shrink-0">Organiza Pouco</h1>
-          <div class="text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
+          <div class="flex items-center gap-1">
+            <h1 class="font-black text-base text-lg text-slate-800 dark:text-white shrink-0">Organiza Pouco</h1>
+            <div class="text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
+          </div>
+          <span id="header-user" class="text-[11px] text-xs text-slate-500 dark:text-slate-400 truncate"></span>
         </div>
         <div class="flex items-center gap-1 gap-2">
           <button id="theme-toggle" class="bg-white p-2 rounded-full shadow border dark:bg-slate-800 dark:border-slate-700">
