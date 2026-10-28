@@ -88,13 +88,25 @@ export async function updateLista(): Promise<void> {
   const ordemEl = document.getElementById('filter-ordem') as HTMLSelectElement | null
   if (ordemEl) setOrdem(ordemEl.value as OrdemTransacao)
 
+  const temTransacoes = filtradas.length > 0
+
+  const chartContainer = document.getElementById('chart-container')
+  const listContainer = document.getElementById('list-container')
+  const exportContainer = document.getElementById('export-container')
+
+  if (chartContainer) chartContainer.classList.toggle('hidden', !temTransacoes)
+  if (listContainer) listContainer.classList.toggle('hidden', !temTransacoes)
+  if (exportContainer) exportContainer.classList.toggle('hidden', !temTransacoes)
+
   renderLista(
     filtradas,
     (id) => cicloHandlers!.handleEditar(id),
     (id) => cicloHandlers!.handleExcluir(id)
   )
 
-  await updateGrafico(filtradas)
+  if (temTransacoes) {
+    await updateGrafico(filtradas)
+  }
 }
 
 export async function updateGrafico(transacoes?: Transacao[]): Promise<void> {

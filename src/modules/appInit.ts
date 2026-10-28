@@ -187,6 +187,7 @@ async function setupApp(
   const formContainer = document.createElement('div')
   formContainer.id = 'form-container'
   const chartContainer = document.createElement('div')
+  chartContainer.id = 'chart-container'
   const listContainer = document.createElement('div')
   listContainer.id = 'list-container'
   const exportContainer = document.createElement('div')
