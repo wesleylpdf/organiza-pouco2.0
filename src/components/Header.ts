@@ -71,24 +71,24 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        <div class="bg-white/5 border border-emerald-500/20 rounded-2xl p-3.5">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-2">
+        <div class="bg-white/5 border border-emerald-500/20 rounded-2xl p-3 sm:p-3.5 min-w-0">
           <div class="flex items-center justify-between mb-1">
             <span class="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Entradas</span>
             <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">↑</span>
           </div>
-          <h2 id="total-entradas" class="text-lg sm:text-xl font-extrabold text-emerald-400 truncate">R$ 0,00</h2>
+          <h2 id="total-entradas" class="text-base sm:text-xl font-extrabold text-emerald-400 truncate">R$ 0,00</h2>
         </div>
 
-        <div class="bg-white/5 border border-rose-500/20 rounded-2xl p-3.5">
+        <div class="bg-white/5 border border-rose-500/20 rounded-2xl p-3 sm:p-3.5 min-w-0">
           <div class="flex items-center justify-between mb-1">
             <span class="text-[10px] text-rose-300 uppercase font-bold tracking-wider">Saídas</span>
             <span class="text-xs bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full font-bold">↓</span>
           </div>
-          <h2 id="total-saidas" class="text-lg sm:text-xl font-extrabold text-rose-400 truncate">R$ 0,00</h2>
+          <h2 id="total-saidas" class="text-base sm:text-xl font-extrabold text-rose-400 truncate">R$ 0,00</h2>
         </div>
 
-        <div class="bg-emerald-500/15 border border-emerald-400/30 rounded-2xl p-3.5 flex flex-col justify-between">
+        <div class="col-span-2 sm:col-span-1 bg-emerald-500/15 border border-emerald-400/30 rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
           <div class="flex items-center justify-between mb-1">
             <span class="text-[10px] text-emerald-200 uppercase font-bold tracking-wider">Saldo Final</span>
             <button id="fixos-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-0.5 rounded-lg text-[11px] font-black tracking-wide transition shadow">📌 FIXOS</button>

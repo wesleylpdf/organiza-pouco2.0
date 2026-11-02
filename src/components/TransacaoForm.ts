@@ -43,31 +43,31 @@ export function criarTransacaoForm(
       <form id="transaction-form" class="space-y-4">
         <input type="hidden" id="input-id">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div>
-            <label for="input-value" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Valor (R$)</label>
+        <div class="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+          <div class="min-w-0">
+            <label for="input-value" class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap truncate">Valor (R$)</label>
             <input type="number" id="input-value" step="0.01" min="0.01" required
-              class="w-full min-w-0 p-3 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-base font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              class="w-full min-w-0 p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-sm sm:text-base font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               placeholder="0,00" inputmode="decimal">
           </div>
-          <div>
-            <label for="input-date" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Data</label>
+          <div class="min-w-0">
+            <label for="input-date" class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap truncate">Data</label>
             <input type="date" id="input-date" required
-              class="w-full min-w-0 p-3 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-base font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              class="w-full min-w-0 p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-sm sm:text-base font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div>
-            <label for="input-type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tipo de Lançamento</label>
-            <select id="input-type" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50/70 font-bold text-base dark:bg-slate-800/80 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        <div class="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+          <div class="min-w-0">
+            <label for="input-type" class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap truncate">Tipo de Lançamento</label>
+            <select id="input-type" class="w-full min-w-0 p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-slate-50/70 font-bold text-sm sm:text-base dark:bg-slate-800/80 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
               <option value="saida">🔻 Saída (-)</option>
               <option value="entrada">🔺 Entrada (+)</option>
             </select>
           </div>
-          <div>
-            <label for="input-category" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Categoria</label>
-            <select id="input-category" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50/70 text-base font-semibold dark:bg-slate-800/80 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <div class="min-w-0">
+            <label for="input-category" class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 whitespace-nowrap truncate">Categoria</label>
+            <select id="input-category" class="w-full min-w-0 p-2.5 sm:p-3 rounded-2xl border border-slate-200 bg-slate-50/70 text-sm sm:text-base font-semibold dark:bg-slate-800/80 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
               <!-- Populado dinamicamente -->
             </select>
           </div>
