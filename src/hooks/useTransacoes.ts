@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient'
 import {
   listarTransacoes,
   criarTransacao,
+  criarTransacoesEmLote,
   atualizarTransacao,
   excluirTransacao,
   listarParcelasRelacionadas,
@@ -16,7 +17,7 @@ import {
 } from '@/services/transacoes'
 import { validarTransacao, extrairMensagemErro } from '@/utils/validation'
 import { logger } from '@/utils/logger'
-import { formatDateLocalISO } from '@/utils/ciclo'
+import { formatDateLocalISO, adicionarMeses } from '@/utils/ciclo'
 import type { Transacao, TipoTransacao } from '@/types'
 
 export interface CriarTransacaoParams {
@@ -133,26 +134,25 @@ export function useTransacoes() {
             await excluirParcelasRelacionadas(paraExcluir.map(tx => tx.id))
           }
 
-          // Cria parcelas faltantes quando aumenta a quantidade
+          // Cria parcelas faltantes em lote quando aumenta a quantidade
           if (qtdeNova > qtdeAtual) {
-            const ultimaParcela = relacionadas[relacionadas.length - 1]
-            const dataBase = ultimaParcela
-              ? new Date(ultimaParcela.data + 'T00:00:00')
+            const primeiraParcela = relacionadas[0]
+            const dataBase = primeiraParcela
+              ? new Date(primeiraParcela.data + 'T00:00:00')
               : new Date(params.data + 'T00:00:00')
-            await Promise.all(
-              Array.from({ length: qtdeNova - qtdeAtual }, (_, i) => {
-                const dataNova = new Date(dataBase)
-                dataNova.setMonth(dataNova.getMonth() + (i + 1))
-                return criarTransacao({
-                  ...params,
-                  data: formatDateLocalISO(dataNova),
-                  parcelaAtual: qtdeAtual + i + 1,
-                  descricao: params.descricao,
-                  totalParcelas: qtdeNova,
-                  fixo: params.fixo,
-                } as CriarTransacaoParams)
-              })
-            )
+            const novasParcelas = Array.from({ length: qtdeNova - qtdeAtual }, (_, i) => {
+              const offsetMeses = primeiraParcela ? qtdeAtual + i : i + 1
+              const dataNova = adicionarMeses(dataBase, offsetMeses)
+              return {
+                ...params,
+                data: formatDateLocalISO(dataNova),
+                parcelaAtual: qtdeAtual + i + 1,
+                descricao: params.descricao,
+                totalParcelas: qtdeNova,
+                fixo: params.fixo,
+              }
+            })
+            await criarTransacoesEmLote(novasParcelas)
           }
         } else { // Se não era dividida ou não tem mais parcelas, atualiza como transação única
           logger.debug('Atualizando transação única', { id: editandoId, params })
@@ -161,19 +161,19 @@ export function useTransacoes() {
 
         appStore.setEditandoId(null)
       } else if (params.dividido && params.totalParcelas > 1) {
-        logger.debug('Criando transação dividida', { totalParcelas: params.totalParcelas })
+        logger.debug('Criando transação dividida em lote', { totalParcelas: params.totalParcelas })
         const dataInicial = new Date(params.data + 'T00:00:00')
-        for (let i = 0; i < params.totalParcelas; i++) {
-          const dataParcela = new Date(dataInicial)
-          dataParcela.setMonth(dataParcela.getMonth() + i)
-          await criarTransacao({
+        const parcelas = Array.from({ length: params.totalParcelas }, (_, i) => {
+          const dataParcela = adicionarMeses(dataInicial, i)
+          return {
             ...params,
             data: formatDateLocalISO(dataParcela),
             parcelaAtual: i + 1,
             descricao: params.descricao,
             fixo: params.fixo,
-          } as CriarTransacaoParams)
-        }
+          }
+        })
+        await criarTransacoesEmLote(parcelas)
       } else {
         logger.debug('Criando transação única', { params })
         await criarTransacao({ ...params, fixo: params.fixo })

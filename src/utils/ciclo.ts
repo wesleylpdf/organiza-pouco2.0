@@ -130,3 +130,13 @@ export function formatarIntervaloCiclo(inicio: Date, fim: Date): string {
   const opt: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' }
   return `${inicio.toLocaleDateString('pt-BR', opt)} a ${fim.toLocaleDateString('pt-BR', opt)}`
 }
+
+/**
+ * Adiciona meses a uma data limitando o dia ao último dia do mês de destino
+ * (ex.: 31/01 + 1 mês = 28/02 ou 29/02, evitando pular para março).
+ */
+export function adicionarMeses(data: Date, meses: number): Date {
+  const ref = new Date(data.getFullYear(), data.getMonth() + meses, 1)
+  return criarDataNoMes(ref.getFullYear(), ref.getMonth(), data.getDate())
+
+}

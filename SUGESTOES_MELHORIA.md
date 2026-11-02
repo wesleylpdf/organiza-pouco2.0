@@ -26,12 +26,12 @@
 
 ## 2. Consultas ao Supabase & Escalabilidade de Dados
 
-- [ ] **Filtrar Transações Fixas Diretamente no Banco de Dados**
+- [x] **Filtrar Transações Fixas Diretamente no Banco de Dados**
   - **Onde:** `src/modules/ciclo.ts` (`carregarFixosTodos`, linhas 49–54), `src/modules/transacoes.ts` (`handleAbrirFixos`, linhas 95–107) e `src/services/transacoes.ts` (`listarTransacoes`, linhas 47–71)
   - **Problema:** `listarTransacoes({})` busca **todas** as transações do histórico do usuário para depois filtrar `.filter(t => t.fixo)` em memória no navegador, ignorando o índice parcial `idx_transacoes_user_fixo` já existente em `supabase/schema.sql` (linha 30).
   - **Solução:** Adicionar o parâmetro opcional `fixo?: boolean` em `listarTransacoes` aplicando `.eq('fixo', params.fixo)` na query do Supabase.
 
-- [ ] **Inserção em Lote (Batch Insert) ao Criar Transações Parceladas**
+- [x] **Inserção em Lote (Batch Insert) ao Criar Transações Parceladas**
   - **Onde:** `src/hooks/useTransacoes.ts` (`salvarTransacao`, linhas 163–176) e `src/services/transacoes.ts` (`criarTransacao`)
   - **Problema:** Ao criar uma compra parcelada (ex.: 12x), o loop `for` executa 12 chamadas sequenciais ao Supabase (e 12 chamadas a `supabase.auth.getUser()`).
   - **Solução:** Criar uma função `criarTransacoesEmLote` que envia um array de objetos em um único `.insert([...])`, reduzindo drasticamente o tempo de salvamento e evitando gravações parciais caso a conexão caia no meio.
@@ -40,7 +40,7 @@
 
 ## 3. Possíveis Bugs & Casos de Borda (Edge Cases)
 
-- [ ] **Overflow de Datas ao Gerar Parcelas nos Dias 29, 30 e 31**
+- [x] **Overflow de Datas ao Gerar Parcelas nos Dias 29, 30 e 31**
   - **Onde:** `src/hooks/useTransacoes.ts` (linhas 144–145 e 167–168)
   - **Problema:** O cálculo `dataParcela.setMonth(dataParcela.getMonth() + i)` sofre com o comportamento nativo do `Date` do JavaScript: uma compra em `31/01` ao somar 1 mês vira `03/03` (pulando fevereiro).
   - **Solução:** Utilizar uma função auxiliar que limite o dia ao último dia do mês de destino (similar a `criarDataNoMes` em `src/utils/ciclo.ts`).

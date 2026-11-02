@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { getCicloAtual, getCicloInicioParaData, formatarIntervaloCiclo, diasForaDoCiclo } from './ciclo'
+import { getCicloAtual, getCicloInicioParaData, formatarIntervaloCiclo, diasForaDoCiclo, adicionarMeses, formatDateLocalISO } from './ciclo'
 
 describe('getCicloAtual', () => {
   beforeEach(() => {
@@ -218,5 +218,15 @@ describe('formatarIntervaloCiclo', () => {
 
     expect(resultado).toContain('09/03/2026')
     expect(resultado).toContain('08/04/2026')
+  })
+})
+
+describe('adicionarMeses', () => {
+  it('deve limitar ao último dia do mês em meses mais curtos sem pular fevereiro', () => {
+    const base = new Date('2026-01-31T00:00:00')
+    expect(formatDateLocalISO(adicionarMeses(base, 0))).toBe('2026-01-31')
+    expect(formatDateLocalISO(adicionarMeses(base, 1))).toBe('2026-02-28')
+    expect(formatDateLocalISO(adicionarMeses(base, 2))).toBe('2026-03-31')
+    expect(formatDateLocalISO(adicionarMeses(base, 3))).toBe('2026-04-30')
   })
 })

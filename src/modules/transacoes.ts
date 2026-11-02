@@ -100,7 +100,7 @@ export async function handleAbrirFixos(): Promise<void> {
     btnFixos.textContent = 'Carregando...'
   }
   try {
-    const transacoes = await listarTransacoes({})
+    const transacoes = await listarTransacoes({ fixo: true })
     criarModalFixos(transacoes, async (id) => {
       const sucesso = await handleExcluir(id)
       return sucesso
@@ -122,7 +122,7 @@ export async function handleExportar(): Promise<void> {
   const transacoesDoCiclo = appStore.getTransacoes()
 
   // Busca TODAS as transações (inclui fixas de outros meses/ciclos)
-  const todasTransacoes = await listarTransacoes({})
+  const todasTransacoes = await listarTransacoes({ fixo: true })
   const nomesCiclo = new Set(transacoesDoCiclo.map(t => t.id))
   const fixosForaDoCiclo = todasTransacoes.filter(t => t.fixo && !nomesCiclo.has(t.id))
   const todas = [...transacoesDoCiclo, ...fixosForaDoCiclo]

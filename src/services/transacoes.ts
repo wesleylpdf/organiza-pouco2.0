@@ -48,6 +48,7 @@ export async function listarTransacoes(params: {
   cicloInicio?: string
   dataInicio?: string
   dataFim?: string
+  fixo?: boolean
 }): Promise<Transacao[]> {
   const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
@@ -62,6 +63,10 @@ export async function listarTransacoes(params: {
     query = query.gte('data', params.dataInicio).lte('data', params.dataFim)
   } else if (params.cicloInicio) {
     query = query.eq('ciclo_inicio', params.cicloInicio)
+  }
+
+  if (params.fixo !== undefined) {
+    query = query.eq('fixo', params.fixo)
   }
 
   const { data, error } = await comRetry(() => query)
@@ -117,6 +122,51 @@ export async function criarTransacao(params: {
 
   if (error) throw error
   return paraTransacao(data)
+}
+
+/**
+ * Cria múltiplas transações em lote em uma única requisição ao Supabase
+ */
+export async function criarTransacoesEmLote(
+  itens: Array<Parameters<typeof criarTransacao>[0]>
+): Promise<Transacao[]> {
+  if (itens.length === 0) return []
+
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
+  if (!user) throw new Error('Usuário não autenticado')
+
+  const diaInicioCiclo = appStore.getDiaInicioCiclo()
+
+  const rows = itens.map((params) => {
+    const cicloInicio = getCicloInicioParaData(
+      new Date(params.data + 'T00:00:00'),
+      diaInicioCiclo
+    )
+    const descricaoLimpa = (params.descricao || '').replace(/\s+\d+\/\d+$/, '')
+
+    return paraSnakeCase({
+      user_id: user.id,
+      valor: params.valor,
+      data: params.data,
+      tipo: params.tipo,
+      categoria: params.categoria,
+      descricao: descricaoLimpa,
+      ciclo_inicio: cicloInicio,
+      dividido: params.dividido ?? false,
+      totalParcelas: params.totalParcelas ?? null,
+      parcelaAtual: params.parcelaAtual ?? null,
+      valorOriginal: params.valorOriginal ?? null,
+      fixo: params.fixo ?? false,
+    })
+  })
+
+  const { data, error } = await comRetry(() => supabase
+    .from('transacoes')
+    .insert(rows)
+    .select())
+
+  if (error) throw error
+  return (data || []).map(paraTransacao)
 }
 
 /**

@@ -48,7 +48,7 @@ function limparCampoBusca(): void {
 
 async function carregarFixosTodos(): Promise<Transacao[]> {
   if (fixosTodosCache) return fixosTodosCache
-  const todasTransacoes = await listarTransacoes({})
+  const todasTransacoes = await listarTransacoes({ fixo: true })
   fixosTodosCache = todasTransacoes.filter(t => t.fixo)
   return fixosTodosCache
 }

@@ -1,4 +1,4 @@
-import { listarTransacoes } from './transacoes'
+import { listarTransacoes, criarTransacoesEmLote } from './transacoes'
 import type { Transacao } from '@/types'
 
 vi.mock('@/lib/supabaseClient', () => ({
@@ -37,6 +37,7 @@ function criarMockQuery(retorno: any = { data: [], error: null }) {
   mockQuery.gte = vi.fn(() => mockQuery)
   mockQuery.lte = vi.fn(() => mockQuery)
   mockQuery.order = vi.fn(() => mockQuery)
+  mockQuery.insert = vi.fn(() => mockQuery)
   return mockQuery
 }
 
@@ -83,6 +84,56 @@ describe('listarTransacoes', () => {
 
     expect(mockQuery.gte).toHaveBeenCalledWith('data', '2024-01-01')
     expect(mockQuery.lte).toHaveBeenCalledWith('data', '2024-01-31')
+  })
+
+  it('deve filtrar por fixo quando informado', async () => {
+    ;(supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    })
+
+    const mockQuery = criarMockQuery({ data: [], error: null })
+    ;(supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery)
+
+    await listarTransacoes({ fixo: true })
+
+    expect(mockQuery.eq).toHaveBeenCalledWith('fixo', true)
+  })
+
+  it('deve criar múltiplas transações em lote em uma única chamada', async () => {
+    ;(supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    })
+
+    const mockQuery = criarMockQuery({ data: [mockTransacao], error: null })
+    ;(supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery)
+
+    const result = await criarTransacoesEmLote([
+      {
+        valor: 50,
+        data: '2024-01-31',
+        tipo: 'saida',
+        categoria: 'Outros',
+        descricao: 'Compra 1/2',
+        dividido: true,
+        totalParcelas: 2,
+        parcelaAtual: 1,
+      },
+      {
+        valor: 50,
+        data: '2024-02-29',
+        tipo: 'saida',
+        categoria: 'Outros',
+        descricao: 'Compra 2/2',
+        dividido: true,
+        totalParcelas: 2,
+        parcelaAtual: 2,
+      },
+    ])
+
+    expect(mockQuery.insert).toHaveBeenCalledTimes(1)
+    expect(result).toHaveLength(1)
   })
 
   it('deve lançar erro se Supabase retornar erro', async () => {
