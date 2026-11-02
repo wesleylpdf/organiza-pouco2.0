@@ -1,9 +1,9 @@
-import { Chart, registerables } from 'chart.js'
+import { Chart, PieController, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js'
 import type { Transacao } from '@/types'
 import { agruparPorCategoria, gerarConfigGrafico } from '@/utils/chart'
 import { appStore } from '@/stores/AppState'
 
-Chart.register(...registerables)
+Chart.register(PieController, DoughnutController, ArcElement, Tooltip, Legend)
 
 let chartInstance: Chart | null = null
 

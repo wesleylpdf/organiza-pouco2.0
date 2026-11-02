@@ -10,8 +10,8 @@ import { filtrarTransacoes } from '@/utils/filtroTransacoes'
 import { getOrdem } from '@/components/TransacaoList'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
-import jsPDF from 'jspdf'
-import * as XLSX from 'xlsx'
+
+
 
 // Hook de transações
 const transacoesHook = useTransacoes()
@@ -170,6 +170,7 @@ export async function handleExportar(): Promise<void> {
     URL.revokeObjectURL(url)
     toast.success(`${transacoes.length} transação(ões) exportada(s) para CSV`)
   } else if (format === 'pdf') {
+    const { default: jsPDF } = await import('jspdf')
     const pdfHeaders = ['data', 'tipo', 'categoria', 'valor', 'descricao']
     const pdfRows = transacoes.map((t) => {
       let descricao = t.descricao || ''
@@ -249,6 +250,7 @@ export async function handleExportar(): Promise<void> {
     URL.revokeObjectURL(url)
     toast.success(`${transacoes.length} transação(ões) exportada(s) para PDF`)
   } else if (format === 'xlsx') {
+    const XLSX = await import('xlsx')
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Transações')
