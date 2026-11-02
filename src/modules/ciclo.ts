@@ -71,13 +71,13 @@ export async function updateDashboard(): Promise<void> {
 
     await updateHeader()
 
-    // Remove tela de carregamento assim que todos os dados estão visíveis
-    const tela = document.getElementById('tela-carregamento')
-    if (tela) tela.remove()
+
+
+
   } catch (err) {
     logger.error('Erro ao atualizar dashboard', err as Error)
-    const tela = document.getElementById('tela-carregamento')
-    if (tela) tela.remove()
+
+
   }
 }
 

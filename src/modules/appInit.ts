@@ -8,6 +8,7 @@ import { criarGrafico } from '@/components/GraficoPizza'
 import { criarTransacaoList, aplicarOrdemSalva } from '@/components/TransacaoList'
 import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase, buscarFiltroOrdemPadrao } from '@/services/configuracoes'
 import { debounce } from '@/utils/debounce'
+import { sanitizarHTML } from '@/utils/format'
 import { logger } from '@/utils/logger'
 import type { OrdemTransacao } from '@/utils/ordenacao'
 import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
@@ -34,17 +35,23 @@ const debouncedUpdateDashboard = debounce(() => {
 let carregamentoEl: HTMLElement | null = null
 let carregamentoPercentual = 0
 
-function criarTelaCarregamento(): void {
+function criarTelaCarregamento(nomeUsuario: string): void {
+  const existente = document.getElementById('tela-carregamento')
+  if (existente) existente.remove()
+
+  const nomeLimpo = sanitizarHTML((nomeUsuario || 'Usuário').split('@')[0])
+
   carregamentoEl = document.createElement('div')
   carregamentoEl.id = 'tela-carregamento'
   carregamentoEl.className = 'fixed inset-0 bg-slate-900 flex items-center justify-center z-[9999] p-4'
   carregamentoEl.innerHTML = `
     <div class="text-center">
       <img id="carregamento-logo" src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-6 w-24 h-24 rounded-full object-cover border-2 border-emerald-500 dark:border-emerald-400">
-      <h3 id="carregamento-titulo" class="text-xl font-bold text-white mb-2">Organiza Pouco</h3>
-      <p id="carregamento-texto" class="text-emerald-400 mb-6">Carregando seus dados...</p>
+      <h3 id="carregamento-titulo" class="text-xl font-bold text-white mb-1">Organiza Pouco</h3>
+      <p id="carregamento-boas-vindas" class="text-base font-semibold text-slate-200 mb-3">Bem-vindo, ${nomeLimpo}!</p>
+      <p id="carregamento-texto" class="text-emerald-400 mb-6">Iniciando aplicação...</p>
       <div class="w-64 h-2 bg-slate-700 rounded-full overflow-hidden mx-auto mb-4">
-        <div id="carregamento-barra" class="h-full bg-emerald-500 w-0 transition-width duration-300"></div>
+        <div id="carregamento-barra" class="h-full bg-emerald-500 w-0 transition-all duration-200"></div>
       </div>
       <span id="carregamento-percentual" class="text-2xl font-black text-white">0%</span>
     </div>
@@ -60,6 +67,23 @@ function atualizarCarregamento(percentual: number, texto?: string): void {
   if (barra) barra.style.width = `${carregamentoPercentual}%`
   if (pct) pct.textContent = `${carregamentoPercentual}%`
   if (texto && txt) txt.textContent = texto
+}
+
+async function avancarCarregamento(percentual: number, texto?: string, pausaMs = 120): Promise<void> {
+  atualizarCarregamento(percentual, texto)
+  await new Promise<void>((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => setTimeout(resolve, pausaMs))
+    } else {
+      setTimeout(resolve, pausaMs)
+    }
+  })
+}
+
+function removerTelaCarregamento(): void {
+  const tela = document.getElementById('tela-carregamento')
+  if (tela) tela.remove()
+  carregamentoEl = null
 }
 
 // Controle do carregamento de navegação de ciclo (voltar/avançar) - texto dentro dos botoes
@@ -171,7 +195,7 @@ export function limparFormEdicaoAtual(): void {
 }
 
 async function setupApp(
-  _userEmail: string,
+  userEmail: string,
   handlers: AppInitHandlers
 ): Promise<void> {
   logger.debug('Configurando aplicação')
@@ -185,16 +209,7 @@ async function setupApp(
   // Inicializa offset do ciclo (sempre 0 — o getCicloAtual já ajusta internamente)
   appStore.setCycleOffset(0)
 
-  // Carrega configuração de ciclo do usuário (localStorage ou Supabase)
-  const userId = getAuthState().user?.id ?? null
-
-  // Carrega configuração de ciclo e categorias em paralelo (independentes entre si)
-  await Promise.all([
-    carregarConfiguracaoCiclo(userId),
-    categoriasHook.carregarCategorias(),
-  ])
-
-  // Cria estrutura DOM
+  // Cria estrutura DOM imediatamente para exibir a tela de carregamento desde o 0%
   const headerContainer = document.createElement('div')
   const formContainer = document.createElement('div')
   formContainer.id = 'form-container'
@@ -212,103 +227,109 @@ async function setupApp(
   mainContainer.appendChild(listContainer)
   mainContainer.appendChild(exportContainer)
 
-  // Tela de carregamento com porcentagem exibida imediatamente após o login,
-  // para o usuário não ver tela branca enquanto os dados carregam.
-  criarTelaCarregamento()
-  atualizarCarregamento(10, 'Iniciando aplicação...')
+  const nomeExibicao = userEmail || getAuthState().user?.email || 'Usuário'
+  criarTelaCarregamento(nomeExibicao)
 
-  // Botão de exportação
-  exportContainer.innerHTML = `
-    <select id="export-format" class="bg-white dark:bg-slate-800 dark:text-white border px-3 rounded-full text-xs font-bold w-1/3">
-      <option value="csv">Exportar como CSV</option>
-      <option value="pdf">Exportar como PDF</option>
-      <option value="xlsx">Exportar como Excel</option>
-    </select>
-    <button id="export-btn" class="bg-blue-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-blue-700 transition">Exportar</button>
-  `
+  try {
+    await avancarCarregamento(0, 'Iniciando aplicação...', 80)
 
-  // Inicializa componentes
-  atualizarCarregamento(20, 'Criando interface...')
-  criarHeader(headerContainer, handlers.handleAbrirFixos)
-  ;({ limparFormEdicao } = criarTransacaoForm(
-    formContainer,
-    handlers.handleSalvar,
-    handlers.handleCancelarEdicao,
-    handlers.handleGerenciarCategorias
-  ))
-  criarGrafico(chartContainer)
-  criarTransacaoList(listContainer)
-
-  // Primeira carga (depois dos componentes existirem no DOM)
-  atualizarCarregamento(40, 'Carregando dados...')
-
-  // Restaura preferência de ordem do usuário (do localStorage ou Supabase)
-  const userIdOrdem = getAuthState().user?.id ?? null
-  if (userIdOrdem) {
-    try {
-      const ordemSalva = await buscarFiltroOrdemPadrao(userIdOrdem)
-      if (ordemSalva) {
-        aplicarOrdemSalva(ordemSalva as OrdemTransacao)
-      }
-    } catch {
-      // Ignora erro de busca, mantém ordem padrão
-    }
-  }
-
-  // Eventos de ciclo com feedback de carregamento
-  document.getElementById('ciclo-anterior')!.addEventListener('click', () => {
-    const currentOffset = appStore.getState().cycleOffset
-    appStore.setCycleOffset(currentOffset - 1)
-    carregarCicloComFeedback(handlers.updateDashboard)
-  })
-
-  document.getElementById('ciclo-proximo')!.addEventListener('click', () => {
-    const currentOffset = appStore.getState().cycleOffset
-    appStore.setCycleOffset(currentOffset + 1)
-    carregarCicloComFeedback(handlers.updateDashboard)
-  })
-
-  // Evento de alteração de configuração do ciclo (início/fim)
-  window.addEventListener('cicloConfigChange', async (e: Event) => {
-    const { diaInicio, diaFim } = (e as CustomEvent).detail
-    appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-    appStore.limparCacheCiclo()
+    // Carrega configuração de ciclo e categorias em paralelo
+    await avancarCarregamento(20, 'Carregando configurações e categorias...', 100)
     const userId = getAuthState().user?.id ?? null
-    await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
-    debouncedUpdateDashboard()
-  }, { signal })
+    await Promise.all([
+      carregarConfiguracaoCiclo(userId),
+      categoriasHook.carregarCategorias(),
+    ])
 
-  // Evento de exportação
-  document.getElementById('export-btn')!.addEventListener('click', async () => {
-    const btn = document.getElementById('export-btn') as HTMLButtonElement
-    btn.disabled = true
-    btn.textContent = 'Exportando...'
-    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700')
-    btn.classList.add('bg-rose-500', 'hover:bg-rose-600')
-    try {
-      await handlers.handleExportar()
-    } finally {
-      btn.disabled = false
-      btn.textContent = 'Exportar'
-      btn.classList.remove('bg-rose-500', 'hover:bg-rose-600')
-      btn.classList.add('bg-blue-600', 'hover:bg-blue-700')
+    // Botão de exportação e componentes da interface
+    await avancarCarregamento(40, 'Criando interface...', 100)
+    exportContainer.innerHTML = `
+      <select id="export-format" class="bg-white dark:bg-slate-800 dark:text-white border px-3 rounded-full text-xs font-bold w-1/3">
+        <option value="csv">Exportar como CSV</option>
+        <option value="pdf">Exportar como PDF</option>
+        <option value="xlsx">Exportar como Excel</option>
+      </select>
+      <button id="export-btn" class="bg-blue-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-blue-700 transition">Exportar</button>
+    `
+
+    criarHeader(headerContainer, handlers.handleAbrirFixos)
+    ;({ limparFormEdicao } = criarTransacaoForm(
+      formContainer,
+      handlers.handleSalvar,
+      handlers.handleCancelarEdicao,
+      handlers.handleGerenciarCategorias
+    ))
+    criarGrafico(chartContainer)
+    criarTransacaoList(listContainer)
+
+    // Restaura preferência de ordem do usuário (do localStorage ou Supabase)
+    await avancarCarregamento(60, 'Carregando preferências...', 100)
+    const userIdOrdem = getAuthState().user?.id ?? null
+    if (userIdOrdem) {
+      try {
+        const ordemSalva = await buscarFiltroOrdemPadrao(userIdOrdem)
+        if (ordemSalva) {
+          aplicarOrdemSalva(ordemSalva as OrdemTransacao)
+        }
+      } catch {
+        // Ignora erro de busca, mantém ordem padrão
+      }
     }
-  })
 
-  // Outros eventos
-  document.getElementById('filter-dividido')!.addEventListener('change', async () => await handlers.updateLista())
-  const debouncedUpdateLista = debounce(async () => await handlers.updateLista(), 300)
-  document.getElementById('filter-descricao')!.addEventListener('input', () => debouncedUpdateLista())
-  window.addEventListener('themechange', () => handlers.updateDashboard(), { signal })
+    // Eventos de ciclo com feedback de carregamento
+    document.getElementById('ciclo-anterior')!.addEventListener('click', () => {
+      const currentOffset = appStore.getState().cycleOffset
+      appStore.setCycleOffset(currentOffset - 1)
+      carregarCicloComFeedback(handlers.updateDashboard)
+    })
 
-  atualizarCarregamento(60, 'Processando transações...')
+    document.getElementById('ciclo-proximo')!.addEventListener('click', () => {
+      const currentOffset = appStore.getState().cycleOffset
+      appStore.setCycleOffset(currentOffset + 1)
+      carregarCicloComFeedback(handlers.updateDashboard)
+    })
 
-  // Primeira carga (depois dos componentes existirem no DOM)
-  await handlers.updateDashboard()
+    // Evento de alteração de configuração do ciclo (início/fim)
+    window.addEventListener('cicloConfigChange', async (e: Event) => {
+      const { diaInicio, diaFim } = (e as CustomEvent).detail
+      appStore.setConfiguracaoCiclo(diaInicio, diaFim)
+      appStore.limparCacheCiclo()
+      const userId = getAuthState().user?.id ?? null
+      await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
+      debouncedUpdateDashboard()
+    }, { signal })
 
-  atualizarCarregamento(80, 'Atualizando interface...')
+    // Evento de exportação
+    document.getElementById('export-btn')!.addEventListener('click', async () => {
+      const btn = document.getElementById('export-btn') as HTMLButtonElement
+      btn.disabled = true
+      btn.textContent = 'Exportando...'
+      btn.classList.remove('bg-blue-600', 'hover:bg-blue-700')
+      btn.classList.add('bg-rose-500', 'hover:bg-rose-600')
+      try {
+        await handlers.handleExportar()
+      } finally {
+        btn.disabled = false
+        btn.textContent = 'Exportar'
+        btn.classList.remove('bg-rose-500', 'hover:bg-rose-600')
+        btn.classList.add('bg-blue-600', 'hover:bg-blue-700')
+      }
+    })
 
-  atualizarCarregamento(100, 'Pronto!')
+    // Outros eventos
+    document.getElementById('filter-dividido')!.addEventListener('change', async () => await handlers.updateLista())
+    const debouncedUpdateLista = debounce(async () => await handlers.updateLista(), 300)
+    document.getElementById('filter-descricao')!.addEventListener('input', () => debouncedUpdateLista())
+    window.addEventListener('themechange', () => handlers.updateDashboard(), { signal })
+
+    // Primeira carga das transações e atualização do dashboard
+    await avancarCarregamento(80, 'Processando transações...', 100)
+    await handlers.updateDashboard()
+
+    await avancarCarregamento(100, 'Pronto!', 250)
+  } finally {
+    removerTelaCarregamento()
+  }
 }
 
 function init(handlers: AppInitHandlers): void {
@@ -344,7 +365,6 @@ function init(handlers: AppInitHandlers): void {
       authContainer.classList.add('hidden')
       mainContainer.classList.remove('hidden')
       appStore.reset()
-      appStore.reset()
       handlers.limparCacheFixos?.()
       setupApp(state.user.email ?? '', handlers)
     } else {
@@ -355,7 +375,6 @@ function init(handlers: AppInitHandlers): void {
       logger.info('Usuário desautenticado')
       appStore.reset()
       handlers.limparCacheFixos?.()
-      appStore.reset()
       mainContainer.classList.add('hidden')
       mainContainer.innerHTML = ''
       authContainer.classList.remove('hidden')
