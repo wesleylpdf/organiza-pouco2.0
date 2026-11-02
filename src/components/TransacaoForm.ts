@@ -29,60 +29,88 @@ export function criarTransacaoForm(
   onGerenciarCategorias: () => void
 ): FormApi {
   container.innerHTML = `
-    <div class="relative max-w-2xl mx-auto p-6 border bg-white border-slate-200 rounded-3xl shadow-sm mb-8 dark:bg-slate-800 dark:border-slate-700">
-      <h3 id="form-title" class="font-bold text-lg mb-4 text-slate-800 dark:text-white">Nova Transação</h3>
+    <div class="relative max-w-3xl mx-auto p-5 sm:p-6 border bg-white/95 border-slate-200/90 rounded-3xl shadow-md mb-6 dark:bg-slate-900/95 dark:border-slate-800">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-6 rounded-full bg-emerald-500"></span>
+          <h3 id="form-title" class="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">Nova Transação</h3>
+        </div>
+        <button type="button" id="btn-gerenciar-categorias" class="text-xs px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 font-bold transition">
+          ⚙️ Categorias
+        </button>
+      </div>
+
       <form id="transaction-form" class="space-y-4">
         <input type="hidden" id="input-id">
-        <div class="grid grid-cols-2 gap-4">
-          <input type="number" id="input-value" step="0.01" min="0.01" required
-            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-base"
-            placeholder="Valor" inputmode="decimal">
-          <input type="date" id="input-date" required
-            class="w-full h-full min-w-0 p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-base">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="input-value" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Valor (R$)</label>
+            <input type="number" id="input-value" step="0.01" min="0.01" required
+              class="w-full min-w-0 p-3 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-base font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              placeholder="0,00" inputmode="decimal">
+          </div>
+          <div>
+            <label for="input-date" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Data</label>
+            <input type="date" id="input-date" required
+              class="w-full min-w-0 p-3 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-base font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <select id="input-type" class="w-full p-3 rounded-xl border bg-white font-bold text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
-            <option value="saida">Saída (-)</option>
-            <option value="entrada">Entrada (+)</option>
-          </select>
-          <select id="input-category" class="w-full p-3 rounded-xl border bg-white text-base dark:bg-slate-900 dark:border-slate-700 dark:text-white">
-            <!-- Populado dinamicamente -->
-          </select>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="input-type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tipo de Lançamento</label>
+            <select id="input-type" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50/70 font-bold text-base dark:bg-slate-800/80 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="saida">🔻 Saída (-)</option>
+              <option value="entrada">🔺 Entrada (+)</option>
+            </select>
+          </div>
+          <div>
+            <label for="input-category" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Categoria</label>
+            <select id="input-category" class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50/70 text-base font-semibold dark:bg-slate-800/80 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <!-- Populado dinamicamente -->
+            </select>
+          </div>
         </div>
-        <div class="flex justify-end mt-1">
-          <button type="button" id="btn-gerenciar-categorias" class="text-xs text-blue-500 hover:underline font-bold">
-            ⚙️ Gerenciar categorias
-          </button>
+
+        <div>
+          <label for="input-description" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Descrição</label>
+          <input type="text" id="input-description" required maxlength="100"
+            class="w-full p-3 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-base focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            placeholder="Ex.: Supermercado, Aluguel, Salário...">
         </div>
-        <input type="text" id="input-description" required maxlength="100"
-          class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
-          placeholder="Descrição">
-        <div class="flex flex-wrap items-center gap-y-2 gap-x-6">
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300" for="input-dividido">
-            <input type="checkbox" id="input-dividido" class="w-4 h-4">
-            Parcelado?
+
+        <div class="flex flex-wrap items-center gap-2.5 pt-1">
+          <label class="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer select-none transition" for="input-dividido">
+            <input type="checkbox" id="input-dividido" class="w-4 h-4 accent-emerald-600">
+            🔄 Parcelado?
           </label>
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 ml-2" for="input-fixo">
-            <input type="checkbox" id="input-fixo" class="w-4 h-4">
-            Fixo?
+          <label class="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer select-none transition" for="input-fixo">
+            <input type="checkbox" id="input-fixo" class="w-4 h-4 accent-emerald-600">
+            📌 Fixo?
           </label>
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300 hidden" id="dividir-valor-checkbox-label">
-            <input type="checkbox" id="input-dividir-valor" class="w-4 h-4">
-            Dividir valor pelas parcelas?
+          <label class="flex items-center gap-2 text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 cursor-pointer select-none hidden transition" id="dividir-valor-checkbox-label">
+            <input type="checkbox" id="input-dividir-valor" class="w-4 h-4 accent-emerald-600">
+            ➗ Dividir valor pelas parcelas?
           </label>
         </div>
-        <div id="parcelas-container" class="hidden grid grid-cols-1 gap-4">
+
+        <div id="parcelas-container" class="hidden grid grid-cols-1 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <label for="input-total-parcelas" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Quantidade de Parcelas</label>
           <input type="number" id="input-total-parcelas" min="2" step="1" value="2"
-            class="w-full p-3 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-base"
+            class="w-full p-3 rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-base font-bold"
             placeholder="Quantidade de parcelas">
         </div>
-        <button type="submit" id="save-btn"
-          class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition dark:bg-slate-700">
-          Guardar
-        </button>
-        <button type="button" id="cancel-btn" class="hidden w-full py-2 bg-slate-200 rounded-xl font-bold dark:bg-slate-600 dark:text-white">
-          Cancelar Edição
-        </button>
+
+        <div class="pt-1 space-y-2">
+          <button type="submit" id="save-btn"
+            class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl font-extrabold tracking-wide shadow-md shadow-emerald-600/20 transition">
+            Guardar
+          </button>
+          <button type="button" id="cancel-btn" class="hidden w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-2xl font-bold dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white transition">
+            Cancelar Edição
+          </button>
+        </div>
       </form>
     </div>
   `

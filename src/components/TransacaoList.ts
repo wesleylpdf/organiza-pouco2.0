@@ -31,26 +31,34 @@ export function aplicarOrdemSalva(ordem: OrdemTransacao): void {
 
 export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="relative max-w-2xl mx-auto mb-6 grid grid-cols-1 gap-4">
-      <div class="flex items-center justify-center gap-2 w-full flex-wrap">
-        <label class="flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded-full border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
-          <input type="checkbox" id="filter-dividido" class="w-4 h-4"> <span>Parcelados</span>
-        </label>
-        <input type="text" id="filter-descricao" placeholder="Buscar"
-          class="flex-1 min-w-0 p-1.5 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-        <select id="filter-ordem" class="p-1.5 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-          <option value="data-desc">Data (mais recente)</option>
-          <option value="data-asc">Data (mais antiga)</option>
-          <option value="valor-desc">Valor (maior primeiro)</option>
-          <option value="valor-asc">Valor (menor primeiro)</option>
-          <option value="categoria-asc">Categoria (A-Z)</option>
-          <option value="categoria-desc">Categoria (Z-A)</option>
-          <option value="criado-desc">Criado (mais recente)</option>
-          <option value="criado-asc">Criado (mais antigo)</option>
-        </select>
+    <div class="relative max-w-3xl mx-auto mb-6">
+      <div class="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-md mb-4">
+        <div class="flex items-center gap-2.5 mb-3">
+          <span class="w-2.5 h-5 rounded-full bg-blue-500"></span>
+          <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">Lançamentos do Ciclo</h3>
+        </div>
+        <div class="flex items-center gap-2.5 w-full flex-wrap">
+          <label class="flex items-center justify-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200 transition select-none">
+            <input type="checkbox" id="filter-dividido" class="w-4 h-4 accent-emerald-600"> <span>🔄 Parcelados</span>
+          </label>
+          <input type="text" id="filter-descricao" placeholder="🔎 Buscar por descrição ou categoria..."
+            class="flex-1 min-w-[160px] px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <select id="filter-ordem" class="px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <option value="data-desc">Data (mais recente)</option>
+            <option value="data-asc">Data (mais antiga)</option>
+            <option value="valor-desc">Valor (maior primeiro)</option>
+            <option value="valor-asc">Valor (menor primeiro)</option>
+            <option value="categoria-asc">Categoria (A-Z)</option>
+            <option value="categoria-desc">Categoria (Z-A)</option>
+            <option value="criado-desc">Criado (mais recente)</option>
+            <option value="criado-asc">Criado (mais antigo)</option>
+          </select>
+        </div>
       </div>
-    <div id="transaction-list" class="space-y-3 pb-10"></div>
-    <p id="list-empty" class="text-center text-slate-400 py-8 hidden">Nenhuma transação neste ciclo</p>
+
+      <div id="transaction-list" class="space-y-3 pb-4"></div>
+      <p id="list-empty" class="text-center text-slate-400 bg-white/80 dark:bg-slate-900/80 border border-dashed border-slate-300 dark:border-slate-800 rounded-3xl py-10 hidden">Nenhuma transação neste ciclo</p>
+    </div>
   `
 
   document.getElementById('filter-ordem')!.addEventListener('change', async (e) => {
@@ -190,27 +198,40 @@ export function renderLista(
   const items = ordenarTransacoes(transactions, ordemAtual)
 
   listContainer.innerHTML = items.map(t => {
-    const sinal = t.tipo === 'entrada' ? '+' : '-'
-    const corClasse = t.tipo === 'entrada' ? 'text-emerald-600' : 'text-rose-600'
+    const isEntrada = t.tipo === 'entrada'
+    const sinal = isEntrada ? '+' : '-'
+    const corClasse = isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+    const bordaLateral = isEntrada ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-rose-500'
     const descSanitizada = sanitizarHTML(t.descricao || '')
     const catSanitizada = sanitizarHTML(t.categoria)
-    const fixoIcon = t.fixo ? ' 📌' : ''
-    const parceladoIcon = (t.dividido && t.totalParcelas && t.parcelaAtual)
-      ? ` 🔄 ${t.parcelaAtual}/${t.totalParcelas}${t.valorOriginal != null ? ` (${formatarMoeda(t.valorOriginal)})` : ''}`
+    const fixoBadge = t.fixo
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">📌 Fixo</span>'
+      : ''
+    const parceladoBadge = (t.dividido && t.totalParcelas && t.parcelaAtual)
+      ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/20">🔄 ${t.parcelaAtual}/${t.totalParcelas}${t.valorOriginal != null ? ` (${formatarMoeda(t.valorOriginal)})` : ''}</span>`
       : ''
 
     return `
-      <div class="p-3 bg-white border rounded-xl flex flex-col gap-2 shadow-sm dark:bg-slate-800 dark:border-slate-700">
-        <div class="flex items-start justify-between gap-2 min-w-0">
-          <div class="min-w-0 flex-1">
-            <span class="block font-bold text-sm dark:text-white truncate">${descSanitizada}${fixoIcon} <span class="${corClasse}">${sinal} ${formatarMoeda(t.valor)}</span></span>
-            <span class="text-xs text-slate-500">${catSanitizada} | ${formatarData(t.data)}${parceladoIcon}</span>
+      <div class="p-4 bg-white/95 border border-slate-200/80 ${bordaLateral} rounded-2xl flex flex-col gap-2 shadow-sm hover:shadow-md transition dark:bg-slate-900/95 dark:border-slate-800">
+        <div class="flex items-center justify-between gap-3 min-w-0">
+          <div class="min-w-0 flex-1 space-y-1">
+            <div class="flex items-center justify-between sm:justify-start gap-2 flex-wrap">
+              <span class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">${descSanitizada}</span>
+              <span class="font-black text-sm sm:text-base ${corClasse} shrink-0">${sinal} ${formatarMoeda(t.valor)}</span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap text-xs text-slate-500 dark:text-slate-400">
+              <span class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-semibold text-slate-700 dark:text-slate-300">${catSanitizada}</span>
+              <span>•</span>
+              <span class="font-medium">${formatarData(t.data)}</span>
+              ${fixoBadge}
+              ${parceladoBadge}
+            </div>
           </div>
           <div class="flex gap-2 shrink-0">
-            <button data-action="edit" data-id="${t.id}" class="bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition px-2 py-1 rounded">Editar</button>
-            <button data-action="delete" data-id="${t.id}" class="bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition px-2 py-1 rounded">Excluir</button>
-            <button data-action="confirm-delete" data-id="${t.id}" class="bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition px-2 py-1 rounded hidden">Confirmar?</button>
-            <button data-action="cancel-delete" data-id="${t.id}" class="bg-slate-300 text-slate-800 text-xs font-bold hover:bg-slate-400 transition px-2 py-1 rounded hidden">Cancelar</button>
+            <button data-action="edit" data-id="${t.id}" class="bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-500/20 text-xs font-bold hover:bg-blue-600 hover:text-white transition px-3 py-1.5 rounded-xl">Editar</button>
+            <button data-action="delete" data-id="${t.id}" class="bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-500/20 text-xs font-bold hover:bg-rose-500 hover:text-white transition px-3 py-1.5 rounded-xl">Excluir</button>
+            <button data-action="confirm-delete" data-id="${t.id}" class="bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition px-3 py-1.5 rounded-xl hidden">Confirmar?</button>
+            <button data-action="cancel-delete" data-id="${t.id}" class="bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-300 transition px-3 py-1.5 rounded-xl hidden">Cancelar</button>
           </div>
         </div>
       </div>

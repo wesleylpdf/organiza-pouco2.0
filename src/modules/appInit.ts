@@ -243,13 +243,14 @@ async function setupApp(
 
     // Botão de exportação e componentes da interface
     await avancarCarregamento(40, 'Criando interface...', 100)
+    exportContainer.className = 'max-w-3xl mx-auto pb-8 flex items-center justify-between gap-3 bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 p-4 rounded-3xl shadow-md'
     exportContainer.innerHTML = `
-      <select id="export-format" class="bg-white dark:bg-slate-800 dark:text-white border px-3 rounded-full text-xs font-bold w-1/3">
+      <select id="export-format" class="flex-1 bg-slate-50 dark:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
         <option value="csv">Exportar como CSV</option>
         <option value="pdf">Exportar como PDF</option>
         <option value="xlsx">Exportar como Excel</option>
       </select>
-      <button id="export-btn" class="bg-blue-600 text-white px-6 py-3 rounded-full font-bold text-xs hover:bg-blue-700 transition">Exportar</button>
+      <button id="export-btn" class="bg-blue-600 text-white px-6 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm hover:bg-blue-700 transition shadow-sm">Exportar</button>
     `
 
     criarHeader(headerContainer, handlers.handleAbrirFixos)

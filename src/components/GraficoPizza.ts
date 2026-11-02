@@ -9,10 +9,13 @@ let chartInstance: Chart | null = null
 
 export function criarGrafico(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="relative max-w-2xl mx-auto p-6 rounded-3xl shadow-sm mb-8 border border-slate-200 flex flex-col items-center justify-center bg-white dark:bg-slate-800 dark:border-slate-700" style="height: 320px;">
-      <h3 class="font-bold text-sm mb-2 text-slate-800 w-full text-left dark:text-white">Distribuição de Gastos</h3>
+    <div class="relative max-w-3xl mx-auto p-5 sm:p-6 rounded-3xl shadow-md mb-6 border border-slate-200/90 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-900/95 dark:border-slate-800" style="height: 340px;">
+      <div class="flex items-center gap-2.5 w-full mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+        <span class="w-2.5 h-5 rounded-full bg-teal-500"></span>
+        <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">Distribuição de Gastos</h3>
+      </div>
       <div class="relative w-full h-full flex items-center justify-center">
-        <canvas id="categoryChart" style="max-height: 220px;"></canvas>
+        <canvas id="categoryChart" style="max-height: 230px;"></canvas>
       </div>
       <p id="chart-empty" class="text-slate-400 text-sm hidden">Sem saídas neste ciclo</p>
     </div>

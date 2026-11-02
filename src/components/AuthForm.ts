@@ -4,25 +4,25 @@ type Modo = 'login' | 'cadastro' | 'reset'
 
 export function criarAuthForm(container: HTMLElement): void {
   container.innerHTML = `
-    <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[999] p-4">
-      <div class="relative bg-white p-4 p-6 p-8 rounded-2xl rounded-3xl text-center w-full max-w-sm mx-auto shadow-2xl dark:bg-slate-800">
-        <img id="auth-logo" src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-3 mb-4 w-20 w-24 h-auto rounded-full object-cover border-2 border-emerald-500 dark:border-emerald-400">
-        <h2 class="font-black text-lg text-xl mb-2 text-slate-800 dark:text-white">Organiza Pouco</h2>
-        <p id="auth-subtitle" class="text-xs text-sm text-slate-500 mb-4 mb-6 dark:text-slate-400">Entre na sua conta</p>
-        <div class="absolute bottom-2 right-2 text-[10px] text-slate-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
+    <div id="auth-screen" class="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex items-center justify-center z-[999] p-4">
+      <div class="relative bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-slate-800 p-7 sm:p-8 rounded-3xl text-center w-full max-w-sm mx-auto shadow-2xl">
+        <img id="auth-logo" src="logo-organiza.jpeg" alt="Organiza Pouco" class="mx-auto mb-4 w-24 h-24 rounded-2xl object-cover border-2 border-emerald-500 shadow-lg shadow-emerald-500/20">
+        <h2 class="font-black text-2xl mb-1 text-slate-900 dark:text-white tracking-tight">Organiza Pouco</h2>
+        <p id="auth-subtitle" class="text-sm text-slate-500 mb-6 dark:text-slate-400">Entre na sua conta</p>
+        <div class="inline-block mb-4 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Versão: ${__BUILD_VERSION__}</div>
 
-        <div id="auth-fields" class="space-y-2 space-y-3 mb-3 mb-4">
-          <input type="email" id="auth-email" class="border p-3 rounded-xl w-full bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-base" placeholder="Email" autocomplete="email">
-          <input type="password" id="auth-pass" class="border p-3 rounded-xl w-full bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm text-base" placeholder="Senha" autocomplete="current-password">
+        <div id="auth-fields" class="space-y-3 mb-4 text-left">
+          <input type="email" id="auth-email" class="border border-slate-200 p-3.5 rounded-2xl w-full bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white text-base focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Seu e-mail" autocomplete="email">
+          <input type="password" id="auth-pass" class="border border-slate-200 p-3.5 rounded-2xl w-full bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white text-base focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Sua senha" autocomplete="current-password">
         </div>
 
-        <p id="auth-error" class="text-rose-500 text-xs mb-3 hidden"></p>
+        <p id="auth-error" class="text-rose-500 text-xs font-semibold mb-3 hidden"></p>
 
-        <button id="auth-submit" class="bg-slate-900 text-white px-6 px-8 py-3 rounded-xl font-bold w-full hover:bg-slate-800 transition dark:bg-slate-700 text-sm text-base">Entrar</button>
+        <button id="auth-submit" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-8 py-3.5 rounded-2xl font-extrabold w-full transition shadow-lg shadow-emerald-600/25 text-base">Entrar</button>
 
-        <div class="mt-3 mt-4 space-y-2 text-xs text-sm">
-          <a id="auth-toggle" href="#" class="text-blue-500 hover:underline block">Não tem conta? Cadastre-se</a>
-          <a id="auth-reset" href="#" class="text-slate-400 hover:underline block">Esqueci minha senha</a>
+        <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 text-sm">
+          <a id="auth-toggle" href="#" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline block">Não tem conta? Cadastre-se</a>
+          <a id="auth-reset" href="#" class="text-slate-400 hover:underline block text-xs">Esqueci minha senha</a>
         </div>
       </div>
     </div>

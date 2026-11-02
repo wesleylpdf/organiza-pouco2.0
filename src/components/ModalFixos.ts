@@ -13,24 +13,27 @@ export function criarModalFixos(
 
   const modal = document.createElement('div')
   modal.id = 'modal-fixos'
-  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4'
+  modal.className = 'fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[1000] p-4'
 
   const fixos = transacoes.filter(t => t.fixo)
   const totalFixos = fixos.reduce((acc, t) => acc + Number(t.valor), 0)
 
   modal.innerHTML = `
-    <div id="modal-content" class="relative bg-white rounded-3xl p-4 p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:bg-slate-800 dark:border-slate-700 max-h-[85vh] flex flex-col">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-lg text-slate-800 dark:text-white">Transações Fixas</h3>
-        <button id="fechar-modal-fixos" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl">&times;</button>
+    <div id="modal-content" class="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800 max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-5 rounded-full bg-emerald-500"></span>
+          <h3 class="font-extrabold text-lg text-slate-900 dark:text-white">📌 Transações Fixas</h3>
+        </div>
+        <button id="fechar-modal-fixos" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xl font-bold">&times;</button>
       </div>
 
-      <div class="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700">
-        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total das fixas (todos os ciclos)</span>
-        <p id="total-fixos" class="text-lg text-xl font-black text-slate-900 dark:text-white">${formatarMoeda(totalFixos)}</p>
+      <div class="mb-4 p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white border border-slate-800">
+        <span class="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Total das fixas (todos os ciclos)</span>
+        <p id="total-fixos" class="text-2xl font-black text-white">${formatarMoeda(totalFixos)}</p>
       </div>
 
-      <div id="lista-fixos" class="flex-1 overflow-y-auto mb-3">
+      <div id="lista-fixos" class="flex-1 overflow-y-auto mb-2 pr-1">
         ${renderListaFixos(fixos)}
       </div>
 
@@ -147,22 +150,21 @@ function renderListaFixos(fixos: Transacao[]): string {
   if (fixos.length === 0) return ''
 
   return `
-    <div class="space-y-2">
+    <div class="space-y-2.5">
       ${fixos.map(tx => `
-        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
           <div class="flex flex-col min-w-0">
-            <span class="text-sm font-semibold text-slate-800 dark:text-white truncate">${sanitizarHTML(tx.descricao || '')}</span>
-            <span class="text-[10px] text-slate-500 dark:text-slate-400">${formatarData(tx.data)}</span>
+            <span class="text-sm font-bold text-slate-900 dark:text-white truncate">${sanitizarHTML(tx.descricao || '')}</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">${formatarData(tx.data)}</span>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-xs text-sm font-bold text-slate-600 dark:text-slate-300">${formatarMoeda(tx.valor)}</span>
-            <button data-action="delete" data-id="${tx.id}" class="text-[10px] text-xs text-white bg-rose-500 hover:bg-rose-600 font-bold px-2 py-1 rounded transition">Excluir</button>
-            <button data-action="confirm-delete" data-id="${tx.id}" class="text-[10px] text-xs text-white bg-rose-600 hover:bg-rose-700 font-bold px-2 py-1 rounded transition hidden">Confirmar?</button>
-            <button data-action="cancel-delete" data-id="${tx.id}" class="text-[10px] text-xs text-slate-800 bg-slate-300 hover:bg-slate-400 font-bold px-2 py-1 rounded transition hidden">Cancelar</button>
+            <span class="text-sm font-extrabold text-slate-700 dark:text-slate-200">${formatarMoeda(tx.valor)}</span>
+            <button data-action="delete" data-id="${tx.id}" class="text-xs text-white bg-rose-500 hover:bg-rose-600 font-bold px-2.5 py-1.5 rounded-xl transition">Excluir</button>
+            <button data-action="confirm-delete" data-id="${tx.id}" class="text-xs text-white bg-rose-600 hover:bg-rose-700 font-bold px-2.5 py-1.5 rounded-xl transition hidden">Confirmar?</button>
+            <button data-action="cancel-delete" data-id="${tx.id}" class="text-xs text-slate-800 bg-slate-200 hover:bg-slate-300 font-bold px-2.5 py-1.5 rounded-xl transition hidden">Cancelar</button>
           </div>
         </div>
       `).join('')}
     </div>
   `
 }
-
