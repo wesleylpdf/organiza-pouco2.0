@@ -2,7 +2,7 @@
 
 **Data do levantamento:** 01/11/2026  
 **Última atualização:** 02/11/2026  
-**Status:** Etapas 1 a 4 concluídas (8/10 itens implementados). Pendente testar visualmente o toast da Etapa 4 e decidir sobre Etapas 5 e 6 na próxima sessão.
+**Status:** Todas as 6 Etapas concluídas (10/10 itens implementados).
 
 ---
 
@@ -12,6 +12,8 @@
 - **Antes da Etapa 2:** `backup/antes-etapa2-supabase-2026-11-02` / tag `backup-antes-etapa2-supabase-2026-11-02`
 - **Antes da Etapa 3:** `backup/antes-etapa3-listeners-ui-2026-11-02` / tag `backup-antes-etapa3-listeners-ui-2026-11-02`
 - **Antes da Etapa 4:** `backup/antes-etapa4-service-worker-2026-11-02` / tag `backup-antes-etapa4-service-worker-2026-11-02`
+- **Antes da Etapa 5:** `backup/antes-etapa5-toast-tailwind-2026-11-02` / tag `backup-antes-etapa5-toast-tailwind-2026-11-02`
+- **Antes da Etapa 6:** `backup/antes-etapa6-grupo-parcelas-2026-11-02` / tag `backup-antes-etapa6-grupo-parcelas-2026-11-02`
 
 ---
 
@@ -59,7 +61,7 @@
   - **Onde:** `src/utils/ciclo.ts` (`adicionarMeses`) e `src/hooks/useTransacoes.ts`
   - **Solução aplicada:** Criada função `adicionarMeses` que limita o dia ao último dia do mês de destino sem pular meses curtos (como fevereiro).
 
-- [ ] **Etapa 6 — Vincular Parcelas por ID de Grupo em vez de Regex na Descrição**
+- [x] **Etapa 6 — Vincular Parcelas por ID de Grupo em vez de Regex na Descrição** *(Concluído na Etapa 6)*
   - **Onde:** `src/services/transacoes.ts` (`listarParcelasRelacionadas`) e `supabase/schema.sql`
   - **Problema:** As parcelas são encontradas buscando transações com o mesmo `total_parcelas` e comparando a `descricao` via expressão regular. Duas compras distintas com a mesma descrição e mesmo número de parcelas colidem ao editar ou excluir.
   - **Solução:** Adicionar uma coluna opcional `grupo_parcela_id UUID` em `transacoes` para agrupar parcelas de uma mesma compra de forma única (mantendo fallback pela lógica atual para parcelas antigas).

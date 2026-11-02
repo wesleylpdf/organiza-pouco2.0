@@ -26,6 +26,7 @@ export interface Transacao {
   totalParcelas?: number | null
   parcelaAtual?: number | null
   valorOriginal?: number | null
+  grupoParcelaId?: string | null
 }
 
 export interface Ciclo {

@@ -37,6 +37,7 @@ function paraTransacao(row: any): Transacao {
     totalParcelas: row.total_parcelas,
     parcelaAtual: row.parcela_atual,
     valorOriginal: row.valor_original,
+    ...(row.grupo_parcela_id !== undefined ? { grupoParcelaId: row.grupo_parcela_id } : {}),
   }
 }
 
@@ -88,6 +89,7 @@ export async function criarTransacao(params: {
   totalParcelas?: number
   parcelaAtual?: number
   valorOriginal?: number | null
+  grupoParcelaId?: string | null
   fixo?: boolean
 }): Promise<Transacao> {
   const { data: { user } } = await comRetry(() => supabase.auth.getUser())
@@ -101,22 +103,25 @@ export async function criarTransacao(params: {
   // Remove sufixo de parcelamento ( N/M) da descrição antes de salvar
   const descricaoLimpa = (params.descricao || '').replace(/\s+\d+\/\d+$/, '')
 
+  const payload = paraSnakeCase({
+    user_id: user.id,
+    valor: params.valor,
+    data: params.data,
+    tipo: params.tipo,
+    categoria: params.categoria,
+    descricao: descricaoLimpa,
+    ciclo_inicio: cicloInicio,
+    dividido: params.dividido ?? false,
+    totalParcelas: params.totalParcelas ?? null,
+    parcelaAtual: params.parcelaAtual ?? null,
+    valorOriginal: params.valorOriginal ?? null,
+    grupoParcelaId: params.grupoParcelaId,
+    fixo: params.fixo ?? false,
+  })
+
   const { data, error } = await comRetry(() => supabase
     .from('transacoes')
-    .insert(paraSnakeCase({
-      user_id: user.id,
-      valor: params.valor,
-      data: params.data,
-      tipo: params.tipo,
-      categoria: params.categoria,
-      descricao: descricaoLimpa,
-      ciclo_inicio: cicloInicio,
-      dividido: params.dividido ?? false,
-      totalParcelas: params.totalParcelas ?? null,
-      parcelaAtual: params.parcelaAtual ?? null,
-      valorOriginal: params.valorOriginal ?? null,
-      fixo: params.fixo ?? false,
-    }))
+    .insert(payload)
     .select()
     .single())
 
@@ -156,6 +161,7 @@ export async function criarTransacoesEmLote(
       totalParcelas: params.totalParcelas ?? null,
       parcelaAtual: params.parcelaAtual ?? null,
       valorOriginal: params.valorOriginal ?? null,
+      grupoParcelaId: params.grupoParcelaId,
       fixo: params.fixo ?? false,
     })
   })
@@ -208,14 +214,30 @@ export async function excluirTransacao(id: string): Promise<void> {
 
 /**
  * Lista parcelas relacionadas de uma transação dividida.
+ * Usa `grupo_parcela_id` quando disponível, mantendo fallback por descrição e total_parcelas
+ * para parcelas antigas criadas antes da coluna existir.
  */
 export async function listarParcelasRelacionadas(params: {
   userId: string
   totalParcelas: number
   descricaoBase: string
+  grupoParcelaId?: string | null
 }): Promise<Transacao[]> {
   const { data: { user } } = await comRetry(() => supabase.auth.getUser())
   if (!user) throw new Error('Usuário não autenticado')
+
+  if (params.grupoParcelaId) {
+    const { data, error } = await comRetry(() => supabase
+      .from('transacoes')
+      .select('*')
+      .eq('user_id', params.userId)
+      .eq('grupo_parcela_id', params.grupoParcelaId!)
+      .order('data', { ascending: true }))
+
+    if (!error && data && data.length > 0) {
+      return data.map(paraTransacao)
+    }
+  }
 
   const { data, error } = await comRetry(() => supabase
     .from('transacoes')

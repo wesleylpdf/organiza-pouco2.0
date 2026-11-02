@@ -1,4 +1,4 @@
-import { listarTransacoes, criarTransacoesEmLote } from './transacoes'
+import { listarTransacoes, criarTransacoesEmLote, listarParcelasRelacionadas } from './transacoes'
 import type { Transacao } from '@/types'
 
 vi.mock('@/lib/supabaseClient', () => ({
@@ -119,6 +119,7 @@ describe('listarTransacoes', () => {
         dividido: true,
         totalParcelas: 2,
         parcelaAtual: 1,
+        grupoParcelaId: 'grupo-123',
       },
       {
         valor: 50,
@@ -129,11 +130,40 @@ describe('listarTransacoes', () => {
         dividido: true,
         totalParcelas: 2,
         parcelaAtual: 2,
+        grupoParcelaId: 'grupo-123',
       },
     ])
 
     expect(mockQuery.insert).toHaveBeenCalledTimes(1)
     expect(result).toHaveLength(1)
+  })
+
+  it('deve buscar parcelas relacionadas por grupo_parcela_id quando disponível', async () => {
+    ;(supabase.auth.getUser as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    })
+
+    const mockParcela = {
+      ...mockTransacao,
+      dividido: true,
+      total_parcelas: 2,
+      parcela_atual: 1,
+      grupo_parcela_id: 'grupo-abc',
+    }
+    const mockQuery = criarMockQuery({ data: [mockParcela], error: null })
+    ;(supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(mockQuery)
+
+    const result = await listarParcelasRelacionadas({
+      userId: 'user-1',
+      totalParcelas: 2,
+      descricaoBase: 'Mercado',
+      grupoParcelaId: 'grupo-abc',
+    })
+
+    expect(mockQuery.eq).toHaveBeenCalledWith('grupo_parcela_id', 'grupo-abc')
+    expect(result).toHaveLength(1)
+    expect(result[0].grupoParcelaId).toBe('grupo-abc')
   })
 
   it('deve lançar erro se Supabase retornar erro', async () => {

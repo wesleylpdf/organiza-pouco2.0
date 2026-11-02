@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.transacoes (
   dividido BOOLEAN NOT NULL DEFAULT FALSE,
   total_parcelas INTEGER,
   parcela_atual INTEGER,
+  grupo_parcela_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -28,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_transacoes_user_ciclo ON public.transacoes(user_i
 CREATE INDEX IF NOT EXISTS idx_transacoes_user_data ON public.transacoes(user_id, data DESC);
 CREATE INDEX IF NOT EXISTS idx_transacoes_user_tipo ON public.transacoes(user_id, tipo);
 CREATE INDEX IF NOT EXISTS idx_transacoes_user_fixo ON public.transacoes(user_id, fixo) WHERE fixo = TRUE;
+CREATE INDEX IF NOT EXISTS idx_transacoes_grupo_parcela ON public.transacoes(user_id, grupo_parcela_id) WHERE grupo_parcela_id IS NOT NULL;
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)

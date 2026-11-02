@@ -20,6 +20,17 @@ import { logger } from '@/utils/logger'
 import { formatDateLocalISO, adicionarMeses } from '@/utils/ciclo'
 import type { Transacao, TipoTransacao } from '@/types'
 
+function gerarGrupoParcelaId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 export interface CriarTransacaoParams {
   valor: number
   data: string
@@ -94,6 +105,7 @@ export function useTransacoes() {
             userId: user.id,
             totalParcelas: original.totalParcelas,
             descricaoBase,
+            grupoParcelaId: original.grupoParcelaId,
           })
 
           // Ordena por data crescente (primeira parcela primeiro)
@@ -103,6 +115,9 @@ export function useTransacoes() {
           // Se o usuário desmarcou "dividida", mantém apenas um lançamento
           const qtdeNova = params.dividido && params.totalParcelas > 1 ? params.totalParcelas : 1
           const qtdeManter = Math.min(qtdeAtual, qtdeNova)
+          const grupoParcelaId = qtdeNova > 1
+            ? (original.grupoParcelaId || gerarGrupoParcelaId())
+            : null
 
           // Atualiza as parcelas que serão mantidas (sem alterar data, pois estão em meses diferentes)
           const paraManter = relacionadas.slice(0, qtdeManter)
@@ -115,6 +130,7 @@ export function useTransacoes() {
               dividido: qtdeNova > 1,
               totalParcelas: qtdeNova > 1 ? qtdeNova : null,
               valorOriginal: params.valorOriginal ?? null,
+              grupoParcelaId,
               fixo: params.fixo,
             })
 
@@ -149,6 +165,7 @@ export function useTransacoes() {
                 parcelaAtual: qtdeAtual + i + 1,
                 descricao: params.descricao,
                 totalParcelas: qtdeNova,
+                grupoParcelaId,
                 fixo: params.fixo,
               }
             })
@@ -163,6 +180,7 @@ export function useTransacoes() {
       } else if (params.dividido && params.totalParcelas > 1) {
         logger.debug('Criando transação dividida em lote', { totalParcelas: params.totalParcelas })
         const dataInicial = new Date(params.data + 'T00:00:00')
+        const grupoParcelaId = gerarGrupoParcelaId()
         const parcelas = Array.from({ length: params.totalParcelas }, (_, i) => {
           const dataParcela = adicionarMeses(dataInicial, i)
           return {
@@ -170,6 +188,7 @@ export function useTransacoes() {
             data: formatDateLocalISO(dataParcela),
             parcelaAtual: i + 1,
             descricao: params.descricao,
+            grupoParcelaId,
             fixo: params.fixo,
           }
         })
@@ -210,6 +229,7 @@ export function useTransacoes() {
           userId: user.id,
           totalParcelas: original.totalParcelas,
           descricaoBase,
+          grupoParcelaId: original.grupoParcelaId,
         })
 
         await excluirParcelasRelacionadas(relacionadas.map(tx => tx.id))
