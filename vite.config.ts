@@ -73,7 +73,9 @@ function versionamentoPlugin() {
 
       // Publica o service worker (obrigatório para instalação PWA)
       try {
-        copyFileSync(resolve(raizProjeto, 'src', 'sw.js'), resolve(distDir, 'sw.js'))
+        const swContent = readFileSync(resolve(raizProjeto, 'src', 'sw.js'), 'utf-8')
+          .replace(/__BUILD_VERSION__/g, BUILD_VERSION)
+        writeFileSync(resolve(distDir, 'sw.js'), swContent)
       } catch {
         // service worker opcional
       }

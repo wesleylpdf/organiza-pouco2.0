@@ -64,7 +64,7 @@
 
 ## 4. PWA, Cache & Service Worker
 
-- [ ] **Aprimorar Estratégia de Cache do Service Worker (`sw.js`)**
+- [x] **Aprimorar Estratégia de Cache do Service Worker (`sw.js`)**
   - **Onde:** `src/sw.js` (linhas 1–22)
   - **Problema:** O Service Worker intercepta todas as requisições em modo *Cache-First* e não remove caches antigos no evento `activate`, o que pode servir HTML desatualizado ou interferir na verificação de atualização.
   - **Solução:** Ignorar chamadas para o Supabase e `version.json`, aplicar limpeza de caches antigos no `activate` e usar estratégia *Network-First* para navegação de página.
