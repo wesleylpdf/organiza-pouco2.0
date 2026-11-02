@@ -20,9 +20,14 @@ let mainContainer: HTMLElement
 // Hooks
 const categoriasHook = useCategorias()
 
-// Debounce para navegação de ciclos
+// Referência aos handlers atuais e AbortController para evitar duplicação de listeners globais
+let currentHandlers: AppInitHandlers | null = null
+let windowListenersAbort: AbortController | null = null
+let ultimoUserIdInicializado: string | null = null
+
+// Debounce para atualização do dashboard ao alterar configuração de ciclo
 const debouncedUpdateDashboard = debounce(() => {
-  // Sobrescrito por main.ts após a criação do módulo ciclo
+  void currentHandlers?.updateDashboard()
 }, 250)
 
 // Controle da tela de carregamento com porcentagem
@@ -99,8 +104,8 @@ async function carregarCicloComFeedback(updateDashboard: () => Promise<void>): P
   } catch (err) {
     logger.error('Erro ao carregar ciclo', err as Error)
   } finally {
-    btnCicloAnterior!.textContent = textoAnteriorOriginal
-    btnCicloProximo!.textContent = textoProximoOriginal
+    if (btnCicloAnterior) btnCicloAnterior.textContent = textoAnteriorOriginal
+    if (btnCicloProximo) btnCicloProximo.textContent = textoProximoOriginal
     setBotoesDesabilitados(false)
   }
 }
@@ -169,6 +174,12 @@ async function setupApp(
   handlers: AppInitHandlers
 ): Promise<void> {
   logger.debug('Configurando aplicação')
+  currentHandlers = handlers
+
+  // Cancela listeners globais anteriores caso setupApp seja chamado novamente
+  windowListenersAbort?.abort()
+  windowListenersAbort = new AbortController()
+  const { signal } = windowListenersAbort
 
   // Inicializa offset do ciclo (sempre 0 — o getCicloAtual já ajusta internamente)
   appStore.setCycleOffset(0)
@@ -260,12 +271,11 @@ async function setupApp(
   window.addEventListener('cicloConfigChange', async (e: Event) => {
     const { diaInicio, diaFim } = (e as CustomEvent).detail
     appStore.setConfiguracaoCiclo(diaInicio, diaFim)
-    const userId = getAuthState().user?.id
-    if (userId) {
-      await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
-    }
+    appStore.limparCacheCiclo()
+    const userId = getAuthState().user?.id ?? null
+    await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
     debouncedUpdateDashboard()
-  })
+  }, { signal })
 
   // Evento de exportação
   document.getElementById('export-btn')!.addEventListener('click', async () => {
@@ -288,12 +298,7 @@ async function setupApp(
   document.getElementById('filter-dividido')!.addEventListener('change', async () => await handlers.updateLista())
   const debouncedUpdateLista = debounce(async () => await handlers.updateLista(), 300)
   document.getElementById('filter-descricao')!.addEventListener('input', () => debouncedUpdateLista())
-  window.addEventListener('themechange', () => handlers.updateDashboard())
-
-  // Subscribe to store changes
-  appStore.subscribe(() => {
-    // updateLoadingStates será movido para ciclo.ts
-  })
+  window.addEventListener('themechange', () => handlers.updateDashboard(), { signal })
 
   atualizarCarregamento(60, 'Processando transações...')
 
@@ -329,6 +334,10 @@ function init(handlers: AppInitHandlers): void {
     if (state.loading) return
 
     if (state.user) {
+      // Evita recriar a interface e resetar o ciclo durante refresh de token do mesmo usuário
+      if (ultimoUserIdInicializado === state.user.id) return
+      ultimoUserIdInicializado = state.user.id
+
       logger.info('Usuário autenticado', { email: state.user.email })
       authContainer.innerHTML = ''
       authContainer.classList.add('hidden')
@@ -336,6 +345,10 @@ function init(handlers: AppInitHandlers): void {
       appStore.reset()
       setupApp(state.user.email ?? '', handlers)
     } else {
+      ultimoUserIdInicializado = null
+      windowListenersAbort?.abort()
+      windowListenersAbort = null
+
       logger.info('Usuário desautenticado')
       appStore.reset()
       mainContainer.classList.add('hidden')

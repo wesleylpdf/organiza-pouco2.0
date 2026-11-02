@@ -50,12 +50,12 @@
   - **Problema:** As parcelas são encontradas buscando transações com o mesmo `total_parcelas` e comparando a `descricao` via expressão regular. Duas compras distintas com a mesma descrição e mesmo número de parcelas colidem ao editar ou excluir.
   - **Solução:** Adicionar uma coluna opcional `grupo_parcela_id UUID` em `transacoes` para agrupar parcelas de uma mesma compra de forma única (mantendo fallback pela lógica atual para parcelas antigas).
 
-- [ ] **Evitar Duplicação de Event Listeners Globais e Corrigir `debouncedUpdateDashboard`**
+- [x] **Evitar Duplicação de Event Listeners Globais e Corrigir `debouncedUpdateDashboard`**
   - **Onde:** `src/modules/appInit.ts` (linhas 24–26, 260–268 e 291)
   - **Problema:** `window.addEventListener('cicloConfigChange', ...)` e `window.addEventListener('themechange', ...)` são adicionados dentro de `setupApp`, acumulando novos listeners a cada ciclo de logout/login. Além disso, `debouncedUpdateDashboard` em `appInit.ts` possui corpo vazio, não disparando `handlers.updateDashboard()`.
   - **Solução:** Chamar `handlers.updateDashboard()` dentro do debounce e garantir que listeners globais sejam registrados apenas uma vez (ou removidos ao deslogar).
 
-- [ ] **Limpar Classes Tailwind Conflitantes e Substituir `alert()` por `toast`**
+- [x] **Limpar Classes Tailwind Conflitantes e Substituir `alert()` por `toast`**
   - **Onde:** `src/components/Header.ts` (linhas 21–76) e `src/components/TransacaoForm.ts` (linhas 35–47, 159 e 181)
   - **Problema:** Há classes duplicadas/conflitantes no mesmo elemento (`p-4 p-6`, `rounded-2xl rounded-3xl`, `text-xs text-sm`, `mb-4 mb-8`) sem breakpoint responsivo (`sm:`), além de uso de `alert()` bloqueante no formulário.
   - **Solução:** Ajustar as classes para usar prefixos responsivos (`p-4 sm:p-6`, etc.) e trocar os `alert()` por `toast.error(...)` / `toast.warning(...)`.

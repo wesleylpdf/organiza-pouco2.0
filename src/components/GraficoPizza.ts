@@ -14,7 +14,7 @@ export function criarGrafico(container: HTMLElement): void {
       <div class="relative w-full h-full flex items-center justify-center">
         <canvas id="categoryChart" style="max-height: 220px;"></canvas>
       </div>
-      <p id="chart-empty" class="text-slate-400 text-xs text-sm hidden">Sem saídas neste ciclo</p>
+      <p id="chart-empty" class="text-slate-400 text-sm hidden">Sem saídas neste ciclo</p>
     </div>
   `
 }
@@ -46,8 +46,3 @@ export function atualizarGrafico(saidas: Transacao[]): void {
 
   chartInstance = new Chart(canvas.getContext('2d')!, config as any)
 }
-
-// Atualiza gráfico quando o tema muda
-window.addEventListener('themechange', () => {
-  // Re-render será feito pelo main.ts ao chamar updateDashboard()
-})
