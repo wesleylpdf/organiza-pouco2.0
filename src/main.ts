@@ -51,4 +51,5 @@ init({
   handleExportar,
   updateDashboard,
   updateLista,
+  limparCacheFixos,
 })

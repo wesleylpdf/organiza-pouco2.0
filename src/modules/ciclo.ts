@@ -17,11 +17,13 @@ import type { Transacao, TotaisCiclo } from '@/types'
 // Hook de transações
 const transacoesHook = useTransacoes()
 
-// Cache de transações fixas de todos os meses (evita buscas duplicadas no gráfico e no header)
+// Cache de transações fixas de todos os meses por usuário (evita buscas duplicadas no gráfico e no header)
 let fixosTodosCache: Transacao[] | null = null
+let fixosTodosUserId: string | null = null
 
 export function limparCacheFixos(): void {
   fixosTodosCache = null
+  fixosTodosUserId = null
 }
 
 // Callbacks injetados pelo main.ts (evita dependência circular entre módulos)
@@ -47,9 +49,11 @@ function limparCampoBusca(): void {
 }
 
 async function carregarFixosTodos(): Promise<Transacao[]> {
-  if (fixosTodosCache) return fixosTodosCache
+  const currentUserId = getAuthState().user?.id ?? null
+  if (fixosTodosCache && fixosTodosUserId === currentUserId) return fixosTodosCache
   const todasTransacoes = await listarTransacoes({ fixo: true })
   fixosTodosCache = todasTransacoes.filter(t => t.fixo)
+  fixosTodosUserId = currentUserId
   return fixosTodosCache
 }
 
@@ -195,7 +199,7 @@ export async function updateHeader(): Promise<void> {
     onFixosClick: () => {
       // handleAbrirFixos será injetado pelo main.ts
     },
-    user: state.user?.email || 'Usuario',
+    user: (state.user?.email || 'Usuario').split('@')[0],
     diaInicioCiclo: config.diaInicioCiclo,
     diaFimCiclo: config.diaFimCiclo,
   })

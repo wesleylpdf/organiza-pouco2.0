@@ -132,7 +132,7 @@ export function atualizarHeader(props: HeaderProps): void {
   root.querySelector('#total-saidas')!.textContent = formatarMoeda(props.totais.saidas)
   root.querySelector('#cycle-total')!.textContent = formatarMoeda(props.totais.saldo)
 
-  document.querySelector('#header-user')!.textContent = props.user
+  document.querySelector('#header-user')!.textContent = props.user.split('@')[0]
 
   // Mantém os selects com a configuração atual do ciclo.
   const inicioSelect = document.querySelector('#dia-inicio-ciclo') as HTMLSelectElement | null

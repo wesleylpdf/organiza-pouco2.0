@@ -161,6 +161,7 @@ interface AppInitHandlers {
   handleExportar: () => void
   updateDashboard: () => Promise<void>
   updateLista: () => Promise<void>
+  limparCacheFixos?: () => void
 }
 
 let limparFormEdicao: (() => void) | null = null
@@ -343,6 +344,8 @@ function init(handlers: AppInitHandlers): void {
       authContainer.classList.add('hidden')
       mainContainer.classList.remove('hidden')
       appStore.reset()
+      appStore.reset()
+      handlers.limparCacheFixos?.()
       setupApp(state.user.email ?? '', handlers)
     } else {
       ultimoUserIdInicializado = null
@@ -350,6 +353,8 @@ function init(handlers: AppInitHandlers): void {
       windowListenersAbort = null
 
       logger.info('Usuário desautenticado')
+      appStore.reset()
+      handlers.limparCacheFixos?.()
       appStore.reset()
       mainContainer.classList.add('hidden')
       mainContainer.innerHTML = ''
