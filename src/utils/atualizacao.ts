@@ -17,6 +17,8 @@ import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
 
 const INTERVALO_VERIFICACAO_MS = 5 * 60 * 1000
+const TEMPO_EXIBICAO_TOAST_MS = 2500
+const CHAVE_ULTIMA_VERSAO_VISTA = 'organiza_pouco_ultima_versao'
 const BASE_URL = import.meta.env.BASE_URL
 const URL_VERSAO = `${BASE_URL}version.json`
 
@@ -62,8 +64,30 @@ async function verificarAtualizacao(): Promise<void> {
     emExecucao: __BUILD_VERSION__,
     publicada: versaoPublicada,
   })
-  toast.info('Nova versão disponível. Atualizando...')
-  window.setTimeout(() => recarregarIgnorandoCache(versaoPublicada), 800)
+  try {
+    localStorage.setItem(CHAVE_ULTIMA_VERSAO_VISTA, versaoPublicada)
+  } catch {
+    // Ignora erro de storage
+  }
+  toast.info('Nova versão disponível. Atualizando...', TEMPO_EXIBICAO_TOAST_MS)
+  window.setTimeout(() => recarregarIgnorandoCache(versaoPublicada), TEMPO_EXIBICAO_TOAST_MS)
+}
+
+/**
+ * Se a página já abriu direto na versão nova (ex.: via redirecionamento rápido
+ * do index.html ou Service Worker Network-First), exibe o toast confirmando
+ * que a nova versão foi aplicada.
+ */
+function notificarSeAtualizouNoCarregamento(): void {
+  try {
+    const versaoAnterior = localStorage.getItem(CHAVE_ULTIMA_VERSAO_VISTA)
+    localStorage.setItem(CHAVE_ULTIMA_VERSAO_VISTA, __BUILD_VERSION__)
+    if (versaoAnterior && versaoAnterior !== __BUILD_VERSION__) {
+      toast.info(`Nova versão disponível. Atualizando... (${__BUILD_VERSION__})`, 3500)
+    }
+  } catch {
+    // Ignora erro de storage
+  }
 }
 
 /**
@@ -71,6 +95,7 @@ async function verificarAtualizacao(): Promise<void> {
  * Verifica ao carregar, ao voltar o foco para a aba e em intervalo fixo.
  */
 export function iniciarVerificacaoDeAtualizacoes(): void {
+  notificarSeAtualizouNoCarregamento()
   void verificarAtualizacao()
 
   document.addEventListener('visibilitychange', () => {

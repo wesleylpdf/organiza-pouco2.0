@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Animações para toast notifications */
 @keyframes slide-in {
   from {

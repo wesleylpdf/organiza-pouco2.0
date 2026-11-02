@@ -1,23 +1,40 @@
 # Sugestões de Melhoria — Organiza Pouco
 
 **Data do levantamento:** 01/11/2026  
-**Status:** Pendente de revisão e autorização para implementação
+**Última atualização:** 02/11/2026  
+**Status:** Etapas 1 a 4 concluídas (8/10 itens implementados). Pendente testar visualmente o toast da Etapa 4 e decidir sobre Etapas 5 e 6 na próxima sessão.
+
+---
+
+## Backups Criados Nesta Sessão (Git Branches & Tags)
+
+- **Antes da Etapa 1:** `backup/antes-melhorias-2026-11-02` / tag `backup-antes-melhorias-2026-11-02`
+- **Antes da Etapa 2:** `backup/antes-etapa2-supabase-2026-11-02` / tag `backup-antes-etapa2-supabase-2026-11-02`
+- **Antes da Etapa 3:** `backup/antes-etapa3-listeners-ui-2026-11-02` / tag `backup-antes-etapa3-listeners-ui-2026-11-02`
+- **Antes da Etapa 4:** `backup/antes-etapa4-service-worker-2026-11-02` / tag `backup-antes-etapa4-service-worker-2026-11-02`
+
+---
+
+## Observação para Verificar na Próxima Sessão (Toast de Nova Versão)
+
+- **Como o Toast funciona hoje:**
+  1. Se o usuário **abre ou dá F5** na página após um deploy, o script inline do `<head>` no `index.html` (linhas 14–34) redireciona instantaneamente para `index-<versao>.html?v=<versao>` **antes** de carregar a interface (por isso é muito rápido e não exibe toast).
+  2. O toast `"Nova versão disponível. Atualizando..."` (`src/utils/atualizacao.ts`, linha 65) aparece quando o usuário **já está com o app aberto** e um novo deploy termina (ou quando ele volta para a aba aberta após um deploy), exibindo o aviso por `800ms` antes de recarregar.
+  3. *(Opcional para próxima sessão)*: Se quiser que o toast fique visível por mais tempo (ex.: `2000ms` ou `2500ms` em vez de `800ms`) ou que também apareça quando o `<head>` detectar atualização, podemos ajustar na próxima sessão.
 
 ---
 
 ## 1. Performance & Bundle (Alto Impacto)
 
-- [x] **Lazy Loading (Importação Dinâmica) na Exportação (`jspdf` e `xlsx`)**
-  - **Onde:** `src/modules/transacoes.ts` (linhas 13–14 e função `handleExportar` nas linhas 119–272)
-  - **Problema:** As bibliotecas `jspdf` e `xlsx` são importadas estaticamente no topo do arquivo, que é carregado logo na inicialização (`src/main.ts`). Isso adiciona centenas de KBs ao bundle inicial mesmo quando o usuário não utiliza a exportação.
-  - **Solução:** Substituir os imports estáticos por `await import('jspdf')` e `await import('xlsx')` dentro de `handleExportar`, carregando sob demanda apenas quando o formato `pdf` ou `xlsx` for acionado.
+- [x] **Lazy Loading (Importação Dinâmica) na Exportação (`jspdf` e `xlsx`)** *(Concluído na Etapa 1)*
+  - **Onde:** `src/modules/transacoes.ts` (função `handleExportar`)
+  - **Solução aplicada:** Imports estáticos substituídos por `await import('jspdf')` e `await import('xlsx')` sob demanda, reduzindo mais de 800 kB do bundle inicial.
 
-- [x] **Tree-shaking do Chart.js**
+- [x] **Tree-shaking do Chart.js** *(Concluído na Etapa 1)*
   - **Onde:** `src/components/GraficoPizza.ts` (linhas 1–6)
-  - **Problema:** `Chart.register(...registerables)` importa todos os tipos de gráficos, escalas e plugins do Chart.js.
-  - **Solução:** Importar e registrar apenas os módulos necessários para o gráfico de pizza/rosca (`ArcElement`, `Tooltip`, `Legend`, `PieController` / `DoughnutController`).
+  - **Solução aplicada:** Registrados apenas `PieController`, `DoughnutController`, `ArcElement`, `Tooltip` e `Legend`.
 
-- [ ] **Migrar Tailwind CSS da CDN para Build Local (Vite/PostCSS)**
+- [x] **Etapa 5 — Migrar Tailwind CSS da CDN para Build Local (Vite/PostCSS)** *(Concluído na Etapa 5)*
   - **Onde:** `index.html` (linha 7) e `src/styles.css`
   - **Problema:** O uso de `<script src="https://cdn.tailwindcss.com"></script>` compila estilos em tempo de execução no navegador, aumenta o tempo de renderização inicial e emite alerta em produção.
   - **Solução:** Configurar o Tailwind CSS via Vite/PostCSS para gerar apenas o CSS efetivamente utilizado no build.
@@ -26,45 +43,39 @@
 
 ## 2. Consultas ao Supabase & Escalabilidade de Dados
 
-- [x] **Filtrar Transações Fixas Diretamente no Banco de Dados**
-  - **Onde:** `src/modules/ciclo.ts` (`carregarFixosTodos`, linhas 49–54), `src/modules/transacoes.ts` (`handleAbrirFixos`, linhas 95–107) e `src/services/transacoes.ts` (`listarTransacoes`, linhas 47–71)
-  - **Problema:** `listarTransacoes({})` busca **todas** as transações do histórico do usuário para depois filtrar `.filter(t => t.fixo)` em memória no navegador, ignorando o índice parcial `idx_transacoes_user_fixo` já existente em `supabase/schema.sql` (linha 30).
-  - **Solução:** Adicionar o parâmetro opcional `fixo?: boolean` em `listarTransacoes` aplicando `.eq('fixo', params.fixo)` na query do Supabase.
+- [x] **Filtrar Transações Fixas Diretamente no Banco de Dados** *(Concluído na Etapa 2)*
+  - **Onde:** `src/modules/ciclo.ts` (`carregarFixosTodos`), `src/modules/transacoes.ts` (`handleAbrirFixos`, `handleExportar`) e `src/services/transacoes.ts` (`listarTransacoes`)
+  - **Solução aplicada:** Adicionado filtro opcional `fixo?: boolean` em `listarTransacoes` aplicando `.eq('fixo', params.fixo)` no Supabase, mantendo os Fixos sempre visíveis e somando no Saldo Final.
 
-- [x] **Inserção em Lote (Batch Insert) ao Criar Transações Parceladas**
-  - **Onde:** `src/hooks/useTransacoes.ts` (`salvarTransacao`, linhas 163–176) e `src/services/transacoes.ts` (`criarTransacao`)
-  - **Problema:** Ao criar uma compra parcelada (ex.: 12x), o loop `for` executa 12 chamadas sequenciais ao Supabase (e 12 chamadas a `supabase.auth.getUser()`).
-  - **Solução:** Criar uma função `criarTransacoesEmLote` que envia um array de objetos em um único `.insert([...])`, reduzindo drasticamente o tempo de salvamento e evitando gravações parciais caso a conexão caia no meio.
+- [x] **Inserção em Lote (Batch Insert) ao Criar Transações Parceladas** *(Concluído na Etapa 2)*
+  - **Onde:** `src/hooks/useTransacoes.ts` (`salvarTransacao`) e `src/services/transacoes.ts` (`criarTransacoesEmLote`)
+  - **Solução aplicada:** Criada `criarTransacoesEmLote` para enviar todas as parcelas em um único `.insert([...])`.
 
 ---
 
 ## 3. Possíveis Bugs & Casos de Borda (Edge Cases)
 
-- [x] **Overflow de Datas ao Gerar Parcelas nos Dias 29, 30 e 31**
-  - **Onde:** `src/hooks/useTransacoes.ts` (linhas 144–145 e 167–168)
-  - **Problema:** O cálculo `dataParcela.setMonth(dataParcela.getMonth() + i)` sofre com o comportamento nativo do `Date` do JavaScript: uma compra em `31/01` ao somar 1 mês vira `03/03` (pulando fevereiro).
-  - **Solução:** Utilizar uma função auxiliar que limite o dia ao último dia do mês de destino (similar a `criarDataNoMes` em `src/utils/ciclo.ts`).
+- [x] **Overflow de Datas ao Gerar Parcelas nos Dias 29, 30 e 31** *(Concluído na Etapa 2)*
+  - **Onde:** `src/utils/ciclo.ts` (`adicionarMeses`) e `src/hooks/useTransacoes.ts`
+  - **Solução aplicada:** Criada função `adicionarMeses` que limita o dia ao último dia do mês de destino sem pular meses curtos (como fevereiro).
 
-- [ ] **Vincular Parcelas por ID de Grupo em vez de Regex na Descrição**
-  - **Onde:** `src/services/transacoes.ts` (`listarParcelasRelacionadas`, linhas 162–183)
+- [ ] **Etapa 6 — Vincular Parcelas por ID de Grupo em vez de Regex na Descrição**
+  - **Onde:** `src/services/transacoes.ts` (`listarParcelasRelacionadas`) e `supabase/schema.sql`
   - **Problema:** As parcelas são encontradas buscando transações com o mesmo `total_parcelas` e comparando a `descricao` via expressão regular. Duas compras distintas com a mesma descrição e mesmo número de parcelas colidem ao editar ou excluir.
   - **Solução:** Adicionar uma coluna opcional `grupo_parcela_id UUID` em `transacoes` para agrupar parcelas de uma mesma compra de forma única (mantendo fallback pela lógica atual para parcelas antigas).
 
-- [x] **Evitar Duplicação de Event Listeners Globais e Corrigir `debouncedUpdateDashboard`**
-  - **Onde:** `src/modules/appInit.ts` (linhas 24–26, 260–268 e 291)
-  - **Problema:** `window.addEventListener('cicloConfigChange', ...)` e `window.addEventListener('themechange', ...)` são adicionados dentro de `setupApp`, acumulando novos listeners a cada ciclo de logout/login. Além disso, `debouncedUpdateDashboard` em `appInit.ts` possui corpo vazio, não disparando `handlers.updateDashboard()`.
-  - **Solução:** Chamar `handlers.updateDashboard()` dentro do debounce e garantir que listeners globais sejam registrados apenas uma vez (ou removidos ao deslogar).
+- [x] **Evitar Duplicação de Event Listeners Globais e Corrigir `debouncedUpdateDashboard`** *(Concluído na Etapa 3)*
+  - **Onde:** `src/modules/appInit.ts`
+  - **Solução aplicada:** `debouncedUpdateDashboard` conectado a `currentHandlers?.updateDashboard()`, cache de ciclo limpo ao trocar dia início/fim, `AbortController` aplicado nos listeners globais e proteção contra reset de tela em refresh de token.
 
-- [x] **Limpar Classes Tailwind Conflitantes e Substituir `alert()` por `toast`**
-  - **Onde:** `src/components/Header.ts` (linhas 21–76) e `src/components/TransacaoForm.ts` (linhas 35–47, 159 e 181)
-  - **Problema:** Há classes duplicadas/conflitantes no mesmo elemento (`p-4 p-6`, `rounded-2xl rounded-3xl`, `text-xs text-sm`, `mb-4 mb-8`) sem breakpoint responsivo (`sm:`), além de uso de `alert()` bloqueante no formulário.
-  - **Solução:** Ajustar as classes para usar prefixos responsivos (`p-4 sm:p-6`, etc.) e trocar os `alert()` por `toast.error(...)` / `toast.warning(...)`.
+- [x] **Limpar Classes Tailwind Conflitantes e Substituir `alert()` por `toast`** *(Concluído na Etapa 3)*
+  - **Onde:** `src/components/Header.ts`, `src/components/TransacaoForm.ts` e `src/components/GraficoPizza.ts`
+  - **Solução aplicada:** Substituídos `alert()` por `toast.warning` / `toast.error` e removidas classes utilitárias duplicadas no mesmo elemento.
 
 ---
 
 ## 4. PWA, Cache & Service Worker
 
-- [x] **Aprimorar Estratégia de Cache do Service Worker (`sw.js`)**
-  - **Onde:** `src/sw.js` (linhas 1–22)
-  - **Problema:** O Service Worker intercepta todas as requisições em modo *Cache-First* e não remove caches antigos no evento `activate`, o que pode servir HTML desatualizado ou interferir na verificação de atualização.
-  - **Solução:** Ignorar chamadas para o Supabase e `version.json`, aplicar limpeza de caches antigos no `activate` e usar estratégia *Network-First* para navegação de página.
+- [x] **Aprimorar Estratégia de Cache do Service Worker (`sw.js`)** *(Concluído na Etapa 4)*
+  - **Onde:** `src/sw.js` e `vite.config.ts`
+  - **Solução aplicada:** `CACHE_NAME` versionado por build (`organiza-pouco-<versao>`), limpeza automática de caches antigos no `activate`, exclusão de chamadas externas/Supabase e `version.json` do cache, e estratégia *Network-First* para navegação HTML.

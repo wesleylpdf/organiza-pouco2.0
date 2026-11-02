@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organiza Pouco</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
     <link rel="stylesheet" href="/src/styles.css">
     <link rel="manifest" href="/organiza-pouco2.0/manifest.json">
     <script>
@@ -27,6 +23,9 @@
           .then(function (r) { return r.ok ? r.json() : null })
           .then(function (dados) {
             if (!dados || !dados.version || dados.version === versaoAtual) return
+            try {
+              localStorage.setItem('organiza_pouco_ultima_versao', versaoAtual)
+            } catch (e) {}
             window.location.replace(base + 'index-' + dados.version + '.html?v=' + dados.version)
           })
           .catch(function () {})
