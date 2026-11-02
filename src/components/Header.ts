@@ -42,28 +42,28 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
       </div>
     </header>
 
-    <div id="resumo-ciclo" class="relative max-w-3xl mx-auto overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 text-white border border-slate-800 p-5 sm:p-6 rounded-3xl shadow-xl mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-white/10">
+    <div id="resumo-ciclo" class="relative max-w-3xl mx-auto overflow-hidden bg-white/95 text-slate-900 border border-slate-200/90 shadow-md dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-emerald-950 dark:text-white dark:border-slate-800 p-5 sm:p-6 rounded-3xl dark:shadow-xl mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200/80 dark:border-white/10">
         <div class="flex items-center justify-between sm:justify-start gap-2 flex-1">
-          <button id="ciclo-anterior" class="bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl font-bold text-xs transition border border-white/10">←</button>
+          <button id="ciclo-anterior" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white px-3.5 py-2 rounded-xl font-bold text-xs transition dark:border-white/10">←</button>
           <div class="text-center flex-1 sm:flex-initial px-2">
-            <span class="block text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Período do Ciclo</span>
-            <span class="text-xs sm:text-sm text-white font-extrabold tracking-wide" id="cycle-dates">Resumo do Ciclo</span>
+            <span class="block text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest">Período do Ciclo</span>
+            <span class="text-xs sm:text-sm text-slate-900 dark:text-white font-extrabold tracking-wide" id="cycle-dates">Resumo do Ciclo</span>
           </div>
-          <button id="ciclo-proximo" class="bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-xl font-bold text-xs transition border border-white/10">→</button>
+          <button id="ciclo-proximo" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white px-3.5 py-2 rounded-xl font-bold text-xs transition dark:border-white/10">→</button>
         </div>
 
-        <div class="flex items-center justify-center gap-2 bg-white/5 px-3 py-1.5 rounded-2xl border border-white/10">
-          <label class="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Início</label>
-          <select id="dia-inicio-ciclo" class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-emerald-400">
+        <div class="flex items-center justify-center gap-2 bg-slate-100/80 border border-slate-200 dark:bg-white/5 px-3 py-1.5 rounded-2xl dark:border-white/10">
+          <label class="text-[10px] text-slate-600 dark:text-slate-300 uppercase font-bold tracking-wider">Início</label>
+          <select id="dia-inicio-ciclo" class="bg-white border border-slate-300 text-slate-800 dark:bg-slate-800 dark:border-slate-600 rounded-lg px-2 py-1 text-xs font-bold dark:text-white focus:outline-none focus:border-emerald-400">
             ${Array.from({ length: 31 }, (_, i) => i + 1)
               .map(d => `<option value="${d}">${d}</option>`)
               .join('')}
           </select>
           <span class="text-slate-500 text-xs">•</span>
-          <label class="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Fim</label>
+          <label class="text-[10px] text-slate-600 dark:text-slate-300 uppercase font-bold tracking-wider">Fim</label>
           <select id="dia-fim-ciclo" title="Fim do ciclo (dia do mês)"
-            class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-emerald-400">
+            class="bg-white border border-slate-300 text-slate-800 dark:bg-slate-800 dark:border-slate-600 rounded-lg px-2 py-1 text-xs font-bold dark:text-white focus:outline-none focus:border-emerald-400">
             ${Array.from({ length: 31 }, (_, i) => i + 1)
               .map(d => `<option value="${d}">${d}</option>`)
               .join('')}
@@ -72,28 +72,28 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-2">
-        <div class="bg-white/5 border border-emerald-500/20 rounded-2xl p-3 sm:p-3.5 min-w-0">
+        <div class="bg-emerald-50/80 border border-emerald-200 dark:bg-white/5 dark:border-emerald-500/20 rounded-2xl p-3 sm:p-3.5 min-w-0">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Entradas</span>
-            <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">↑</span>
+            <span class="text-[10px] text-emerald-700 dark:text-emerald-300 uppercase font-bold tracking-wider">Entradas</span>
+            <span class="text-xs bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 px-2 py-0.5 rounded-full font-bold">↑</span>
           </div>
-          <h2 id="total-entradas" class="text-base sm:text-xl font-extrabold text-emerald-400 truncate">R$ 0,00</h2>
+          <h2 id="total-entradas" class="text-base sm:text-xl font-extrabold text-emerald-600 dark:text-emerald-400 truncate">R$ 0,00</h2>
         </div>
 
-        <div class="bg-white/5 border border-rose-500/20 rounded-2xl p-3 sm:p-3.5 min-w-0">
+        <div class="bg-rose-50/80 border border-rose-200 dark:bg-white/5 dark:border-rose-500/20 rounded-2xl p-3 sm:p-3.5 min-w-0">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] text-rose-300 uppercase font-bold tracking-wider">Saídas</span>
-            <span class="text-xs bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full font-bold">↓</span>
+            <span class="text-[10px] text-rose-700 dark:text-rose-300 uppercase font-bold tracking-wider">Saídas</span>
+            <span class="text-xs bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold">↓</span>
           </div>
-          <h2 id="total-saidas" class="text-base sm:text-xl font-extrabold text-rose-400 truncate">R$ 0,00</h2>
+          <h2 id="total-saidas" class="text-base sm:text-xl font-extrabold text-rose-600 dark:text-rose-400 truncate">R$ 0,00</h2>
         </div>
 
-        <div class="col-span-2 sm:col-span-1 bg-emerald-500/15 border border-emerald-400/30 rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
+        <div class="col-span-2 sm:col-span-1 bg-emerald-500/10 border border-emerald-500/30 dark:bg-emerald-500/15 dark:border-emerald-400/30 rounded-2xl p-3.5 flex flex-col justify-between min-w-0">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] text-emerald-200 uppercase font-bold tracking-wider">Saldo Final</span>
+            <span class="text-[10px] text-emerald-800 dark:text-emerald-200 uppercase font-bold tracking-wider">Saldo Final</span>
             <button id="fixos-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-0.5 rounded-lg text-[11px] font-black tracking-wide transition shadow">📌 FIXOS</button>
           </div>
-          <h2 id="cycle-total" class="text-xl sm:text-2xl font-black text-white truncate">R$ 0,00</h2>
+          <h2 id="cycle-total" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate">R$ 0,00</h2>
         </div>
       </div>
     </div>
