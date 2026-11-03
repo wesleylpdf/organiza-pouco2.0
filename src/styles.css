@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Escala global reduzida em 20% (16px -> 12.8px / 80%) */
+html {
+  font-size: 80%;
+}
+
 /* Animações para toast notifications */
 @keyframes slide-in {
   from {
@@ -90,8 +95,8 @@ select:focus-visible {
 
 /* Scrollbar customizada */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -115,37 +120,35 @@ select:focus-visible {
   background: #64748b;
 }
 
-/* Melhorias mobile */
+/* Melhorias mobile (reduzidas proporcionalmente em 20%) */
 @media (max-width: 640px) {
   body {
-    font-size: 14px;
+    font-size: 11.2px;
   }
 
-  /* Aumenta áreas de toque para botões */
-  button,
-  [role="button"],
+  /* Áreas de toque proporcionais à redução de 20% */
   input[type="button"],
   input[type="submit"] {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 35px;
+    min-width: 35px;
   }
 
-  /* Melhor espaçamento em formulários mobile */
+  /* Espaçamento e fonte de formulários mobile reduzidos em 20% */
   input, select, textarea {
-    font-size: 16px; /* Evita zoom no iOS */
+    font-size: 12.8px;
   }
 
   /* Modal em mobile ocupa quase toda a tela */
   .modal-content {
-    max-width: calc(100vw - 32px);
-    max-height: calc(100vh - 64px);
-    margin: 16px;
+    max-width: calc(100vw - 26px);
+    max-height: calc(100vh - 51px);
+    margin: 13px;
   }
 
   /* Toast notifications */
   #toast-container {
-    left: 16px;
-    right: 16px;
+    left: 13px;
+    right: 13px;
   }
 
   .toast {
@@ -161,13 +164,13 @@ select:focus-visible {
 
   /* Cards com padding menor */
   .card {
-    padding: 12px;
-    margin-bottom: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
   }
 
   /* Espaçamento vertical em listas */
   .list-container {
-    gap: 8px;
+    gap: 6px;
   }
 }
 
@@ -175,7 +178,7 @@ select:focus-visible {
 @media (min-width: 641px) and (max-width: 1024px) {
   .container {
     max-width: 100%;
-    padding: 16px;
+    padding: 13px;
   }
 }
 
@@ -188,8 +191,8 @@ html, body {
 /* Safe area para dispositivos com notch */
 @supports (padding: max(0px)) {
   body {
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 }
