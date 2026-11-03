@@ -76,29 +76,29 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
         </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-3">
+      <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mb-3">
         <div class="bg-emerald-50/80 border border-emerald-200 dark:bg-white/5 dark:border-emerald-500/20 rounded-2xl px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
           <div class="flex items-center gap-1.5 min-w-0">
-            <span class="text-[11px] sm:text-xs text-emerald-700 dark:text-emerald-300 uppercase font-extrabold tracking-wide shrink-0">Entradas:</span>
-            <h2 id="total-entradas" class="text-xs sm:text-base font-black text-emerald-600 dark:text-emerald-400 truncate">R$ 0,00</h2>
+            <span class="text-[10px] sm:text-[11px] text-emerald-700 dark:text-emerald-300 uppercase font-extrabold tracking-wide shrink-0">Entradas:</span>
+            <h2 id="total-entradas" class="text-[11px] sm:text-sm font-black text-emerald-600 dark:text-emerald-400 truncate">R$ 0,00</h2>
           </div>
           <span class="hidden sm:inline-block text-[10px] bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 px-1.5 py-0.5 rounded-full font-bold shrink-0">↑</span>
         </div>
 
         <div class="bg-rose-50/80 border border-rose-200 dark:bg-white/5 dark:border-rose-500/20 rounded-2xl px-3 py-2.5 flex items-center justify-between gap-1.5 min-w-0">
           <div class="flex items-center gap-1.5 min-w-0">
-            <span class="text-[11px] sm:text-xs text-rose-700 dark:text-rose-300 uppercase font-extrabold tracking-wide shrink-0">Saídas:</span>
-            <h2 id="total-saidas" class="text-xs sm:text-base font-black text-rose-600 dark:text-rose-400 truncate">R$ 0,00</h2>
+            <span class="text-[10px] sm:text-[11px] text-rose-700 dark:text-rose-300 uppercase font-extrabold tracking-wide shrink-0">Saídas:</span>
+            <h2 id="total-saidas" class="text-[11px] sm:text-sm font-black text-rose-600 dark:text-rose-400 truncate">R$ 0,00</h2>
           </div>
           <span class="hidden sm:inline-block text-[10px] bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 px-1.5 py-0.5 rounded-full font-bold shrink-0">↓</span>
         </div>
 
-        <div class="col-span-2 sm:col-span-1 bg-emerald-500/10 border border-emerald-500/30 dark:bg-emerald-500/15 dark:border-emerald-400/30 rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2 min-w-0">
+        <div class="col-span-2 bg-emerald-500/10 border border-emerald-500/30 dark:bg-emerald-500/15 dark:border-emerald-400/30 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 min-w-0">
           <div class="flex items-center gap-1.5 min-w-0">
-            <span class="text-[11px] sm:text-xs text-emerald-800 dark:text-emerald-200 uppercase font-extrabold tracking-wide shrink-0">Saldo Final:</span>
-            <h2 id="cycle-total" class="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate">R$ 0,00</h2>
+            <span class="text-xs sm:text-[13px] text-emerald-800 dark:text-emerald-200 uppercase font-extrabold tracking-wide shrink-0">Saldo Final:</span>
+            <h2 id="cycle-total" class="text-[15px] sm:text-[17px] font-black text-slate-900 dark:text-white truncate">R$ 0,00</h2>
           </div>
-          <button id="fixos-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-1 rounded-lg text-[11px] font-black tracking-wide transition shadow shrink-0">📌 FIXOS</button>
+          <button id="fixos-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1 rounded-lg text-xs font-black tracking-wide transition shadow shrink-0">📌 FIXOS</button>
         </div>
       </div>
 
