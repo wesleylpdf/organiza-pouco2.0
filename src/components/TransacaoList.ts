@@ -73,9 +73,9 @@ function atualizarBotoesFiltroStatus(): void {
   botoes.forEach((btn) => {
     const ativo = btn.dataset.filtroStatus === filtroStatusAtual
     if (ativo) {
-      btn.className = 'px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm transition'
+      btn.className = 'px-2 sm:px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm transition whitespace-nowrap'
     } else {
-      btn.className = 'px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition'
+      btn.className = 'px-2 sm:px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition whitespace-nowrap'
     }
   })
 }
@@ -102,13 +102,13 @@ export function criarTransacaoList(container: HTMLElement): void {
             <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">Lançamentos do Ciclo</h3>
             <span id="list-toggle-indicator" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 font-bold group-hover:bg-blue-500/20 transition shrink-0">▲ Recolher</span>
           </button>
-          <div class="flex items-center gap-2 flex-wrap">
-            <div id="filter-status-group" class="inline-flex items-center gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <button type="button" data-filtro-status="todos" class="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm transition">Todos</button>
-              <button type="button" data-filtro-status="pendentes" class="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition">⏳ Pendentes</button>
-              <button type="button" data-filtro-status="pagos" class="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition">✅ Pagos</button>
+          <div class="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 flex-nowrap w-full sm:w-auto">
+            <div id="filter-status-group" class="inline-flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 whitespace-nowrap">
+              <button type="button" data-filtro-status="todos" class="px-2 sm:px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm transition whitespace-nowrap">Todos</button>
+              <button type="button" data-filtro-status="pendentes" class="px-2 sm:px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition whitespace-nowrap">⏳ Pendentes</button>
+              <button type="button" data-filtro-status="pagos" class="px-2 sm:px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition whitespace-nowrap">✅ Pagos</button>
             </div>
-            <span id="list-filter-summary" class="text-[11px] sm:text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"></span>
+            <span id="list-filter-summary" class="text-[10px] sm:text-xs font-extrabold px-2 sm:px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0 whitespace-nowrap"></span>
           </div>
         </div>
         <div id="list-filters-row" class="flex items-center gap-1.5 sm:gap-2.5 w-full flex-nowrap">
