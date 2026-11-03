@@ -382,6 +382,11 @@ async function setupApp(
       await handlers.updateLista()
     }, { signal })
 
+    // Evento de alteração do filtro rápido por status (Todos | Pendentes | Pagos)
+    window.addEventListener('filtroStatusChange', async () => {
+      await handlers.updateLista()
+    }, { signal })
+
     // Evento de alteração do status Pago/Pendente a partir do modal de Fixos
     window.addEventListener('statusPagoChange', async () => {
       await handlers.updateLista()

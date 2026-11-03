@@ -4,7 +4,7 @@ import { getAuthState } from '@/hooks/useAuth'
 import { useTransacoes } from '@/hooks/useTransacoes'
 import { atualizarHeader } from '@/components/Header'
 import { atualizarGrafico, atualizarBadgeFiltroGrafico } from '@/components/GraficoPizza'
-import { renderLista, setOrdem } from '@/components/TransacaoList'
+import { renderLista, setOrdem, getFiltroStatus, setFiltroStatus } from '@/components/TransacaoList'
 import { listarTransacoes } from '@/services/transacoes'
 import { somarAjustesSaldo } from '@/services/ajustes'
 import { formatarIntervaloCiclo, formatDateLocalISO } from '@/utils/ciclo'
@@ -62,6 +62,7 @@ function limparCampoBusca(): void {
   const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
   if (searchEl) searchEl.value = ''
   atualizarBadgeFiltroGrafico('')
+  setFiltroStatus('todos')
 }
 
 async function carregarFixosTodos(): Promise<Transacao[]> {
@@ -98,7 +99,8 @@ export async function updateLista(): Promise<void> {
   const searchTextoOriginal = searchEl?.value.trim() || ''
   const search = searchTextoOriginal.toLowerCase()
   const transacoes = appStore.getTransacoes()
-  const filtradas = filtrarTransacoes(transacoes, search, showOnlyDividido)
+  const userId = getAuthState().user?.id ?? null
+  const filtradas = filtrarTransacoes(transacoes, search, showOnlyDividido, getFiltroStatus(), userId)
 
   atualizarBadgeFiltroGrafico(searchTextoOriginal)
 

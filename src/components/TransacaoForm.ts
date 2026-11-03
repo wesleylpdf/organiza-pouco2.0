@@ -22,6 +22,21 @@ export type FormApi = {
   limparFormEdicao: () => void
 }
 
+const CHAVE_FORM_RECOLHIDO = 'form_nova_transacao_recolhido'
+
+function aplicarEstadoAcordeao(container: HTMLElement, recolhido: boolean): void {
+  const form = container.querySelector('#transaction-form') as HTMLFormElement | null
+  const headerRow = container.querySelector('#form-header-row') as HTMLElement | null
+  const indicator = container.querySelector('#form-toggle-indicator') as HTMLElement | null
+  if (!form || !headerRow || !indicator) return
+
+  form.classList.toggle('hidden', recolhido)
+  headerRow.classList.toggle('mb-4', !recolhido)
+  headerRow.classList.toggle('pb-3', !recolhido)
+  headerRow.classList.toggle('border-b', !recolhido)
+  indicator.textContent = recolhido ? '▼ Expandir' : '▲ Recolher'
+}
+
 export function criarTransacaoForm(
   container: HTMLElement,
   onSave: SaveCallback,
@@ -30,12 +45,13 @@ export function criarTransacaoForm(
 ): FormApi {
   container.innerHTML = `
     <div class="relative max-w-3xl mx-auto p-5 sm:p-6 border bg-white/95 border-slate-200/90 rounded-3xl shadow-md mb-6 dark:bg-slate-900/95 dark:border-slate-800">
-      <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-        <div class="flex items-center gap-2.5">
-          <span class="w-2.5 h-6 rounded-full bg-emerald-500"></span>
-          <h3 id="form-title" class="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">Nova Transação</h3>
-        </div>
-        <button type="button" id="btn-gerenciar-categorias" class="text-xs px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 font-bold transition">
+      <div id="form-header-row" class="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <button type="button" id="btn-toggle-form" class="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none min-w-0">
+          <span class="w-2.5 h-6 rounded-full bg-emerald-500 shrink-0"></span>
+          <h3 id="form-title" class="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white truncate">Nova Transação</h3>
+          <span id="form-toggle-indicator" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 font-bold group-hover:bg-emerald-500/20 transition shrink-0">▲ Recolher</span>
+        </button>
+        <button type="button" id="btn-gerenciar-categorias" class="text-xs px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 font-bold transition shrink-0">
           ⚙️ Categorias
         </button>
       </div>
@@ -120,6 +136,28 @@ export function criarTransacaoForm(
   const formTitle = container.querySelector('#form-title')!
   const inputId = container.querySelector('#input-id') as HTMLInputElement
   const btnGerenciar = container.querySelector('#btn-gerenciar-categorias')!
+  const btnToggleForm = container.querySelector('#btn-toggle-form')!
+
+  // Restaura estado recolhido/expandido salvo pelo usuário
+  try {
+    const salvoRecolhido = localStorage.getItem(CHAVE_FORM_RECOLHIDO) === '1'
+    if (salvoRecolhido) {
+      aplicarEstadoAcordeao(container, true)
+    }
+  } catch {
+    // Ignora erro de localStorage
+  }
+
+  btnToggleForm.addEventListener('click', () => {
+    const estaRecolhido = form.classList.contains('hidden')
+    const novoRecolhido = !estaRecolhido
+    aplicarEstadoAcordeao(container, novoRecolhido)
+    try {
+      localStorage.setItem(CHAVE_FORM_RECOLHIDO, novoRecolhido ? '1' : '0')
+    } catch {
+      // Ignora erro de localStorage
+    }
+  })
 
   // Popula categorias do store
   atualizarSelectCategorias()
@@ -172,7 +210,6 @@ export function criarTransacaoForm(
     }
   })
 
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
 
@@ -195,7 +232,7 @@ export function criarTransacaoForm(
 
     try {
       await onSave({
-        valor: valorFinal, // Usa o valor final calculado
+        valor: valorFinal,
         data: (container.querySelector('#input-date') as HTMLInputElement).value,
         tipo: (container.querySelector('#input-type') as HTMLSelectElement).value as TipoTransacao,
         categoria: (container.querySelector('#input-category') as HTMLSelectElement).value,
@@ -285,6 +322,9 @@ export { atualizarSelectCategorias }
  * Preenche o formulário para edição
  */
 export function preencherFormEdicao(container: HTMLElement, t: Transacao): void {
+  // Garante que o formulário esteja expandido ao iniciar uma edição
+  aplicarEstadoAcordeao(container, false)
+
   ;(container.querySelector('#input-id') as HTMLInputElement).value = t.id
   // Se o valor foi dividido entre as parcelas, o campo mostra o valor original
   const temValorOriginal = t.dividido && t.valorOriginal != null

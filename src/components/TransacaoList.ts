@@ -5,6 +5,7 @@ import { appStore } from '@/stores/AppState'
 import type { Transacao } from '@/types'
 import { formatarMoeda, formatarData, sanitizarHTML } from '@/utils/format'
 import { ordenarTransacoes, type OrdemTransacao } from '@/utils/ordenacao'
+import type { FiltroStatusPago } from '@/utils/filtroTransacoes'
 import { isTransacaoPaga, definirStatusPagoLocal } from '@/utils/statusPago'
 
 type EditCallback = (id: string) => void
@@ -13,6 +14,7 @@ type DeleteCallback = (id: string) => void
 let editCallback: EditCallback
 let deleteCallback: DeleteCallback
 let ordemAtual: OrdemTransacao = 'data-desc'
+let filtroStatusAtual: FiltroStatusPago = 'todos'
 
 export function setOrdem(ordem: OrdemTransacao): void {
   ordemAtual = ordem
@@ -20,6 +22,29 @@ export function setOrdem(ordem: OrdemTransacao): void {
 
 export function getOrdem(): OrdemTransacao {
   return ordemAtual
+}
+
+export function getFiltroStatus(): FiltroStatusPago {
+  return filtroStatusAtual
+}
+
+export function setFiltroStatus(status: FiltroStatusPago): void {
+  filtroStatusAtual = status
+  atualizarBotoesFiltroStatus()
+}
+
+function atualizarBotoesFiltroStatus(): void {
+  const grupo = document.getElementById('filter-status-group')
+  if (!grupo) return
+  const botoes = grupo.querySelectorAll<HTMLButtonElement>('button[data-filtro-status]')
+  botoes.forEach((btn) => {
+    const ativo = btn.dataset.filtroStatus === filtroStatusAtual
+    if (ativo) {
+      btn.className = 'px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm transition'
+    } else {
+      btn.className = 'px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition'
+    }
+  })
 }
 
 /**
@@ -33,15 +58,24 @@ export function aplicarOrdemSalva(ordem: OrdemTransacao): void {
 }
 
 export function criarTransacaoList(container: HTMLElement): void {
+  filtroStatusAtual = 'todos'
+
   container.innerHTML = `
     <div class="relative max-w-3xl mx-auto mb-6">
       <div class="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-md mb-4">
-        <div class="flex items-center justify-between gap-2 mb-3">
+        <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <div class="flex items-center gap-2.5 min-w-0">
             <span class="w-2.5 h-5 rounded-full bg-blue-500 shrink-0"></span>
             <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">Lançamentos do Ciclo</h3>
           </div>
-          <span id="list-filter-summary" class="text-[11px] sm:text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"></span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <div id="filter-status-group" class="inline-flex items-center gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <button type="button" data-filtro-status="todos" class="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm transition">Todos</button>
+              <button type="button" data-filtro-status="pendentes" class="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition">⏳ Pendentes</button>
+              <button type="button" data-filtro-status="pagos" class="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 transition">✅ Pagos</button>
+            </div>
+            <span id="list-filter-summary" class="text-[11px] sm:text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"></span>
+          </div>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2.5 w-full flex-nowrap">
           <label class="shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200 transition select-none">
@@ -66,6 +100,16 @@ export function criarTransacaoList(container: HTMLElement): void {
       <p id="list-empty" class="text-center text-slate-400 bg-white/80 dark:bg-slate-900/80 border border-dashed border-slate-300 dark:border-slate-800 rounded-3xl py-10 hidden">Nenhuma transação neste ciclo</p>
     </div>
   `
+
+  const statusGroup = document.getElementById('filter-status-group')!
+  statusGroup.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('button[data-filtro-status]') as HTMLButtonElement | null
+    const novoStatus = btn?.dataset.filtroStatus as FiltroStatusPago | undefined
+    if (!novoStatus || novoStatus === filtroStatusAtual) return
+    filtroStatusAtual = novoStatus
+    atualizarBotoesFiltroStatus()
+    window.dispatchEvent(new CustomEvent('filtroStatusChange', { detail: { status: filtroStatusAtual } }))
+  })
 
   document.getElementById('filter-ordem')!.addEventListener('change', async (e) => {
     const sel = e.target as HTMLSelectElement
@@ -117,6 +161,11 @@ export function criarTransacaoList(container: HTMLElement): void {
           ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
           : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
       }`
+
+      // Se houver filtro ativo por status (Pendentes ou Pagos), atualiza a lista
+      if (filtroStatusAtual !== 'todos') {
+        window.dispatchEvent(new CustomEvent('statusPagoChange', { detail: { id, pago: novoPago } }))
+      }
 
       // Sincroniza no Supabase em background
       atualizarStatusPago(id, novoPago).catch(() => {})

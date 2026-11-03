@@ -7,7 +7,8 @@ import { criarModalFixos } from '@/components/ModalFixos'
 import { formatDateLocalISO } from '@/utils/ciclo'
 import { ordenarTransacoes } from '@/utils/ordenacao'
 import { filtrarTransacoes } from '@/utils/filtroTransacoes'
-import { getOrdem } from '@/components/TransacaoList'
+import { getOrdem, getFiltroStatus } from '@/components/TransacaoList'
+import { getAuthState } from '@/hooks/useAuth'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
 import type { Transacao } from '@/types'
@@ -140,7 +141,8 @@ export async function handleExportar(): Promise<void> {
   const filtroBuscaEl = document.getElementById('filter-descricao') as HTMLInputElement | null
   const busca = filtroBuscaEl?.value.trim().toLowerCase() || ''
   const ordem = getOrdem()
-  const transacoes = ordenarTransacoes(filtrarTransacoes(todas, busca, showOnlyDividido), ordem)
+  const userId = getAuthState().user?.id ?? null
+  const transacoes = ordenarTransacoes(filtrarTransacoes(todas, busca, showOnlyDividido, getFiltroStatus(), userId), ordem)
 
   if (transacoes.length === 0) {
     toast.warning('Nenhuma transação para exportar')

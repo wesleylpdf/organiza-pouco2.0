@@ -17,8 +17,8 @@ const makeTransacao = (overrides: Partial<Transacao>): Transacao => ({
 })
 
 const transacoes = [
-  makeTransacao({ id: '1', descricao: 'Supermercado', categoria: 'Alimentação', data: '2026-10-15', valor: 150.00, tipo: 'saida', dividido: false }),
-  makeTransacao({ id: '2', descricao: 'Salário', categoria: 'Trabalho', data: '2026-10-10', valor: 5000.00, tipo: 'entrada', dividido: false }),
+  makeTransacao({ id: '1', descricao: 'Supermercado', categoria: 'Alimentação', data: '2026-10-15', valor: 150.00, tipo: 'saida', dividido: false, pago: true }),
+  makeTransacao({ id: '2', descricao: 'Salário', categoria: 'Trabalho', data: '2026-10-10', valor: 5000.00, tipo: 'entrada', dividido: false, pago: false }),
   makeTransacao({ id: '3', descricao: 'Internet', categoria: 'Casa', data: '2026-09-20', valor: 99.90, tipo: 'saida', dividido: false }),
 ]
 
@@ -59,5 +59,15 @@ describe('filtrarTransacoes', () => {
     const naoParceladas = [{ ...transacoes[0], dividido: false }]
     const resultado2 = filtrarTransacoes(naoParceladas, '', true)
     expect(resultado2).toHaveLength(0)
+  })
+
+  it('deve filtrar por status pagos e pendentes', () => {
+    const pagos = filtrarTransacoes(transacoes, '', false, 'pagos', 'user-test')
+    expect(pagos).toHaveLength(1)
+    expect(pagos[0].id).toBe('1')
+
+    const pendentes = filtrarTransacoes(transacoes, '', false, 'pendentes', 'user-test')
+    expect(pendentes).toHaveLength(2)
+    expect(pendentes.map(t => t.id)).toEqual(['2', '3'])
   })
 })
