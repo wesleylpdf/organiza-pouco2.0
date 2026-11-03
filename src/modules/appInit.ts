@@ -5,7 +5,7 @@ import { criarAuthForm } from '@/components/AuthForm'
 import { criarHeader } from '@/components/Header'
 import { criarTransacaoForm } from '@/components/TransacaoForm'
 import { criarGrafico } from '@/components/GraficoPizza'
-import { criarTransacaoList, aplicarOrdemSalva } from '@/components/TransacaoList'
+import { criarTransacaoList, aplicarOrdemSalva, expandirListaLancamentos } from '@/components/TransacaoList'
 import {
   buscarConfiguracaoCiclo,
   salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase,
@@ -378,6 +378,7 @@ async function setupApp(
         searchEl.value = ''
       } else {
         searchEl.value = novaCat
+        expandirListaLancamentos()
       }
       await handlers.updateLista()
     }, { signal })

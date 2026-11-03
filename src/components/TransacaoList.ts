@@ -16,6 +16,8 @@ let deleteCallback: DeleteCallback
 let ordemAtual: OrdemTransacao = 'data-desc'
 let filtroStatusAtual: FiltroStatusPago = 'todos'
 
+const CHAVE_LISTA_RECOLHIDA = 'lista_lancamentos_recolhida'
+
 export function setOrdem(ordem: OrdemTransacao): void {
   ordemAtual = ordem
 }
@@ -31,6 +33,37 @@ export function getFiltroStatus(): FiltroStatusPago {
 export function setFiltroStatus(status: FiltroStatusPago): void {
   filtroStatusAtual = status
   atualizarBotoesFiltroStatus()
+}
+
+export function expandirListaLancamentos(): void {
+  const filtersRow = document.getElementById('list-filters-row')
+  const bodyWrapper = document.getElementById('list-body-wrapper')
+  const headerRow = document.getElementById('list-header-row')
+  const indicator = document.getElementById('list-toggle-indicator')
+  if (!filtersRow || !bodyWrapper || !headerRow || !indicator) return
+
+  filtersRow.classList.remove('hidden')
+  bodyWrapper.classList.remove('hidden')
+  headerRow.classList.add('mb-3')
+  indicator.textContent = '▲ Recolher'
+  try {
+    localStorage.setItem(CHAVE_LISTA_RECOLHIDA, '0')
+  } catch {
+    // Ignora erro de localStorage
+  }
+}
+
+function aplicarEstadoAcordeaoLista(recolhido: boolean): void {
+  const filtersRow = document.getElementById('list-filters-row')
+  const bodyWrapper = document.getElementById('list-body-wrapper')
+  const headerRow = document.getElementById('list-header-row')
+  const indicator = document.getElementById('list-toggle-indicator')
+  if (!filtersRow || !bodyWrapper || !headerRow || !indicator) return
+
+  filtersRow.classList.toggle('hidden', recolhido)
+  bodyWrapper.classList.toggle('hidden', recolhido)
+  headerRow.classList.toggle('mb-3', !recolhido)
+  indicator.textContent = recolhido ? '▼ Expandir' : '▲ Recolher'
 }
 
 function atualizarBotoesFiltroStatus(): void {
@@ -63,11 +96,12 @@ export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
     <div class="relative max-w-3xl mx-auto mb-6">
       <div class="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-md mb-4">
-        <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <div class="flex items-center gap-2.5 min-w-0">
+        <div id="list-header-row" class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <button type="button" id="btn-toggle-list" class="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none min-w-0">
             <span class="w-2.5 h-5 rounded-full bg-blue-500 shrink-0"></span>
             <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">Lançamentos do Ciclo</h3>
-          </div>
+            <span id="list-toggle-indicator" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 font-bold group-hover:bg-blue-500/20 transition shrink-0">▲ Recolher</span>
+          </button>
           <div class="flex items-center gap-2 flex-wrap">
             <div id="filter-status-group" class="inline-flex items-center gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button type="button" data-filtro-status="todos" class="px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm transition">Todos</button>
@@ -77,7 +111,7 @@ export function criarTransacaoList(container: HTMLElement): void {
             <span id="list-filter-summary" class="text-[11px] sm:text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"></span>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 sm:gap-2.5 w-full flex-nowrap">
+        <div id="list-filters-row" class="flex items-center gap-1.5 sm:gap-2.5 w-full flex-nowrap">
           <label class="shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200 transition select-none">
             <input type="checkbox" id="filter-dividido" class="w-4 h-4 accent-emerald-600"> <span>🔄 Parcelados</span>
           </label>
@@ -96,16 +130,42 @@ export function criarTransacaoList(container: HTMLElement): void {
         </div>
       </div>
 
-      <div id="transaction-list" class="space-y-3 pb-4"></div>
-      <p id="list-empty" class="text-center text-slate-400 bg-white/80 dark:bg-slate-900/80 border border-dashed border-slate-300 dark:border-slate-800 rounded-3xl py-10 hidden">Nenhuma transação neste ciclo</p>
+      <div id="list-body-wrapper">
+        <div id="transaction-list" class="space-y-3 pb-4"></div>
+        <p id="list-empty" class="text-center text-slate-400 bg-white/80 dark:bg-slate-900/80 border border-dashed border-slate-300 dark:border-slate-800 rounded-3xl py-10 hidden">Nenhuma transação neste ciclo</p>
+      </div>
     </div>
   `
+
+  const btnToggleList = document.getElementById('btn-toggle-list') as HTMLButtonElement | null
+  const bodyWrapper = document.getElementById('list-body-wrapper') as HTMLElement | null
+
+  try {
+    if (localStorage.getItem(CHAVE_LISTA_RECOLHIDA) === '1') {
+      aplicarEstadoAcordeaoLista(true)
+    }
+  } catch {
+    // Ignora erro de localStorage
+  }
+
+  btnToggleList?.addEventListener('click', () => {
+    const estaRecolhido = bodyWrapper?.classList.contains('hidden') ?? false
+    const novoRecolhido = !estaRecolhido
+    aplicarEstadoAcordeaoLista(novoRecolhido)
+    try {
+      localStorage.setItem(CHAVE_LISTA_RECOLHIDA, novoRecolhido ? '1' : '0')
+    } catch {
+      // Ignora erro de localStorage
+    }
+  })
 
   const statusGroup = document.getElementById('filter-status-group')!
   statusGroup.addEventListener('click', (e) => {
     const btn = (e.target as HTMLElement).closest('button[data-filtro-status]') as HTMLButtonElement | null
     const novoStatus = btn?.dataset.filtroStatus as FiltroStatusPago | undefined
-    if (!novoStatus || novoStatus === filtroStatusAtual) return
+    if (!novoStatus) return
+    expandirListaLancamentos()
+    if (novoStatus === filtroStatusAtual) return
     filtroStatusAtual = novoStatus
     atualizarBotoesFiltroStatus()
     window.dispatchEvent(new CustomEvent('filtroStatusChange', { detail: { status: filtroStatusAtual } }))
