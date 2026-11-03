@@ -6,10 +6,18 @@ import { criarHeader } from '@/components/Header'
 import { criarTransacaoForm } from '@/components/TransacaoForm'
 import { criarGrafico } from '@/components/GraficoPizza'
 import { criarTransacaoList, aplicarOrdemSalva } from '@/components/TransacaoList'
-import { buscarConfiguracaoCiclo, salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase, buscarFiltroOrdemPadrao } from '@/services/configuracoes'
+import {
+  buscarConfiguracaoCiclo,
+  salvarConfiguracaoCiclo as salvarConfiguracaoCicloSupabase,
+  buscarFiltroOrdemPadrao,
+  buscarMetaGastos,
+  salvarMetaGastos,
+} from '@/services/configuracoes'
+import { setMetaGastosAtual, updateHeader } from '@/modules/ciclo'
 import { debounce } from '@/utils/debounce'
 import { sanitizarHTML } from '@/utils/format'
 import { logger } from '@/utils/logger'
+import { toast } from '@/utils/toast'
 import type { OrdemTransacao } from '@/utils/ordenacao'
 import { iniciarVerificacaoDeAtualizacoes } from '@/utils/atualizacao'
 
@@ -177,6 +185,49 @@ async function salvarConfiguracaoCiclo(
   }
 }
 
+async function carregarMetaGastos(userId: string | null): Promise<void> {
+  const chaveLocal = `meta_gastos_${userId ?? 'anonimo'}`
+  const localVal = localStorage.getItem(chaveLocal)
+  if (localVal != null && localVal !== '') {
+    const num = Number(localVal)
+    if (!isNaN(num) && num > 0) {
+      setMetaGastosAtual(num, userId)
+    }
+  }
+
+  if (userId) {
+    try {
+      const metaSupabase = await buscarMetaGastos(userId)
+      if (metaSupabase != null && metaSupabase > 0) {
+        setMetaGastosAtual(metaSupabase, userId)
+        localStorage.setItem(chaveLocal, String(metaSupabase))
+      } else if (metaSupabase === null && localVal == null) {
+        setMetaGastosAtual(null, userId)
+      }
+    } catch {
+      // Caso a coluna meta_gastos ainda não exista no Supabase, mantém o valor do localStorage
+    }
+  }
+}
+
+async function salvarMetaGastosUsuario(meta: number | null, userId: string | null): Promise<void> {
+  const chaveLocal = `meta_gastos_${userId ?? 'anonimo'}`
+  if (meta != null && meta > 0) {
+    localStorage.setItem(chaveLocal, String(meta))
+  } else {
+    localStorage.removeItem(chaveLocal)
+  }
+  setMetaGastosAtual(meta, userId)
+
+  if (userId) {
+    try {
+      await salvarMetaGastos(meta, userId)
+    } catch {
+      // Mantém salvo no localStorage caso a coluna ainda não exista no Supabase
+    }
+  }
+}
+
 interface AppInitHandlers {
   handleSalvar: (data: any) => Promise<void>
   handleCancelarEdicao: () => void
@@ -233,11 +284,12 @@ async function setupApp(
   try {
     await avancarCarregamento(0, 'Iniciando aplicação...', 80)
 
-    // Carrega configuração de ciclo e categorias em paralelo
+    // Carrega configuração de ciclo, meta de gastos e categorias em paralelo
     await avancarCarregamento(20, 'Carregando configurações e categorias...', 100)
     const userId = getAuthState().user?.id ?? null
     await Promise.all([
       carregarConfiguracaoCiclo(userId),
+      carregarMetaGastos(userId),
       categoriasHook.carregarCategorias(),
     ])
 
@@ -304,6 +356,35 @@ async function setupApp(
       const userId = getAuthState().user?.id ?? null
       await salvarConfiguracaoCiclo(diaInicio, diaFim, userId)
       debouncedUpdateDashboard()
+    }, { signal })
+
+    // Evento de alteração da Meta de Gastos do ciclo
+    window.addEventListener('metaGastosChange', async (e: Event) => {
+      const { meta } = (e as CustomEvent).detail
+      const currentUserId = getAuthState().user?.id ?? null
+      await salvarMetaGastosUsuario(meta, currentUserId)
+      await updateHeader()
+      toast.success(meta ? 'Meta de gastos atualizada!' : 'Meta de gastos removida!')
+    }, { signal })
+
+    // Evento de clique numa fatia do Gráfico de Pizza para filtrar por categoria
+    window.addEventListener('categoriaGraficoClick', async (e: Event) => {
+      const { categoria } = (e as CustomEvent).detail
+      const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
+      if (!searchEl) return
+      const valorAtual = searchEl.value.trim().toLowerCase()
+      const novaCat = String(categoria || '').trim()
+      if (!novaCat || valorAtual === novaCat.toLowerCase()) {
+        searchEl.value = ''
+      } else {
+        searchEl.value = novaCat
+      }
+      await handlers.updateLista()
+    }, { signal })
+
+    // Evento de alteração do status Pago/Pendente a partir do modal de Fixos
+    window.addEventListener('statusPagoChange', async () => {
+      await handlers.updateLista()
     }, { signal })
 
     // Evento de exportação

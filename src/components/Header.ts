@@ -15,7 +15,10 @@ export interface HeaderProps {
   diaInicioCiclo?: number
   diaFimCiclo?: number
   cycleOffset?: number
+  metaGastos?: number | null
 }
+
+let metaAtual: number | null = null
 
 export function criarHeader(container: HTMLElement, onFixosClick: () => void): void {
   container.innerHTML = `
@@ -73,7 +76,7 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
         </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-2">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-3">
         <div class="bg-emerald-50/80 border border-emerald-200 dark:bg-white/5 dark:border-emerald-500/20 rounded-2xl p-3 sm:p-3.5 min-w-0">
           <div class="flex items-center justify-between mb-1">
             <span class="text-[10px] text-emerald-700 dark:text-emerald-300 uppercase font-bold tracking-wider">Entradas</span>
@@ -96,6 +99,30 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
             <button id="fixos-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-0.5 rounded-lg text-[11px] font-black tracking-wide transition shadow">📌 FIXOS</button>
           </div>
           <h2 id="cycle-total" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate">R$ 0,00</h2>
+        </div>
+      </div>
+
+      <div id="meta-gastos-section" class="pt-3 border-t border-slate-200/80 dark:border-white/10">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">🎯 Meta de Gastos:</span>
+            <button type="button" id="definir-meta-btn" class="text-[11px] font-extrabold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-emerald-300 border border-slate-200 dark:border-white/10 transition">
+              + Definir meta
+            </button>
+          </div>
+          <span id="meta-status-text" class="text-[11px] font-extrabold text-slate-600 dark:text-slate-300 hidden"></span>
+        </div>
+
+        <div id="meta-editor" class="hidden mt-2.5 flex items-center gap-2 flex-nowrap">
+          <input type="number" id="input-meta-gastos" step="0.01" min="0" placeholder="Limite mensal (R$)" inputmode="decimal"
+            class="flex-1 min-w-0 px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-900 dark:bg-slate-800 dark:border-slate-600 dark:text-white text-xs font-bold focus:outline-none focus:border-emerald-400">
+          <button type="button" id="salvar-meta-btn" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition shrink-0">Salvar</button>
+          <button type="button" id="limpar-meta-btn" class="px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-300 border border-rose-500/20 text-xs font-bold transition shrink-0">Limpar</button>
+          <button type="button" id="cancelar-meta-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-700 dark:text-slate-200 text-xs font-bold transition shrink-0">✕</button>
+        </div>
+
+        <div id="meta-progress-wrapper" class="hidden w-full h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden mt-2">
+          <div id="meta-progress-bar" class="h-full rounded-full transition-all duration-300 bg-emerald-500" style="width: 0%"></div>
         </div>
       </div>
     </div>
@@ -128,6 +155,44 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
 
   // Botão FIXOS
   container.querySelector('#fixos-btn')!.addEventListener('click', onFixosClick)
+
+  // Eventos da Meta de Gastos
+  const definirMetaBtn = container.querySelector('#definir-meta-btn') as HTMLButtonElement
+  const metaEditor = container.querySelector('#meta-editor') as HTMLElement
+  const inputMeta = container.querySelector('#input-meta-gastos') as HTMLInputElement
+  const salvarMetaBtn = container.querySelector('#salvar-meta-btn') as HTMLButtonElement
+  const limparMetaBtn = container.querySelector('#limpar-meta-btn') as HTMLButtonElement
+  const cancelarMetaBtn = container.querySelector('#cancelar-meta-btn') as HTMLButtonElement
+
+  definirMetaBtn.addEventListener('click', () => {
+    const estaAberto = !metaEditor.classList.contains('hidden')
+    if (estaAberto) {
+      metaEditor.classList.add('hidden')
+    } else {
+      inputMeta.value = metaAtual && metaAtual > 0 ? String(metaAtual) : ''
+      metaEditor.classList.remove('hidden')
+      inputMeta.focus()
+    }
+  })
+
+  cancelarMetaBtn.addEventListener('click', () => {
+    metaEditor.classList.add('hidden')
+  })
+
+  salvarMetaBtn.addEventListener('click', () => {
+    const valorNum = Number(inputMeta.value.replace(',', '.'))
+    if (isNaN(valorNum) || valorNum <= 0) {
+      toast.warning('Informe um valor maior que zero para a meta')
+      return
+    }
+    metaEditor.classList.add('hidden')
+    window.dispatchEvent(new CustomEvent('metaGastosChange', { detail: { meta: valorNum } }))
+  })
+
+  limparMetaBtn.addEventListener('click', () => {
+    metaEditor.classList.add('hidden')
+    window.dispatchEvent(new CustomEvent('metaGastosChange', { detail: { meta: null } }))
+  })
 
   function emitirConfigCiclo(): void {
     const diaInicio = parseInt(inicioSelect.value, 10)
@@ -167,5 +232,56 @@ export function atualizarHeader(props: HeaderProps): void {
   const btnHoje = root.querySelector('#ciclo-hoje') as HTMLButtonElement | null
   if (btnHoje) {
     btnHoje.classList.toggle('hidden', (props.cycleOffset ?? 0) === 0)
+  }
+
+  // Atualiza Meta de Gastos e barra de progresso
+  metaAtual = props.metaGastos ?? null
+  const definirMetaBtn = root.querySelector('#definir-meta-btn') as HTMLButtonElement | null
+  const metaStatusText = root.querySelector('#meta-status-text') as HTMLElement | null
+  const metaProgressWrapper = root.querySelector('#meta-progress-wrapper') as HTMLElement | null
+  const metaProgressBar = root.querySelector('#meta-progress-bar') as HTMLElement | null
+
+  if (definirMetaBtn && metaStatusText && metaProgressWrapper && metaProgressBar) {
+    if (metaAtual && metaAtual > 0) {
+      definirMetaBtn.textContent = `${formatarMoeda(metaAtual)} ✏️`
+      const saidas = props.totais.saidas
+      const percentual = (saidas / metaAtual) * 100
+      const percentualBarra = Math.min(percentual, 100)
+      const diferenca = metaAtual - saidas
+
+      metaStatusText.classList.remove('hidden')
+      metaProgressWrapper.classList.remove('hidden')
+      metaProgressBar.style.width = `${percentualBarra.toFixed(1)}%`
+
+      metaProgressBar.classList.remove('bg-emerald-500', 'bg-amber-500', 'bg-rose-500')
+      metaStatusText.classList.remove(
+        'text-emerald-600', 'dark:text-emerald-300',
+        'text-amber-600', 'dark:text-amber-300',
+        'text-rose-600', 'dark:text-rose-300'
+      )
+
+      if (percentual < 70) {
+        metaProgressBar.classList.add('bg-emerald-500')
+        metaStatusText.classList.add('text-emerald-600', 'dark:text-emerald-300')
+      } else if (percentual <= 90) {
+        metaProgressBar.classList.add('bg-amber-500')
+        metaStatusText.classList.add('text-amber-600', 'dark:text-amber-300')
+      } else {
+        metaProgressBar.classList.add('bg-rose-500')
+        metaStatusText.classList.add('text-rose-600', 'dark:text-rose-300')
+      }
+
+      if (diferenca >= 0) {
+        metaStatusText.textContent = `${percentual.toFixed(0)}% usado • Disponível: ${formatarMoeda(diferenca)}`
+      } else {
+        metaStatusText.textContent = `${percentual.toFixed(0)}% usado • Acima em ${formatarMoeda(Math.abs(diferenca))}`
+      }
+    } else {
+      definirMetaBtn.textContent = '+ Definir meta'
+      metaStatusText.textContent = ''
+      metaStatusText.classList.add('hidden')
+      metaProgressWrapper.classList.add('hidden')
+      metaProgressBar.style.width = '0%'
+    }
   }
 }

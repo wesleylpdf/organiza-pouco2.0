@@ -3,7 +3,7 @@ import type { OrdemTransacao } from '@/utils/ordenacao'
 import { getAuthState } from '@/hooks/useAuth'
 import { useTransacoes } from '@/hooks/useTransacoes'
 import { atualizarHeader } from '@/components/Header'
-import { atualizarGrafico } from '@/components/GraficoPizza'
+import { atualizarGrafico, atualizarBadgeFiltroGrafico } from '@/components/GraficoPizza'
 import { renderLista, setOrdem } from '@/components/TransacaoList'
 import { listarTransacoes } from '@/services/transacoes'
 import { somarAjustesSaldo } from '@/services/ajustes'
@@ -21,9 +21,24 @@ const transacoesHook = useTransacoes()
 let fixosTodosCache: Transacao[] | null = null
 let fixosTodosUserId: string | null = null
 
+// Cache da meta de gastos do ciclo por usuário
+let metaGastosCache: number | null = null
+let metaGastosUserId: string | null = null
+
+export function setMetaGastosAtual(meta: number | null, userId: string | null): void {
+  metaGastosCache = meta
+  metaGastosUserId = userId
+}
+
+export function getMetaGastosAtual(userId: string | null): number | null {
+  return metaGastosUserId === userId ? metaGastosCache : null
+}
+
 export function limparCacheFixos(): void {
   fixosTodosCache = null
   fixosTodosUserId = null
+  metaGastosCache = null
+  metaGastosUserId = null
 }
 
 // Callbacks injetados pelo main.ts (evita dependência circular entre módulos)
@@ -46,6 +61,7 @@ export function initCiclo(handlers: CicloHandlers): void {
 function limparCampoBusca(): void {
   const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
   if (searchEl) searchEl.value = ''
+  atualizarBadgeFiltroGrafico('')
 }
 
 async function carregarFixosTodos(): Promise<Transacao[]> {
@@ -70,14 +86,8 @@ export async function updateDashboard(): Promise<void> {
     await updateLista()
 
     await updateHeader()
-
-
-
-
   } catch (err) {
     logger.error('Erro ao atualizar dashboard', err as Error)
-
-
   }
 }
 
@@ -85,22 +95,25 @@ export async function updateLista(): Promise<void> {
   const filterEl = document.getElementById('filter-dividido') as HTMLInputElement | null
   const showOnlyDividido = filterEl?.checked || false
   const searchEl = document.getElementById('filter-descricao') as HTMLInputElement | null
-  const search = searchEl?.value.trim().toLowerCase() || ''
+  const searchTextoOriginal = searchEl?.value.trim() || ''
+  const search = searchTextoOriginal.toLowerCase()
   const transacoes = appStore.getTransacoes()
   const filtradas = filtrarTransacoes(transacoes, search, showOnlyDividido)
+
+  atualizarBadgeFiltroGrafico(searchTextoOriginal)
 
   const ordemEl = document.getElementById('filter-ordem') as HTMLSelectElement | null
   if (ordemEl) setOrdem(ordemEl.value as OrdemTransacao)
 
-  const temTransacoes = filtradas.length > 0
+  const temTransacoesNoCiclo = transacoes.length > 0
 
   const chartContainer = document.getElementById('chart-container')
   const listContainer = document.getElementById('list-container')
   const exportContainer = document.getElementById('export-container')
 
-  if (chartContainer) chartContainer.classList.toggle('hidden', !temTransacoes)
-  if (listContainer) listContainer.classList.toggle('hidden', !temTransacoes)
-  if (exportContainer) exportContainer.classList.toggle('hidden', !temTransacoes)
+  if (chartContainer) chartContainer.classList.toggle('hidden', !temTransacoesNoCiclo)
+  if (listContainer) listContainer.classList.toggle('hidden', !temTransacoesNoCiclo)
+  if (exportContainer) exportContainer.classList.toggle('hidden', !temTransacoesNoCiclo)
 
   renderLista(
     filtradas,
@@ -108,8 +121,8 @@ export async function updateLista(): Promise<void> {
     (id) => cicloHandlers!.handleExcluir(id)
   )
 
-  if (temTransacoes) {
-    await updateGrafico(filtradas)
+  if (temTransacoesNoCiclo) {
+    await updateGrafico(transacoes)
   }
 }
 
@@ -137,6 +150,7 @@ export async function updateHeader(): Promise<void> {
   const transacoes = appStore.getTransacoes()
   const state = getAuthState()
   const config = appStore.getState()
+  const currentUserId = state.user?.id ?? null
 
   // Saldo Final inclui transações do ciclo atual + transações fixas de TODOS os meses
   let totais = calcularTotais(transacoes)
@@ -203,6 +217,7 @@ export async function updateHeader(): Promise<void> {
     diaInicioCiclo: config.diaInicioCiclo,
     diaFimCiclo: config.diaFimCiclo,
     cycleOffset: config.cycleOffset,
+    metaGastos: getMetaGastosAtual(currentUserId),
   })
 }
 

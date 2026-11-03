@@ -69,3 +69,35 @@ export async function salvarFiltroOrdemPadrao(
 
   if (error) throw error
 }
+
+
+/**
+ * Busca a meta mensal de gastos do usuário no Supabase
+ */
+export async function buscarMetaGastos(
+  userId: string
+): Promise<number | null> {
+  const { data, error } = await comRetry(() => supabase
+    .from('configuracoes_usuario')
+    .select('meta_gastos')
+    .eq('user_id', userId)
+    .maybeSingle())
+
+  if (error) throw error
+  return data?.meta_gastos != null ? Number(data.meta_gastos) : null
+}
+
+/**
+ * Salva (ou atualiza) a meta mensal de gastos do usuário no Supabase
+ */
+export async function salvarMetaGastos(
+  meta: number | null,
+  userId: string
+): Promise<void> {
+  const { error } = await comRetry(() => supabase.from('configuracoes_usuario').upsert({
+    user_id: userId,
+    meta_gastos: meta,
+  }))
+
+  if (error) throw error
+}

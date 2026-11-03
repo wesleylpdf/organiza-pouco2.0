@@ -38,6 +38,7 @@ function paraTransacao(row: any): Transacao {
     parcelaAtual: row.parcela_atual,
     valorOriginal: row.valor_original,
     ...(row.grupo_parcela_id !== undefined ? { grupoParcelaId: row.grupo_parcela_id } : {}),
+    ...(row.pago !== undefined ? { pago: row.pago } : {}),
   }
 }
 
@@ -283,4 +284,25 @@ export async function excluirParcelasRelacionadas(ids: string[]): Promise<void> 
     .in('id', ids))
 
   if (error) throw error
+}
+
+
+/**
+ * Atualiza o status de pago/pendente de uma transação
+ */
+export async function atualizarStatusPago(id: string, pago: boolean): Promise<void> {
+  const { data: { user } } = await comRetry(() => supabase.auth.getUser())
+  if (!user) throw new Error('Usuário não autenticado')
+
+  const { error } = await comRetry(() =>
+    supabase
+      .from('transacoes')
+      .update({ pago })
+      .eq('id', id)
+      .eq('user_id', user.id)
+  )
+
+  if (error && !String(error.message || '').includes('pago')) {
+    throw error
+  }
 }

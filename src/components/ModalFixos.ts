@@ -1,5 +1,8 @@
 import type { Transacao } from '@/types'
 import { formatarMoeda, formatarData, sanitizarHTML } from '@/utils/format'
+import { getAuthState } from '@/hooks/useAuth'
+import { atualizarStatusPago } from '@/services/transacoes'
+import { isTransacaoPaga, definirStatusPagoLocal } from '@/utils/statusPago'
 
 type ExcluirCallback = (id: string) => Promise<boolean>
 type EditarCallback = (transacao: Transacao) => void
@@ -19,6 +22,7 @@ export function criarModalFixos(
 
   const fixos = transacoes.filter(t => t.fixo)
   const totalFixos = fixos.reduce((acc, t) => acc + Number(t.valor), 0)
+  const userId = getAuthState().user?.id ?? null
 
   modal.innerHTML = `
     <div id="modal-content" class="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800 max-h-[85vh] flex flex-col">
@@ -36,7 +40,7 @@ export function criarModalFixos(
       </div>
 
       <div id="lista-fixos" class="flex-1 overflow-y-auto mb-2 pr-1">
-        ${renderListaFixos(fixos)}
+        ${renderListaFixos(fixos, userId)}
       </div>
 
       ${fixos.length === 0 ? `
@@ -60,13 +64,34 @@ export function criarModalFixos(
   // Rastreia quais botões estão em modo de confirmação de exclusão
   const confirmandoExclusao = new Set<string>()
 
-  // Delegação de eventos para botões de editar/excluir
+  // Delegação de eventos para botões de pago/editar/excluir
   const lista = modal.querySelector('#lista-fixos')!
   lista.addEventListener('click', async (e) => {
     const btn = (e.target as HTMLElement).closest('button[data-action]') as HTMLButtonElement | null
     const action = btn?.dataset.action
     const id = btn?.dataset.id
-    if (!action || !id) return
+    if (!action || !id || !btn) return
+
+    if (action === 'toggle-pago') {
+      const pagoAtual = btn.dataset.pago === '1'
+      const novoPago = !pagoAtual
+      definirStatusPagoLocal(id, novoPago, userId)
+      const tx = fixos.find(t => t.id === id)
+      if (tx) tx.pago = novoPago
+
+      btn.dataset.pago = novoPago ? '1' : '0'
+      btn.title = novoPago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'
+      btn.textContent = novoPago ? '✅ Pago' : '⏳ Pendente'
+      btn.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold border transition cursor-pointer ${
+        novoPago
+          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
+          : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
+      }`
+
+      atualizarStatusPago(id, novoPago).catch(() => {})
+      window.dispatchEvent(new CustomEvent('statusPagoChange', { detail: { id, pago: novoPago } }))
+      return
+    }
 
     const btnGroup = btn.closest('.flex.items-center.gap-3')
     if (!btnGroup) return
@@ -169,16 +194,23 @@ export function criarModalFixos(
   document.body.appendChild(modal)
 }
 
-function renderListaFixos(fixos: Transacao[]): string {
+function renderListaFixos(fixos: Transacao[], userId: string | null): string {
   if (fixos.length === 0) return ''
 
   return `
     <div class="space-y-2.5">
-      ${fixos.map(tx => `
+      ${fixos.map(tx => {
+        const pago = isTransacaoPaga(tx, userId)
+        return `
         <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 gap-2">
-          <div class="flex flex-col min-w-0">
+          <div class="flex flex-col min-w-0 gap-0.5">
             <span class="text-sm font-bold text-slate-900 dark:text-white truncate">${sanitizarHTML(tx.descricao || '')}</span>
-            <span class="text-[11px] text-slate-500 dark:text-slate-400">${formatarData(tx.data)}</span>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">${formatarData(tx.data)}</span>
+              <button type="button" data-action="toggle-pago" data-id="${tx.id}" data-pago="${pago ? '1' : '0'}" title="${pago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold border transition cursor-pointer ${pago ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/25'}">
+                ${pago ? '✅ Pago' : '⏳ Pendente'}
+              </button>
+            </div>
           </div>
           <div class="flex items-center gap-3 shrink-0">
             <span data-fixo-valor class="text-sm font-extrabold text-slate-700 dark:text-slate-200">${formatarMoeda(tx.valor)}</span>
@@ -188,7 +220,7 @@ function renderListaFixos(fixos: Transacao[]): string {
             <button data-action="cancel-delete" data-id="${tx.id}" class="text-xs text-slate-800 bg-slate-200 hover:bg-slate-300 font-bold px-2.5 py-1.5 rounded-xl transition hidden">Cancelar</button>
           </div>
         </div>
-      `).join('')}
+      `}).join('')}
     </div>
   `
 }

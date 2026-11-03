@@ -1,8 +1,11 @@
 import { salvarFiltroOrdemPadrao } from '@/services/configuracoes'
+import { atualizarStatusPago } from '@/services/transacoes'
 import { getAuthState } from '@/hooks/useAuth'
+import { appStore } from '@/stores/AppState'
 import type { Transacao } from '@/types'
 import { formatarMoeda, formatarData, sanitizarHTML } from '@/utils/format'
 import { ordenarTransacoes, type OrdemTransacao } from '@/utils/ordenacao'
+import { isTransacaoPaga, definirStatusPagoLocal } from '@/utils/statusPago'
 
 type EditCallback = (id: string) => void
 type DeleteCallback = (id: string) => void
@@ -33,9 +36,12 @@ export function criarTransacaoList(container: HTMLElement): void {
   container.innerHTML = `
     <div class="relative max-w-3xl mx-auto mb-6">
       <div class="bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-md mb-4">
-        <div class="flex items-center gap-2.5 mb-3">
-          <span class="w-2.5 h-5 rounded-full bg-blue-500"></span>
-          <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">Lançamentos do Ciclo</h3>
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-2.5 h-5 rounded-full bg-blue-500 shrink-0"></span>
+            <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white truncate">Lançamentos do Ciclo</h3>
+          </div>
+          <span id="list-filter-summary" class="text-[11px] sm:text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"></span>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2.5 w-full flex-nowrap">
           <label class="shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200 transition select-none">
@@ -88,7 +94,34 @@ export function criarTransacaoList(container: HTMLElement): void {
     const btn = target.closest('button[data-action]') as HTMLButtonElement | null
     const action = btn?.dataset.action
     const id = btn?.dataset.id
-    if (!action || !id) return
+    if (!action || !id || !btn) return
+
+    if (action === 'toggle-pago') {
+      const pagoAtual = btn.dataset.pago === '1'
+      const novoPago = !pagoAtual
+      const userId = getAuthState().user?.id ?? null
+
+      // Atualiza estado local imediatamente
+      definirStatusPagoLocal(id, novoPago, userId)
+      const txNoStore = appStore.getTransacoes().find(tx => tx.id === id)
+      if (txNoStore) {
+        txNoStore.pago = novoPago
+      }
+
+      // Atualiza visual do botão imediatamente
+      btn.dataset.pago = novoPago ? '1' : '0'
+      btn.title = novoPago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'
+      btn.textContent = novoPago ? '✅ Pago' : '⏳ Pendente'
+      btn.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold border transition cursor-pointer ${
+        novoPago
+          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25'
+          : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
+      }`
+
+      // Sincroniza no Supabase em background
+      atualizarStatusPago(id, novoPago).catch(() => {})
+      return
+    }
 
     const btnGroup = btn.closest('.flex.gap-2.shrink-0')
     if (!btnGroup) return
@@ -185,6 +218,20 @@ export function renderLista(
 
   const listContainer = document.getElementById('transaction-list')!
   const emptyMsg = document.getElementById('list-empty')!
+  const summaryEl = document.getElementById('list-filter-summary')
+  const userId = getAuthState().user?.id ?? null
+
+  if (summaryEl) {
+    const somaEntradas = transactions.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
+    const somaSaidas = transactions.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
+    const saldoVisivel = somaEntradas - somaSaidas
+    const totalAbsoluto = somaEntradas > 0 && somaSaidas === 0
+      ? `+${formatarMoeda(somaEntradas)}`
+      : somaSaidas > 0 && somaEntradas === 0
+        ? `-${formatarMoeda(somaSaidas)}`
+        : `${saldoVisivel >= 0 ? '+' : ''}${formatarMoeda(saldoVisivel)}`
+    summaryEl.textContent = `${transactions.length} ${transactions.length === 1 ? 'item' : 'itens'} • ${totalAbsoluto}`
+  }
 
   if (transactions.length === 0) {
     listContainer.innerHTML = ''
@@ -204,6 +251,12 @@ export function renderLista(
     const bordaLateral = isEntrada ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-rose-500'
     const descSanitizada = sanitizarHTML(t.descricao || '')
     const catSanitizada = sanitizarHTML(t.categoria)
+    const pago = isTransacaoPaga(t, userId)
+    const pagoBadge = `
+      <button type="button" data-action="toggle-pago" data-id="${t.id}" data-pago="${pago ? '1' : '0'}" title="${pago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold border transition cursor-pointer ${pago ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/25'}">
+        ${pago ? '✅ Pago' : '⏳ Pendente'}
+      </button>
+    `
     const fixoBadge = t.fixo
       ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">📌 Fixo</span>'
       : ''
@@ -223,6 +276,7 @@ export function renderLista(
               <span class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-semibold text-slate-700 dark:text-slate-300">${catSanitizada}</span>
               <span>•</span>
               <span class="font-medium">${formatarData(t.data)}</span>
+              ${pagoBadge}
               ${fixoBadge}
               ${parceladoBadge}
             </div>
