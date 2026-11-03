@@ -25,6 +25,10 @@ let fixosTodosUserId: string | null = null
 let metaGastosCache: number | null = null
 let metaGastosUserId: string | null = null
 
+// Cache dos ajustes de saldo do ciclo atual
+let ajustesCicloCache: { entradas: number; saidas: number } | null = null
+let ajustesCicloKey: string | null = null
+
 export function setMetaGastosAtual(meta: number | null, userId: string | null): void {
   metaGastosCache = meta
   metaGastosUserId = userId
@@ -39,6 +43,8 @@ export function limparCacheFixos(): void {
   fixosTodosUserId = null
   metaGastosCache = null
   metaGastosUserId = null
+  ajustesCicloCache = null
+  ajustesCicloKey = null
 }
 
 // Callbacks injetados pelo main.ts (evita dependência circular entre módulos)
@@ -74,6 +80,27 @@ async function carregarFixosTodos(): Promise<Transacao[]> {
   return fixosTodosCache
 }
 
+async function carregarAjustesCiclo(forcarRecarregar = false): Promise<{ entradas: number; saidas: number }> {
+  const userId = getAuthState().user?.id
+  if (!userId) return { entradas: 0, saidas: 0 }
+  const ciclo = appStore.getCicloAtual()
+  const dataInicio = formatDateLocalISO(ciclo.inicio)
+  const dataFim = formatDateLocalISO(ciclo.fim)
+  const key = `${userId}_${dataInicio}_${dataFim}`
+  if (!forcarRecarregar && ajustesCicloCache && ajustesCicloKey === key) {
+    return ajustesCicloCache
+  }
+  try {
+    const somas = await somarAjustesSaldo({ userId, dataInicio, dataFim })
+    ajustesCicloCache = somas
+    ajustesCicloKey = key
+    return somas
+  } catch (err) {
+    logger.error('Erro ao buscar ajustes de saldo', err as Error)
+    return { entradas: 0, saidas: 0 }
+  }
+}
+
 export async function updateDashboard(): Promise<void> {
   try {
     logger.debug('Atualizando dashboard')
@@ -83,6 +110,7 @@ export async function updateDashboard(): Promise<void> {
 
     // Carrega transações via hook
     await transacoesHook.carregarTransacoes()
+    ajustesCicloCache = null
 
     await updateLista()
 
@@ -117,10 +145,13 @@ export async function updateLista(): Promise<void> {
   if (listContainer) listContainer.classList.toggle('hidden', !temTransacoesNoCiclo)
   if (exportContainer) exportContainer.classList.toggle('hidden', !temTransacoesNoCiclo)
 
+  const ajustes = await carregarAjustesCiclo()
+
   renderLista(
     filtradas,
     (id) => cicloHandlers!.handleEditar(id),
-    (id) => cicloHandlers!.handleExcluir(id)
+    (id) => cicloHandlers!.handleExcluir(id),
+    ajustes
   )
 
   if (temTransacoesNoCiclo) {
@@ -175,9 +206,9 @@ export async function updateHeader(): Promise<void> {
       const state = getAuthState()
       const userId = state.user?.id
       if (userId) {
-        const dataInicio = formatDateLocalISO(ciclo.inicio)
-        const dataFim = formatDateLocalISO(ciclo.fim)
-        const somas = await somarAjustesSaldo({ userId, dataInicio, dataFim })
+
+
+        const somas = await carregarAjustesCiclo()
         ajustesEntradas = somas.entradas
         ajustesSaidas = somas.saidas
       }

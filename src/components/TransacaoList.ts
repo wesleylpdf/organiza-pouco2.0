@@ -319,7 +319,8 @@ export function criarTransacaoList(container: HTMLElement): void {
 export function renderLista(
   transactions: Transacao[],
   onEdit: EditCallback,
-  onDelete: DeleteCallback
+  onDelete: DeleteCallback,
+  ajustes?: { entradas: number; saidas: number }
 ): void {
   // Atualiza callbacks
   editCallback = onEdit
@@ -331,8 +332,8 @@ export function renderLista(
   const userId = getAuthState().user?.id ?? null
 
   if (summaryEl) {
-    const somaEntradas = transactions.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0)
-    const somaSaidas = transactions.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0)
+    const somaEntradas = transactions.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0) + (ajustes?.entradas ?? 0)
+    const somaSaidas = transactions.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0) + (ajustes?.saidas ?? 0)
     const saldoVisivel = somaEntradas - somaSaidas
     const totalAbsoluto = somaEntradas > 0 && somaSaidas === 0
       ? `+${formatarMoeda(somaEntradas)}`
