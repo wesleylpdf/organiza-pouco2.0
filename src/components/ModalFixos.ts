@@ -2,10 +2,12 @@ import type { Transacao } from '@/types'
 import { formatarMoeda, formatarData, sanitizarHTML } from '@/utils/format'
 
 type ExcluirCallback = (id: string) => Promise<boolean>
+type EditarCallback = (transacao: Transacao) => void
 
 export function criarModalFixos(
   transacoes: Transacao[],
-  onExcluir: ExcluirCallback
+  onExcluir: ExcluirCallback,
+  onEditar?: EditarCallback
 ): void {
   // Remove modal existente se houver
   const existente = document.getElementById('modal-fixos')
@@ -28,9 +30,9 @@ export function criarModalFixos(
         <button id="fechar-modal-fixos" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xl font-bold">&times;</button>
       </div>
 
-      <div class="mb-4 p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white border border-slate-800">
-        <span class="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Total das fixas (todos os ciclos)</span>
-        <p id="total-fixos" class="text-2xl font-black text-white">${formatarMoeda(totalFixos)}</p>
+      <div class="mb-4 p-4 rounded-2xl bg-emerald-50/90 text-slate-900 border border-emerald-200 dark:bg-gradient-to-r dark:from-slate-900 dark:to-emerald-950 dark:text-white dark:border-slate-800">
+        <span class="text-[10px] text-emerald-700 dark:text-emerald-300 uppercase font-bold tracking-wider">Total das fixas (todos os ciclos)</span>
+        <p id="total-fixos" class="text-2xl font-black text-emerald-600 dark:text-white">${formatarMoeda(totalFixos)}</p>
       </div>
 
       <div id="lista-fixos" class="flex-1 overflow-y-auto mb-2 pr-1">
@@ -58,7 +60,7 @@ export function criarModalFixos(
   // Rastreia quais botões estão em modo de confirmação de exclusão
   const confirmandoExclusao = new Set<string>()
 
-  // Delegação de eventos para botões de excluir
+  // Delegação de eventos para botões de editar/excluir
   const lista = modal.querySelector('#lista-fixos')!
   lista.addEventListener('click', async (e) => {
     const btn = (e.target as HTMLElement).closest('button[data-action]') as HTMLButtonElement | null
@@ -69,30 +71,44 @@ export function criarModalFixos(
     const btnGroup = btn.closest('.flex.items-center.gap-3')
     if (!btnGroup) return
 
+    const btnEdit = btnGroup.querySelector(`button[data-action="edit"][data-id="${id}"]`) as HTMLButtonElement | null
     const btnDelete = btnGroup.querySelector(`button[data-action="delete"][data-id="${id}"]`) as HTMLButtonElement | null
     const btnConfirm = btnGroup.querySelector(`button[data-action="confirm-delete"][data-id="${id}"]`) as HTMLButtonElement | null
     const btnCancel = btnGroup.querySelector(`button[data-action="cancel-delete"][data-id="${id}"]`) as HTMLButtonElement | null
 
     const modoConfirmacao = () => {
+      btnEdit?.classList.add('hidden')
       btnDelete?.classList.add('hidden')
       btnConfirm?.classList.remove('hidden')
       btnCancel?.classList.remove('hidden')
     }
 
     const modoNormal = () => {
+      btnEdit?.classList.remove('hidden')
       btnDelete?.classList.remove('hidden')
       btnConfirm?.classList.add('hidden')
       btnCancel?.classList.add('hidden')
     }
 
-    if (action === 'delete') {
-      // Primeira vez: mostra botões Confirmar? e Cancelar, esconde Excluir
+    if (action === 'edit') {
+      const tx = fixos.find(t => t.id === id)
+      if (tx && onEditar) {
+        modal.remove()
+        onEditar(tx)
+      }
+      return
+    } else if (action === 'delete') {
+      // Primeira vez: mostra botões Confirmar? e Cancelar, esconde Editar e Excluir
       confirmandoExclusao.add(id)
       modoConfirmacao()
 
-      // Bloqueia todos os outros botões de excluir enquanto aguarda confirmação
+      // Bloqueia todos os outros botões enquanto aguarda confirmação
       const todosBtnDelete = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
       todosBtnDelete.forEach(b => {
+        if (b.dataset.id !== id) b.disabled = true
+      })
+      const todosBtnEdit = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="edit"]'))
+      todosBtnEdit.forEach(b => {
         if (b.dataset.id !== id) b.disabled = true
       })
     } else if (action === 'confirm-delete') {
@@ -103,9 +119,13 @@ export function criarModalFixos(
       // Esconde o botão Cancelar ao clicar em Confirmar?
       btnCancel?.classList.add('hidden')
 
-      // Desabilita todos os outros botões de excluir até o retorno do Supabase
+      // Desabilita todos os outros botões de excluir e editar até o retorno do Supabase
       const todosBtnDelete = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
       todosBtnDelete.forEach(b => {
+        if (b !== btn) b.disabled = true
+      })
+      const todosBtnEdit = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="edit"]'))
+      todosBtnEdit.forEach(b => {
         if (b !== btn) b.disabled = true
       })
 
@@ -119,14 +139,17 @@ export function criarModalFixos(
         btn.disabled = false
         btn.textContent = 'Confirmar?'
         todosBtnDelete.forEach(b => b.disabled = false)
+        todosBtnEdit.forEach(b => b.disabled = false)
         modoNormal()
       }
     } else if (action === 'cancel-delete') {
       confirmandoExclusao.delete(id)
 
-      // Desbloqueia todos os botões de excluir ao cancelar
+      // Desbloqueia todos os botões ao cancelar
       const todosBtnDelete = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="delete"]'))
       todosBtnDelete.forEach(b => b.disabled = false)
+      const todosBtnEdit = Array.from(lista.querySelectorAll<HTMLButtonElement>('button[data-action="edit"]'))
+      todosBtnEdit.forEach(b => b.disabled = false)
 
       modoNormal()
     }
@@ -136,7 +159,7 @@ export function criarModalFixos(
     const itens = lista.querySelectorAll('[data-action="delete"]')
     let total = 0
     itens.forEach(btn => {
-      const valorSpan = btn.previousElementSibling as HTMLSpanElement
+      const valorSpan = (btn.closest('.flex.items-center.gap-3')?.querySelector('[data-fixo-valor]') ?? btn.previousElementSibling) as HTMLSpanElement
       total += Number(valorSpan.textContent?.replace(/[^0-9,-]/g, '').replace('.', '').replace(',', '.') || 0)
     })
     const totalEl = document.getElementById('total-fixos')
@@ -152,13 +175,14 @@ function renderListaFixos(fixos: Transacao[]): string {
   return `
     <div class="space-y-2.5">
       ${fixos.map(tx => `
-        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 gap-2">
           <div class="flex flex-col min-w-0">
             <span class="text-sm font-bold text-slate-900 dark:text-white truncate">${sanitizarHTML(tx.descricao || '')}</span>
             <span class="text-[11px] text-slate-500 dark:text-slate-400">${formatarData(tx.data)}</span>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="text-sm font-extrabold text-slate-700 dark:text-slate-200">${formatarMoeda(tx.valor)}</span>
+          <div class="flex items-center gap-3 shrink-0">
+            <span data-fixo-valor class="text-sm font-extrabold text-slate-700 dark:text-slate-200">${formatarMoeda(tx.valor)}</span>
+            <button data-action="edit" data-id="${tx.id}" class="text-xs text-blue-600 dark:text-blue-300 bg-blue-600/10 dark:bg-blue-500/20 border border-blue-500/20 hover:bg-blue-600 hover:text-white font-bold px-2.5 py-1.5 rounded-xl transition">Editar</button>
             <button data-action="delete" data-id="${tx.id}" class="text-xs text-white bg-rose-500 hover:bg-rose-600 font-bold px-2.5 py-1.5 rounded-xl transition">Excluir</button>
             <button data-action="confirm-delete" data-id="${tx.id}" class="text-xs text-white bg-rose-600 hover:bg-rose-700 font-bold px-2.5 py-1.5 rounded-xl transition hidden">Confirmar?</button>
             <button data-action="cancel-delete" data-id="${tx.id}" class="text-xs text-slate-800 bg-slate-200 hover:bg-slate-300 font-bold px-2.5 py-1.5 rounded-xl transition hidden">Cancelar</button>

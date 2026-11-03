@@ -101,7 +101,7 @@ function atualizarCarregamentoCicloBtns(percentual: number): void {
  */
 function setBotoesDesabilitados(desabilitado: boolean): void {
   const seletores = [
-    '#ciclo-anterior', '#ciclo-proximo', '#salvar-config-ciclo',
+    '#ciclo-anterior', '#ciclo-proximo', '#ciclo-hoje', '#salvar-config-ciclo',
     '#transaction-form button[type="submit"]', '#fixos-btn',
     'button[data-action="edit"]', 'button[data-action="delete"]',
   ]
@@ -287,6 +287,12 @@ async function setupApp(
     document.getElementById('ciclo-proximo')!.addEventListener('click', () => {
       const currentOffset = appStore.getState().cycleOffset
       appStore.setCycleOffset(currentOffset + 1)
+      carregarCicloComFeedback(handlers.updateDashboard)
+    })
+
+    document.getElementById('ciclo-hoje')?.addEventListener('click', () => {
+      if (appStore.getState().cycleOffset === 0) return
+      appStore.setCycleOffset(0)
       carregarCicloComFeedback(handlers.updateDashboard)
     })
 

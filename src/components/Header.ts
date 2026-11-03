@@ -14,6 +14,7 @@ export interface HeaderProps {
   user: string
   diaInicioCiclo?: number
   diaFimCiclo?: number
+  cycleOffset?: number
 }
 
 export function criarHeader(container: HTMLElement, onFixosClick: () => void): void {
@@ -51,6 +52,7 @@ export function criarHeader(container: HTMLElement, onFixosClick: () => void): v
             <span class="text-xs sm:text-sm text-slate-900 dark:text-white font-extrabold tracking-wide" id="cycle-dates">Resumo do Ciclo</span>
           </div>
           <button id="ciclo-proximo" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white px-3.5 py-2 rounded-xl font-bold text-xs transition dark:border-white/10">→</button>
+          <button id="ciclo-hoje" title="Voltar para o ciclo atual" class="hidden bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2.5 py-2 rounded-xl font-extrabold text-xs transition shrink-0">Hoje</button>
         </div>
 
         <div class="flex items-center justify-center gap-2 bg-slate-100/80 border border-slate-200 dark:bg-white/5 px-3 py-1.5 rounded-2xl dark:border-white/10">
@@ -161,4 +163,9 @@ export function atualizarHeader(props: HeaderProps): void {
   const diaFim = props.diaFimCiclo ?? DIA_FIM_PADRAO
   if (inicioSelect) inicioSelect.value = String(diaInicio)
   if (fimSelect) fimSelect.value = String(diaFim)
+
+  const btnHoje = root.querySelector('#ciclo-hoje') as HTMLButtonElement | null
+  if (btnHoje) {
+    btnHoje.classList.toggle('hidden', (props.cycleOffset ?? 0) === 0)
+  }
 }

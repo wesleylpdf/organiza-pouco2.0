@@ -10,8 +10,7 @@ import { filtrarTransacoes } from '@/utils/filtroTransacoes'
 import { getOrdem } from '@/components/TransacaoList'
 import { logger } from '@/utils/logger'
 import { toast } from '@/utils/toast'
-
-
+import type { Transacao } from '@/types'
 
 // Hook de transações
 const transacoesHook = useTransacoes()
@@ -53,12 +52,14 @@ export function handleCancelarEdicao(): void {
   transacoesHook.cancelarEdicao()
 }
 
-export function handleEditar(id: string): void {
+export function handleEditar(idOrTransacao: string | Transacao): void {
   const transacoes = appStore.getTransacoes()
-  const t = transacoes.find(tx => tx.id === id)
+  const t = typeof idOrTransacao === 'string'
+    ? transacoes.find(tx => tx.id === idOrTransacao)
+    : idOrTransacao
   if (!t) return
 
-  logger.debug('Editando transação', { id })
+  logger.debug('Editando transação', { id: t.id })
   transacoesHook.iniciarEdicao(t)
 
   const formContainer = document.getElementById('form-container')!
@@ -101,10 +102,16 @@ export async function handleAbrirFixos(): Promise<void> {
   }
   try {
     const transacoes = await listarTransacoes({ fixo: true })
-    criarModalFixos(transacoes, async (id) => {
-      const sucesso = await handleExcluir(id)
-      return sucesso
-    })
+    criarModalFixos(
+      transacoes,
+      async (id) => {
+        const sucesso = await handleExcluir(id)
+        return sucesso
+      },
+      (tx) => {
+        handleEditar(tx)
+      }
+    )
   } catch (err) {
     logger.error('Erro ao abrir transações fixas', err as Error)
     toast.error('Erro ao abrir transações fixas')

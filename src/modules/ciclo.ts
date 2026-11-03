@@ -202,6 +202,7 @@ export async function updateHeader(): Promise<void> {
     user: (state.user?.email || 'Usuario').split('@')[0],
     diaInicioCiclo: config.diaInicioCiclo,
     diaFimCiclo: config.diaFimCiclo,
+    cycleOffset: config.cycleOffset,
   })
 }
 
