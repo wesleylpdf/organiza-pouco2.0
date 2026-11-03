@@ -10,7 +10,7 @@ let chartInstance: Chart | null = null
 
 export function criarGrafico(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="relative max-w-3xl mx-auto p-5 sm:p-6 rounded-3xl shadow-md mb-6 border border-slate-200/90 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-900/95 dark:border-slate-800" style="height: 272px;">
+    <div class="relative max-w-3xl mx-auto p-5 sm:p-6 rounded-3xl shadow-md mb-6 border border-slate-200/90 flex flex-col items-center justify-center bg-white/95 dark:bg-slate-900/95 dark:border-slate-800" style="height: 306px;">
       <div class="flex items-center justify-between gap-2 w-full mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
         <div class="flex items-center gap-2.5 min-w-0">
           <span class="w-2.5 h-5 rounded-full bg-teal-500 shrink-0"></span>
@@ -25,7 +25,7 @@ export function criarGrafico(container: HTMLElement): void {
         </div>
       </div>
       <div class="relative w-full h-full flex items-center justify-center">
-        <canvas id="categoryChart" class="cursor-pointer" style="max-height: 184px;"></canvas>
+        <canvas id="categoryChart" class="cursor-pointer" style="max-height: 207px;"></canvas>
       </div>
       <p id="chart-empty" class="text-slate-400 text-sm hidden">Sem saídas neste ciclo</p>
     </div>

@@ -4,7 +4,7 @@
 
 /* Escala global reduzida em 20% (16px -> 12.8px / 80%) */
 html {
-  font-size: 80%;
+  font-size: 90%;
 }
 
 /* Animações para toast notifications */
@@ -123,19 +123,19 @@ select:focus-visible {
 /* Melhorias mobile (reduzidas proporcionalmente em 20%) */
 @media (max-width: 640px) {
   body {
-    font-size: 11.2px;
+    font-size: 12.6px;
   }
 
   /* Áreas de toque proporcionais à redução de 20% */
   input[type="button"],
   input[type="submit"] {
-    min-height: 35px;
-    min-width: 35px;
+    min-height: 40px;
+    min-width: 40px;
   }
 
   /* Espaçamento e fonte de formulários mobile reduzidos em 20% */
   input, select, textarea {
-    font-size: 12.8px;
+    font-size: 14.4px;
   }
 
   /* Modal em mobile ocupa quase toda a tela */
