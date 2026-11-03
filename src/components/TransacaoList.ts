@@ -37,13 +37,13 @@ export function criarTransacaoList(container: HTMLElement): void {
           <span class="w-2.5 h-5 rounded-full bg-blue-500"></span>
           <h3 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">Lançamentos do Ciclo</h3>
         </div>
-        <div class="flex items-center gap-2.5 w-full flex-wrap">
-          <label class="flex items-center justify-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200 transition select-none">
+        <div class="flex items-center gap-1.5 sm:gap-2.5 w-full flex-nowrap">
+          <label class="shrink-0 whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-200 transition select-none">
             <input type="checkbox" id="filter-dividido" class="w-4 h-4 accent-emerald-600"> <span>🔄 Parcelados</span>
           </label>
           <input type="text" id="filter-descricao" placeholder="🔎 Buscar por descrição ou categoria..."
-            class="flex-1 min-w-[160px] px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-          <select id="filter-ordem" class="px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            class="flex-1 min-w-0 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <select id="filter-ordem" class="shrink-0 max-w-[115px] sm:max-w-none truncate px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50/70 dark:bg-slate-800/80 dark:border-slate-700 dark:text-white text-[11px] sm:text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             <option value="data-desc">Data (mais recente)</option>
             <option value="data-asc">Data (mais antiga)</option>
             <option value="valor-desc">Valor (maior primeiro)</option>
