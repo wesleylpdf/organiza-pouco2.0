@@ -332,8 +332,9 @@ export function renderLista(
   const userId = getAuthState().user?.id ?? null
 
   if (summaryEl) {
-    const somaEntradas = transactions.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0) + (ajustes?.entradas ?? 0)
-    const somaSaidas = transactions.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0) + (ajustes?.saidas ?? 0)
+    const incluirAjustes = filtroStatusAtual === 'todos'
+    const somaEntradas = transactions.filter(t => t.tipo === 'entrada').reduce((acc, t) => acc + Number(t.valor), 0) + (incluirAjustes ? (ajustes?.entradas ?? 0) : 0)
+    const somaSaidas = transactions.filter(t => t.tipo === 'saida').reduce((acc, t) => acc + Number(t.valor), 0) + (incluirAjustes ? (ajustes?.saidas ?? 0) : 0)
     const saldoVisivel = somaEntradas - somaSaidas
     const totalAbsoluto = somaEntradas > 0 && somaSaidas === 0
       ? `+${formatarMoeda(somaEntradas)}`

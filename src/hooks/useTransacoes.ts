@@ -173,7 +173,7 @@ export function useTransacoes() {
           }
         } else { // Se não era dividida ou não tem mais parcelas, atualiza como transação única
           logger.debug('Atualizando transação única', { id: editandoId, params })
-          await atualizarTransacao(editandoId, { ...params, fixo: params.fixo })
+          await atualizarTransacao(editandoId, { ...params, totalParcelas: params.dividido ? params.totalParcelas : null, fixo: params.fixo })
         }
 
         appStore.setEditandoId(null)
@@ -199,7 +199,7 @@ export function useTransacoes() {
       }
 
       logger.info('Transação salva com sucesso')
-      appStore.limparCacheCiclo(appStore.getCicloInicioISO())
+      appStore.limparCacheCiclo()
       await carregarTransacoes()
       return true
     } catch (error) {
@@ -239,7 +239,7 @@ export function useTransacoes() {
       }
 
       logger.info('Transação excluída', { id })
-      appStore.limparCacheCiclo(appStore.getCicloInicioISO())
+      appStore.limparCacheCiclo()
       await carregarTransacoes()
       return true
     } catch (error) {

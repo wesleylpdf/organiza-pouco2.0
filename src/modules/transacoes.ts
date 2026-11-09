@@ -44,6 +44,7 @@ export async function handleSalvar(data: Parameters<typeof transacoesHook.salvar
     const error = appStore.getError()
     if (error) {
       appStore.setError(error)
+      throw new Error(error)
     }
   }
 }

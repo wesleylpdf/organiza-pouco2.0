@@ -334,7 +334,14 @@ export function preencherFormEdicao(container: HTMLElement, t: Transacao): void 
   ;(container.querySelector('#input-date') as HTMLInputElement).value = t.data
   ;(container.querySelector('#input-type') as HTMLSelectElement).value = t.tipo
   atualizarSelectCategorias()
-  ;(container.querySelector('#input-category') as HTMLSelectElement).value = t.categoria
+  const selectCat = container.querySelector('#input-category') as HTMLSelectElement
+  if (t.categoria && !Array.from(selectCat.options).some(opt => opt.value === t.categoria)) {
+    const opt = document.createElement('option')
+    opt.value = t.categoria
+    opt.textContent = t.categoria
+    selectCat.appendChild(opt)
+  }
+  selectCat.value = t.categoria || (selectCat.options[0]?.value ?? '')
   ;(container.querySelector('#input-description') as HTMLInputElement).value = t.descricao || ''
   container.querySelector('#form-title')!.textContent = 'Editar Transação'
   container.querySelector('#cancel-btn')!.classList.remove('hidden')
@@ -348,7 +355,11 @@ export function preencherFormEdicao(container: HTMLElement, t: Transacao): void 
   const inputDividirValor = container.querySelector('#input-dividir-valor') as HTMLInputElement
   inputDividido.checked = !!t.dividido
   inputFixo.checked = !!t.fixo
-  inputTotalParcelas.value = String(t.totalParcelas || 1)
+  inputTotalParcelas.value = String(t.totalParcelas && t.totalParcelas >= 2 ? t.totalParcelas : 2)
+  inputDividido.classList.toggle('invisible', !!t.fixo)
+  container.querySelector('label[for="input-dividido"]')?.classList.toggle('invisible', !!t.fixo)
+  inputFixo.classList.toggle('invisible', !!t.dividido)
+  container.querySelector('label[for="input-fixo"]')?.classList.toggle('invisible', !!t.dividido)
   inputDividirValor.checked = !!temValorOriginal
   parcelasContainer.classList.toggle('hidden', !t.dividido)
   dividirValorCheckboxLabel.classList.toggle('hidden', !t.dividido)
